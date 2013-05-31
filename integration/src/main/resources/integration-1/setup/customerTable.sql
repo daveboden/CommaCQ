@@ -1,0 +1,1 @@
+create table CUSTOMER (code varchar(255), description varchar(255), active bit, accountOpeningDate date, currentBalance numeric(20,6), currentBalanceDigits int)

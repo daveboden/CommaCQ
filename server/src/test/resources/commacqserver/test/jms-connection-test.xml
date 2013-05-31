@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans
+    xmlns="http://www.springframework.org/schema/beans"
+    xmlns:context="http://www.springframework.org/schema/context"
+    xmlns:util="http://www.springframework.org/schema/util"
+    xmlns:c="http://www.springframework.org/schema/c"
+    xmlns:p="http://www.springframework.org/schema/p"
+    xmlns:jms="http://www.springframework.org/schema/jms"
+    xmlns:jee="http://www.springframework.org/schema/jee"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="
+http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.1.xsd
+http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-3.1.xsd
+http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util-3.1.xsd
+http://www.springframework.org/schema/jee http://www.springframework.org/schema/jee/spring-jee-3.1.xsd
+http://www.springframework.org/schema/jms http://www.springframework.org/schema/jms/spring-jms-3.1.xsd
+">
+
+    <!--
+    Split the mock JMS listener out into a separate Spring file
+    so that we don't have to try and get mock JMS to work with JNDI.
+    
+    Also, mock JMS requires you to declare all your queues and topics
+    up front, which is generally not required by Active MQ and other
+    JMS providers in a development environment.
+     -->
+    
+    <bean id="destinationManager" class="com.mockrunner.jms.DestinationManager"/>
+    <bean id="configurationManager" class="com.mockrunner.jms.ConfigurationManager"/>
+ 
+    <bean id="jmsConnectionFactory" class="com.mockrunner.mock.jms.MockQueueConnectionFactory" >
+        <constructor-arg index="0" ref="destinationManager" />
+        <constructor-arg index="1" ref="configurationManager" />
+    </bean>
+    
+    <alias name="jmsConnectionFactory" alias="jmsClientConnectionFactory"/>
+    
+    <!-- Create queues and topics -->
+    <bean factory-bean="destinationManager" factory-method="createQueue">
+        <constructor-arg value="test.update"/>
+    </bean>
+    <bean factory-bean="destinationManager" factory-method="createQueue">
+        <constructor-arg value="query"/>
+    </bean>
+    <bean factory-bean="destinationManager" factory-method="createTopic">
+        <constructor-arg value="broadcast.customer"/>
+    </bean>
+
+</beans>

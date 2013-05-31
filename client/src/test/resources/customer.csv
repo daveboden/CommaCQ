@@ -1,0 +1,3 @@
+id,description,active,accountOpeningDate,currentBalance
+BMW,BMW Motors,false,2011-01-01,345.660000
+MERC,Mercedes Motors,true,2012-02-02,14032.000000

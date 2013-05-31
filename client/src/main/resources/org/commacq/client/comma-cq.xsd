@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xsd:schema xmlns="http://comma-cq.com/client"
+            targetNamespace="http://comma-cq.com/client"
+            xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+            xmlns:beans="http://www.springframework.org/schema/beans"
+            xmlns:tool="http://www.springframework.org/schema/tool"
+            elementFormDefault="qualified"
+            attributeFormDefault="unqualified">
+
+    <xsd:import namespace="http://www.springframework.org/schema/beans"/>
+    <xsd:import namespace="http://www.springframework.org/schema/tool"/>
+
+    <xsd:element name="manager">
+        <xsd:complexType>
+            <xsd:complexContent>
+                <xsd:extension base="beans:identifiedType">
+                    <xsd:attribute use="required" name="entityName" type="xsd:string"/>
+                    <xsd:attribute use="optional" name="beanCacheUpdaterFactory" type="xsd:string" default="beanCacheUpdaterFactory">
+                        <xsd:annotation>
+                            <xsd:documentation><![CDATA[A reference to the BeanCacheUpdaterFactory used to construct and update the cache of beans.]]></xsd:documentation>
+                            <xsd:appinfo>
+                                <tool:annotation kind="ref">
+                                    <tool:expected-type type="org.commacq.client.factory.BeanCacheUpdaterFactory"/>
+                                </tool:annotation>
+                            </xsd:appinfo>
+                        </xsd:annotation>
+                    </xsd:attribute>
+                    <xsd:attribute use="optional" name="beanType" type="xsd:string">
+                        <xsd:annotation>
+                            <xsd:documentation><![CDATA[A bean type to use instead of relying on the BeanCacheUpdaterFactory to choose.]]></xsd:documentation>
+                            <xsd:appinfo>
+                                <tool:annotation kind="value">
+                                    <tool:expected-type type="java.lang.Class"/>
+                                </tool:annotation>
+                            </xsd:appinfo>
+                        </xsd:annotation>
+                    </xsd:attribute>
+                    <xsd:attribute use="optional" name="managerFactory" type="xsd:string" default="managerFactory">
+                        <xsd:annotation>
+                            <xsd:documentation><![CDATA[An opportunity to override the ManagerSelectionStrategy used to select the manager type based on the entity name and bean type.]]></xsd:documentation>
+                            <xsd:appinfo>
+                                <tool:annotation kind="ref">
+                                    <tool:expected-type type="org.commacq.client.factory.ManagerFactory"/>
+                                </tool:annotation>
+                            </xsd:appinfo>
+                        </xsd:annotation>
+                    </xsd:attribute>
+                    <xsd:attribute use="optional" name="managerType" type="xsd:string">
+                        <xsd:annotation>
+                            <xsd:documentation><![CDATA[A manager type to use instead of relying on the ManagerSelectionStrategy to choose.]]></xsd:documentation>
+                            <xsd:appinfo>
+                                <tool:annotation kind="value">
+                                    <tool:expected-type type="java.lang.Class"/>
+                                </tool:annotation>
+                            </xsd:appinfo>
+                        </xsd:annotation>
+                    </xsd:attribute>
+                </xsd:extension>
+            </xsd:complexContent>
+        </xsd:complexType>
+    </xsd:element>
+
+</xsd:schema>

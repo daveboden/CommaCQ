@@ -1,0 +1,20 @@
+<configuration>
+
+  <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+    <!-- encoders are assigned the type
+         ch.qos.logback.classic.encoder.PatternLayoutEncoder by default -->
+    <encoder>
+      <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
+    </encoder>
+  </appender>
+
+  <logger name="org.apache.camel" level="info"/>
+  <logger name="org.springframework" level="info"/>
+  <logger name="org.eclipse.jetty" level="info"/>
+  <logger name="org.h2" level="all"/>
+  <logger name="org.apache.tomcat.jdbc" level="all"/>
+
+  <root level="debug">
+    <appender-ref ref="STDOUT" />
+  </root>
+</configuration>

@@ -1,0 +1,28 @@
+<beans
+    xmlns="http://www.springframework.org/schema/beans"
+    xmlns:context="http://www.springframework.org/schema/context"
+    xmlns:amq="http://activemq.apache.org/schema/core"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:jdbc="http://www.springframework.org/schema/jdbc"
+    xsi:schemaLocation="
+http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.1.xsd
+http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-3.1.xsd
+http://www.springframework.org/schema/jdbc http://www.springframework.org/schema/jdbc/spring-jdbc-3.1.xsd
+http://activemq.apache.org/schema/core http://activemq.apache.org/schema/core/activemq-core.xsd
+">
+
+    <!--
+    Embedded HSQLDB database - connect to it using URL:
+    jdbc:hsqldb:mem:integration1
+    The database is given the same name as the bean id.
+    -->
+    <jdbc:embedded-database id="dataSource" type="H2">
+        <jdbc:script location="classpath:integration-1/setup/customerTable.sql" />
+        <jdbc:script location="classpath:integration-1/setup/customerTableData.sql" />
+    </jdbc:embedded-database>
+    
+    <bean class="org.commacq.db.InsertManyRows">
+        <constructor-arg ref="dataSource"/>
+    </bean>
+
+</beans>

@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans
+    xmlns="http://www.springframework.org/schema/beans"
+    xmlns:context="http://www.springframework.org/schema/context"
+    xmlns:util="http://www.springframework.org/schema/util"
+    xmlns:c="http://www.springframework.org/schema/c"
+    xmlns:p="http://www.springframework.org/schema/p"
+    xmlns:jms="http://www.springframework.org/schema/jms"
+    xmlns:jee="http://www.springframework.org/schema/jee"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="
+http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.1.xsd
+http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-3.1.xsd
+http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util-3.1.xsd
+http://www.springframework.org/schema/jee http://www.springframework.org/schema/jee/spring-jee-3.1.xsd
+http://www.springframework.org/schema/jms http://www.springframework.org/schema/jms/spring-jms-3.1.xsd
+">
+
+    <bean id="webSocketOutboundHandler" class="org.commacq.http.WebSocketOutboundHandler"/>
+    
+
+    <bean id="csvHttpFileHandler" class="org.commacq.http.CsvHttpFileHandler"
+          c:dataManager-ref="dataManager"
+    />
+          
+    <!--
+    Serves up the initial grid HTML page that subsequently connects to
+    a web socket from javascript.
+    -->
+    <bean id="csvGridHandler" class="org.commacq.http.CsvGridHandler"
+          c:dataManager-ref="dataManager"
+    />
+    
+    <!--
+    Receives the web socket connection request from the grid HTML page and sets up
+    a subscription.
+    Contains a reference to the collection of normal HTTP handlers.
+    -->
+    <bean id="csvWebSocketHandler" class="org.commacq.http.CsvWebSocketHandler"
+          c:dataManager-ref="dataManager"
+          c:webSocketOutboundHandler-ref="webSocketOutboundHandler"
+          p:handler-ref="contextHandlerCollection"
+    />
+    
+    <bean id="htmlHandler" class="org.eclipse.jetty.server.handler.ResourceHandler">
+        <property name="resourceBase" 
+                  value = "#{new org.springframework.core.io.ClassPathResource('html').getURI().toString()}" />
+    </bean> 
+          
+    <bean id="contextHandlerCollection" class="org.eclipse.jetty.server.handler.ContextHandlerCollection">
+        <property name="handlers">
+            <list>
+                <bean class="org.eclipse.jetty.server.handler.ContextHandler"
+                      p:contextPath="/csv"
+                      p:handler-ref="csvHttpFileHandler"
+                />
+                
+                <!-- Static html and javascript -->
+                <bean class="org.eclipse.jetty.server.handler.ContextHandler"
+                      p:contextPath="/html"
+                      p:handler-ref="htmlHandler"
+                />
+                
+                <bean class="org.eclipse.jetty.server.handler.ContextHandler"
+                      p:contextPath="/grid"
+                      p:handler-ref="csvGridHandler"
+                />
+                
+            </list>
+        </property>
+    </bean>
+          
+    <bean id="Server" class="org.eclipse.jetty.server.Server" init-method="start" destroy-method="stop">
+        <property name="connectors">
+          <list>
+            <bean id="Connector" class="org.eclipse.jetty.server.nio.SelectChannelConnector">
+              <property name="port" value="${http.port}"/> <!-- Move to properties file -->
+            </bean>
+          </list>
+        </property>
+     
+        <!--
+        Provide the web socket handler which itself has a reference
+        to the main list of handlers which process the normal HTTP messages.
+        The web socket handler delegates non-web-socket requests to the normal
+        handlers.
+        -->
+        <property name="handler" ref="csvWebSocketHandler"/>
+  </bean>
+
+</beans>

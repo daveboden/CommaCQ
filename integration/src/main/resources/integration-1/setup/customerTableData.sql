@@ -1,0 +1,2 @@
+insert into CUSTOMER (code, description, active, accountOpeningDate, currentBalance, currentBalanceDigits) values ('BMW', 'BMW Motors', 0, '2011-01-01', 345.66, 2)
+insert into CUSTOMER (code, description, active, accountOpeningDate, currentBalance, currentBalanceDigits) values ('MERC', 'Mercedes Motors', 1, '2012-02-02', 14032, 0)
