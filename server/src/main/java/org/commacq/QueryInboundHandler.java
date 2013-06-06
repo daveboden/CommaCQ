@@ -87,6 +87,8 @@ public class QueryInboundHandler implements SessionAwareMessageListener<Message>
 		MessageProducer messageProducer = session.createProducer(message.getJMSReplyTo());
 		
 		messageProducer.send(outputMessage);
+		
+		logger.info("Completed query for entity {}", entityName);
 	}
 	
 }

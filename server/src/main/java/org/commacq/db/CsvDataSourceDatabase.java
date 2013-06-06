@@ -103,7 +103,7 @@ public class CsvDataSourceDatabase implements CsvDataSource {
            .append("where nest.id = '").append(id).append("'");
         
         String sqlString = sql.toString();
-        logger.info("Executing SQL: {}", sqlString);
+        logger.debug("Executing SQL: {}", sqlString);
         
         final CsvParser csvParser = new CsvParser();
         
