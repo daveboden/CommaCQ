@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.io.StringWriter;
 import java.io.Writer;
 
+import javax.jms.InvalidDestinationException;
 import javax.jms.JMSException;
 import javax.jms.Message;
 import javax.jms.MessageProducer;
@@ -84,7 +85,13 @@ public class QueryInboundHandler implements SessionAwareMessageListener<Message>
 		TextMessage outputMessage = session.createTextMessage(writer.toString());
 		outputMessage.setJMSCorrelationID(message.getJMSCorrelationID());
 		
-		MessageProducer messageProducer = session.createProducer(message.getJMSReplyTo());
+		MessageProducer messageProducer;
+		try {
+			messageProducer = session.createProducer(message.getJMSReplyTo());
+		} catch(InvalidDestinationException ex) {
+			logger.warn("Cannot send reply; client has gone away: {}", message.getJMSReplyTo());
+			return;
+		}
 		
 		messageProducer.send(outputMessage);
 		

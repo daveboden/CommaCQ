@@ -89,6 +89,7 @@ public class DataManager {
 	    
 	    final List<CsvLine> lines = csvDataSource.getCsvLines(entityId, ids);
 	    final Set<String> updatedIds = new HashSet<>();
+	    final Set<String> ignoredIds = new HashSet<>();
 	    CsvCache cache = caches.get(entityId);
 	    
 	    for(CsvLine line : lines) {
@@ -98,13 +99,15 @@ public class DataManager {
 	            updatedIds.add(line.getId());
 	        } else {
 	            logger.debug("Entity did not materially change, so not reporting an update: {}", line.getId());
+	            ignoredIds.add(line.getId());
 	        }
 	    }
 		
-	    //All the ids minus the ones we've successfully updated.
+	    //All the ids minus the ones we've successfully updated or ignored.
 	    //What remains needs to be deleted.
 		final Set<String> deletedIds = new HashSet<>(ids);
 		deletedIds.removeAll(updatedIds);
+		deletedIds.removeAll(ignoredIds);
 		
 		for(String id : deletedIds) {
 			boolean wasPresentInCache = cache.removeId(id); 
@@ -115,7 +118,11 @@ public class DataManager {
 		}
 		
 		UpdateCsvCacheResult result = new UpdateCsvCacheResult(updatedIds, deletedIds);
-		updateOutboundHub.sendUpdate(entityId, cache, result);
+		if(!updatedIds.isEmpty() || !deletedIds.isEmpty()) {
+			updateOutboundHub.sendUpdate(entityId, cache, result);
+		} else {
+			logger.info("No entities to update. Not sending an outbound message.");
+		}
 		return result;
 	}
 	
