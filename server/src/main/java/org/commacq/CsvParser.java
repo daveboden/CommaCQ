@@ -12,6 +12,8 @@ import java.sql.Timestamp;
 import java.sql.Types;
 import java.text.SimpleDateFormat;
 
+import javax.annotation.concurrent.ThreadSafe;
+
 import org.apache.commons.lang3.StringEscapeUtils;
 
 /**
@@ -48,6 +50,7 @@ import org.apache.commons.lang3.StringEscapeUtils;
  * do it in your database select statement. They are not
  * surrounded by quotes.
  */
+@ThreadSafe
 public class CsvParser {
 	
 	public static final char COMMA = ',';
