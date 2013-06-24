@@ -6,11 +6,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 
 public class InsertManyRows {
 
-	private final DataSource dataSource;
-
-	public InsertManyRows(DataSource dataSource) {
-		this.dataSource = dataSource;
-		
+	public InsertManyRows(DataSource dataSource) {		
 		JdbcTemplate jdbcTemplate = new JdbcTemplate(dataSource);
 		
 		for(int i = 0; i < 50000; i++) {
