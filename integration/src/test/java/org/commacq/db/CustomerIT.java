@@ -40,6 +40,8 @@ import org.commacq.testclient.Customer;
     
     "classpath:commacqserver/jms-handlers.xml",
     "classpath:commacqserver/data-manager.xml",
+    "classpath:commacqserver/database-connection.xml",
+    
     "classpath:commacqserver/csv-data-source-database.xml",
     "classpath:commacqserver/http.xml",
     
@@ -50,7 +52,7 @@ public class CustomerIT {
 	private static Logger logger = LoggerFactory.getLogger(CustomerIT.class);
 
 	@Resource
-	DataSource dataSource;
+	DataSource integrationDataSource1;
 	
 	@Resource
 	UpdateManager updateManager;
@@ -74,7 +76,7 @@ public class CustomerIT {
 		Customer bmw = customerManager.mustGet(BMW);
 		assertEquals(BMW_DESCRIPTION_OLD, bmw.getDescription());
 	
-		JdbcTemplate jdbcTemplate = new JdbcTemplate(dataSource);
+		JdbcTemplate jdbcTemplate = new JdbcTemplate(integrationDataSource1);
 		jdbcTemplate.execute("update customer set description = '" + BMW_DESCRIPTION_NEW + "' where CODE = '" + BMW + "'");		
 		
 		SimpleCacheObserver<Customer> cacheObserver = new SimpleCacheObserver<>();
