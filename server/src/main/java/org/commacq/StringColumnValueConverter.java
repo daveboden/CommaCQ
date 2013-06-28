@@ -9,6 +9,7 @@ import java.sql.SQLException;
 import java.sql.Time;
 import java.sql.Timestamp;
 import java.sql.Types;
+import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 
 public class StringColumnValueConverter {
@@ -22,6 +23,12 @@ public class StringColumnValueConverter {
 	private ThreadLocal<SimpleDateFormat> yyyy_MM_dd_T_TimeWithZone = new ThreadLocal<SimpleDateFormat>() {
 		protected SimpleDateFormat initialValue() {
 			return new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ");
+		};
+	};
+	
+	private ThreadLocal<DecimalFormat> decimalUpTo20Places = new ThreadLocal<DecimalFormat>() {
+		protected DecimalFormat initialValue() {
+			return new DecimalFormat("0.####################");
 		};
 	};
 	
@@ -56,10 +63,10 @@ public class StringColumnValueConverter {
 				return handleLong(rs, colIndex);
 			case Types.BIT:
 				return handleBoolean(rs.getBoolean(colIndex));
-			case Types.DECIMAL:
 			case Types.DOUBLE:
 			case Types.FLOAT:
-				//TODO Handle floating point types properly
+				return handleDouble(rs.getDouble(colIndex));
+			case Types.DECIMAL:
 			case Types.REAL:
 			case Types.NUMERIC:
 				return handleBigDecimal(rs.getBigDecimal(colIndex));
@@ -95,6 +102,10 @@ public class StringColumnValueConverter {
 	protected String handleBigDecimal(BigDecimal decimal) {
         return decimal == null ? null : decimal.toString();
     }
+	
+	protected String handleDouble(double d) {
+		return decimalUpTo20Places.get().format(d);
+	}
 
 	protected String handleLong(ResultSet rs, int columnIndex) throws SQLException {
         long lv = rs.getLong(columnIndex);
