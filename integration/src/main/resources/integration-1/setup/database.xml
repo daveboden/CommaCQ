@@ -21,8 +21,8 @@ http://activemq.apache.org/schema/core http://activemq.apache.org/schema/core/ac
         <jdbc:script location="classpath:integration-1/setup/customerTableData.sql" />
     </jdbc:embedded-database>
     
-    <bean class="org.commacq.db.InsertManyRows">
+<!--     <bean class="org.commacq.db.InsertManyRows">
         <constructor-arg ref="integrationDataSource1"/>
-    </bean>
+    </bean> -->
 
 </beans>

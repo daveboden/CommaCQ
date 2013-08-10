@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:c="http://www.springframework.org/schema/c"
+       xmlns:cq="http://commacq.org/client"
+       xsi:schemaLocation="
+http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd
+http://commacq.org/client http://commacq.org/client/comma-cq-1.0.xsd
+">
+
+    <import resource="classpath:integration-1/setup/database.xml"/>
+    <import resource="classpath:integration-1/setup/integration-placeholder.xml"/>
+    <import resource="classpath:commacqserver/test/jms-connection-test.xml"/>
+    <import resource="classpath:commacqserver/test/jms-listener-test.xml"/>
+    
+    <import resource="classpath:commacqserver/jms-handlers.xml"/>
+    <import resource="classpath:commacqserver/data-manager.xml"/>
+    <import resource="classpath:commacqserver/database-connection.xml"/>
+    
+    <import resource="classpath:commacqserver/csv-data-source-database.xml"/>
+    <!-- <import resource="classpath:commacqserver/http.xml"/> -->
+    
+    <import resource="classpath:org/commacq/client/update-manager.xml"/>
+    
+    <import resource="classpath:integration-1/clientSpring/client-spring-test.xml"/>
+</beans>

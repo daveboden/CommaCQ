@@ -22,8 +22,8 @@ public class BeanTypeSelectionStrategyEntityNameWithinPackages implements BeanTy
     }
 	
 	@Override
-	public Class<?> chooseBeanType(String entityName) throws ClassNotFoundException {
-		final String capitalisedEntityName = WordUtils.capitalize(entityName);
+	public Class<?> chooseBeanType(String entityId) throws ClassNotFoundException {
+		final String capitalisedEntityName = WordUtils.capitalize(entityId);
 		for(String packageName : packageNames) {
 			String className = packageName + "." + capitalisedEntityName;
 			try {

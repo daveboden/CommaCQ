@@ -73,7 +73,7 @@ public class DataSourceAccess {
         sql.append(")");
                 
         String sqlString = sql.toString();
-        logger.info("Executing SQL: {}", sqlString);
+        logger.debug("Executing SQL: {}", sqlString);
         
         try {
         	return jdbcTemplate.query(sqlString, rowMapper);

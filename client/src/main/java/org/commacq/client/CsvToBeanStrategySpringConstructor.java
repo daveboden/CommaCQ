@@ -60,7 +60,7 @@ public class CsvToBeanStrategySpringConstructor<BeanType> implements CsvToBeanSt
 		Set<String> deleted = new HashSet<>();
 		
 		List<String> columnNames = Arrays.asList(csv[0]);
-		logger.info("Column names are {}", columnNames);
+		logger.info("Parsing CSV; column names are {}", columnNames);
 		
 		for(int lineIndex = 1; lineIndex < csv.length; lineIndex++) {
 			List<String> line = Arrays.asList(csv[lineIndex]);
@@ -91,10 +91,11 @@ public class CsvToBeanStrategySpringConstructor<BeanType> implements CsvToBeanSt
 			beans.put(line.get(0), bean); //id is always first column			
 		}
 		
-		logger.info("Updated beans {}", beans);
-		if(logger.isInfoEnabled()) {
+		logger.info("Updated {} beans", beans.size());
+		logger.debug("Updated beans {}", beans); //Potentially very slow logging operation
+		if(logger.isDebugEnabled()) {
 			if(!deleted.isEmpty()) {
-				logger.info("Deleted ids {}", deleted);
+				logger.debug("Deleted ids {}", deleted);
 			}
 		}
 		return new CsvToBeanStrategyResult<>(beans, deleted); 

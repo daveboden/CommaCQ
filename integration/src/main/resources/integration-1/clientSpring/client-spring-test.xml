@@ -9,21 +9,17 @@ http://www.springframework.org/schema/beans http://www.springframework.org/schem
 http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd
 http://commacq.org/client http://commacq.org/client/comma-cq-1.0.xsd
 ">
-    <bean id="beanTypeSelectionStrategy" class="org.commacq.client.factory.BeanTypeSelectionStrategyEntityNameWithinPackages">
-        <constructor-arg value="org.commacq.testclient"/>
-    </bean>
+    <bean id="beanTypeSelectionStrategy" class="org.commacq.client.factory.BeanTypeSelectionStrategyEntityNameWithinPackages"
+          c:packageNames="org.commacq.testclient"
+    />
 
-    <bean id="beanCacheUpdaterFactory" class="org.commacq.client.factory.BeanCacheUpdaterFactoryResourceInitialLoad"
+    <bean id="beanCacheUpdaterFactory" class="org.commacq.client.factory.BeanCacheUpdaterFactoryJmsBroadcast"
         c:beanTypeSelectionStrategy-ref="beanTypeSelectionStrategy"
-        c:resourceBase="classpath:/"
-        c:capitalizeEntityName="false"
-        c:extension=".csv"
+        c:connectionFactory-ref="jmsClientConnectionFactory"
     />
 
     <bean id="managerFactory" class="org.commacq.client.factory.ManagerFactoryDefault"/>
-
-    <cq:manager entityName="customer" beanType="org.commacq.testclient.Customer"/> <!-- id defaults to customerManager -->
-    <cq:manager id="customerManager2" entityName="customer" beanType="org.commacq.testclient.Customer2"/>
-    <cq:manager id="customerManager3" entityName="customer" managerType="org.commacq.testclient.CustomerManager2" beanType="org.commacq.testclient.Customer2"/>
+    
+    <cq:manager entityName="customer" beanType="org.commacq.testclient.Customer"/>
 
 </beans>

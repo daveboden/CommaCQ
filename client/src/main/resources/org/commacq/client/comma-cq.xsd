@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<xsd:schema xmlns="http://comma-cq.com/client"
-            targetNamespace="http://comma-cq.com/client"
+<xsd:schema xmlns="http://commacq.org/client"
+            targetNamespace="http://commacq.org/client"
             xmlns:xsd="http://www.w3.org/2001/XMLSchema"
             xmlns:beans="http://www.springframework.org/schema/beans"
             xmlns:tool="http://www.springframework.org/schema/tool"
