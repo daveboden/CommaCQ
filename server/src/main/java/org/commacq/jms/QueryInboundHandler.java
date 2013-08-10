@@ -1,4 +1,4 @@
-package org.commacq;
+package org.commacq.jms;
 
 import java.io.IOException;
 import java.io.StringWriter;
@@ -11,6 +11,9 @@ import javax.jms.MessageProducer;
 import javax.jms.Session;
 import javax.jms.TextMessage;
 
+import org.commacq.CsvCache;
+import org.commacq.DataManager;
+import org.commacq.MessageFields;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.jms.listener.SessionAwareMessageListener;

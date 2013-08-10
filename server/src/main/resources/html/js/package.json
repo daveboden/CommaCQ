@@ -6,9 +6,9 @@
         "rql": "http://kzyp.dojotoolkit.org/packages/dojo1.5.0.zip"
     },
     "dependencies": {
-        "dgrid": "0.3.6",
+        "dgrid": "0.3.9",
         "dojo": "1.8.3",
-        "put-selector": "0.3.2",
-        "xstyle": "0.0.5"
+        "put-selector": "0.3.4",
+        "xstyle": "0.2.0"
     }
 }

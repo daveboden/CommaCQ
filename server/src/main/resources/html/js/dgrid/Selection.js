@@ -1,6 +1,10 @@
 define(["dojo/_base/kernel", "dojo/_base/declare", "dojo/_base/Deferred", "dojo/on", "dojo/has", "dojo/aspect", "./List", "dojo/has!touch?./util/touch", "put-selector/put", "dojo/query", "dojo/_base/sniff"],
 function(kernel, declare, Deferred, on, has, aspect, List, touchUtil, put){
 
+has.add("mspointer", function(global, doc, element){
+	return "onmspointerdown" in element;
+});
+
 // Add feature test for user-select CSS property for optionally disabling
 // text selection.
 // (Can't use dom.setSelectable prior to 1.8.2 because of bad sniffs, see #15990)
@@ -27,7 +31,9 @@ has.add("css-user-select", function(global, doc, element){
 has.add("dom-selectstart", typeof document.onselectstart !== "undefined");
 
 var ctrlEquiv = has("mac") ? "metaKey" : "ctrlKey",
-	hasUserSelect = has("css-user-select");
+	hasUserSelect = has("css-user-select"),
+	downType = has("mspointer") ? "MSPointerDown" : "mousedown",
+	upType = has("mspointer") ? "MSPointerUp" : "mouseup";
 
 function makeUnselectable(node, unselectable){
 	// Utility function used in fallback path for recursively setting unselectable
@@ -46,8 +52,11 @@ function makeUnselectable(node, unselectable){
 function setSelectable(grid, selectable){
 	// Alternative version of dojo/dom.setSelectable based on feature detection.
 	
+	// For FF < 21, use -moz-none, which will respect -moz-user-select: text on
+	// child elements (e.g. form inputs).  In FF 21, none behaves the same.
+	// See https://developer.mozilla.org/en-US/docs/CSS/user-select
 	var node = grid.bodyNode,
-		value = selectable ? "text" : "none";
+		value = selectable ? "text" : has("ff") < 21 ? "-moz-none" : "none";
 	
 	if(hasUserSelect){
 		node.style[hasUserSelect] = value;
@@ -100,13 +109,13 @@ return declare(null, {
 	// selectionEvents: String
 	//		Event (or events, comma-delimited) to listen on to trigger select logic.
 	//		Note: this is ignored in the case of touch devices.
-	selectionEvents: "mousedown,mouseup,dgrid-cellfocusin",
+	selectionEvents: downType + "," + upType + ",dgrid-cellfocusin",
 	
 	// deselectOnRefresh: Boolean
 	//		If true, the selection object will be cleared when refresh is called.
 	deselectOnRefresh: true,
 	
-	//allowSelectAll: Boolean
+	// allowSelectAll: Boolean
 	//		If true, allow ctrl/cmd+A to select all rows.
 	//		Also consulted by the selector plugin for showing select-all checkbox.
 	allowSelectAll: false,
@@ -145,9 +154,10 @@ return declare(null, {
 	destroy: function(){
 		this.inherited(arguments);
 		
-		// Remove any handles added for cross-browser text selection prevention.
+		// Remove any extra handles added by Selection.
 		if(this._selectstartHandle){ this._selectstartHandle.remove(); }
 		if(this._unselectableHandle){ this._unselectableHandle.remove(); }
+		if(this._deselectionHandle){ this._deselectionHandle.remove(); }
 	},
 	
 	_setSelectionMode: function(mode){
@@ -160,11 +170,15 @@ return declare(null, {
 		
 		this.selectionMode = mode;
 		
+		// Compute name of selection handler for this mode once
+		// (in the form of _fooSelectionHandler)
+		this._selectionHandlerName = "_" + mode + "SelectionHandler";
+		
 		// Also re-run allowTextSelection setter in case it is in automatic mode.
 		this._setAllowTextSelection(this.allowTextSelection);
 	},
 	setSelectionMode: function(mode){
-		kernel.deprecated("setSelectionMode(...)", 'use set("selectionMode", ...) instead', "dgrid 1.0");
+		kernel.deprecated("setSelectionMode(...)", 'use set("selectionMode", ...) instead', "dgrid 0.4");
 		this.set("selectionMode", mode);
 	},
 	
@@ -177,62 +191,91 @@ return declare(null, {
 		this.allowTextSelection = allow;
 	},
 	
-	_handleSelect: function(event, currentTarget){
-		// don't run if selection mode is none,
+	_handleSelect: function(event, target){
+		// Don't run if selection mode doesn't have a handler (incl. "none"),
 		// or if coming from a dgrid-cellfocusin from a mousedown
-		if(this.selectionMode == "none" ||
-				(event.type == "dgrid-cellfocusin" && event.parentType == "mousedown") ||
-				(event.type == "mouseup" && currentTarget != this._waitForMouseUp)){
+		if(!this[this._selectionHandlerName] ||
+				(event.type === "dgrid-cellfocusin" && event.parentType === "mousedown") ||
+				(event.type === upType && target != this._waitForMouseUp)){
 			return;
 		}
 		this._waitForMouseUp = null;
 		this._selectionTriggerEvent = event;
-		var ctrlKey = !event.keyCode ? event[ctrlEquiv] : event.ctrlKey;
+		
+		// Don't call select handler for ctrl+navigation
 		if(!event.keyCode || !event.ctrlKey || event.keyCode == 32){
-			var mode = this.selectionMode,
-				row = currentTarget,
-				rowObj = this.row(row),
-				lastRow = this._lastSelected;
-			
-			if(mode == "single"){
-				if(lastRow === row){
-					// Allow ctrl to toggle selection, even within single select mode.
-					this.select(row, null, !ctrlKey || !this.isSelected(row));
-				}else{
-					this.clearSelection();
-					this.select(row);
-					this._lastSelected = row;
-				}
-			}else if(this.selection[rowObj.id] && !event.shiftKey && event.type == "mousedown"){
-				// we wait for the mouse up if we are clicking a selected item so that drag n' drop
-				// is possible without losing our selection
-				this._waitForMouseUp = row;
+			// If clicking a selected item, wait for mouseup so that drag n' drop
+			// is possible without losing our selection
+			if(!event.shiftKey && event.type === downType && this.isSelected(target)){
+				this._waitForMouseUp = target;
 			}else{
-				var value;
-				// clear selection first for non-ctrl-clicks in extended mode,
-				// as well as for right-clicks on unselected targets
-				if((event.button != 2 && mode == "extended" && !ctrlKey) ||
-						(event.button == 2 && !(this.selection[rowObj.id]))){
-					this.clearSelection(rowObj.id, true);
-				}
-				if(!event.shiftKey){
-					// null == toggle; undefined == true;
-					lastRow = value = ctrlKey ? null : undefined;
-				}
-				this.select(row, lastRow, value);
-
-				if(!lastRow){
-					// update lastRow reference for potential subsequent shift+select
-					// (current row was already selected by earlier logic)
-					this._lastSelected = row;
-				}
-			}
-			if(!event.keyCode && (event.shiftKey || ctrlKey)){
-				// prevent selection in firefox
-				event.preventDefault();
+				this[this._selectionHandlerName](event, target);
 			}
 		}
 		this._selectionTriggerEvent = null;
+	},
+	
+	_singleSelectionHandler: function(event, target){
+		// summary:
+		//		Selection handler for "single" mode, where only one target may be
+		//		selected at a time.
+		
+		var ctrlKey = event.keyCode ? event.ctrlKey : event[ctrlEquiv];
+		if(this._lastSelected === target){
+			// Allow ctrl to toggle selection, even within single select mode.
+			this.select(target, null, !ctrlKey || !this.isSelected(target));
+		}else{
+			this.clearSelection();
+			this.select(target);
+			this._lastSelected = target;
+		}
+	},
+	
+	_multipleSelectionHandler: function(event, target){
+		// summary:
+		//		Selection handler for "multiple" mode, where shift can be held to
+		//		select ranges, ctrl/cmd can be held to toggle, and clicks/keystrokes
+		//		without modifier keys will add to the current selection.
+		
+		var lastRow = this._lastSelected,
+			ctrlKey = event.keyCode ? event.ctrlKey : event[ctrlEquiv],
+			value;
+		
+		if(!event.shiftKey){
+			// Toggle if ctrl is held; otherwise select
+			value = ctrlKey ? null : true;
+			lastRow = null;
+		}
+		this.select(target, lastRow, value);
+
+		if(!lastRow){
+			// Update reference for potential subsequent shift+select
+			// (current row was already selected above)
+			this._lastSelected = target;
+		}
+	},
+	
+	_extendedSelectionHandler: function(event, target){
+		// summary:
+		//		Selection handler for "extended" mode, which is like multiple mode
+		//		except that clicks/keystrokes without modifier keys will clear
+		//		the previous selection.
+		
+		// Clear selection first for right-clicks outside selection and non-ctrl-clicks;
+		// otherwise, extended mode logic is identical to multiple mode
+		if(event.button === 2 ? !this.isSelected(target) :
+				!(event.keyCode ? event.ctrlKey : event[ctrlEquiv])){
+			this.clearSelection(null, true);
+		}
+		this._multipleSelectionHandler(event, target);
+	},
+	
+	_toggleSelectionHandler: function(event, target){
+		// summary:
+		//		Selection handler for "toggle" mode which simply toggles the selection
+		//		of the given target.  Primarily useful for touch input.
+		
+		this.select(target, null, null);
 	},
 
 	_initSelectionEvents: function(){
@@ -274,14 +317,56 @@ return declare(null, {
 			});
 		}
 		
-		aspect.before(this, "removeRow", function(rowElement, justCleanup){
-			var row;
-			if(!justCleanup){
-				row = this.row(rowElement);
-				// if it is a real row removal for a selected item, deselect it
-				if(row && (row.id in this.selection)){ this.deselect(rowElement); }
-			}
-		});
+		// Update aspects if there is a store change
+		if(this._setStore){
+			aspect.after(this, "_setStore", function(){
+				grid._updateDeselectionAspect();
+			});
+		}
+		this._updateDeselectionAspect();
+	},
+	
+	_updateDeselectionAspect: function(){
+		// summary:
+		//		Hooks up logic to handle deselection of removed items.
+		//		Aspects to an observable store's notify method if applicable,
+		//		or to the list/grid's removeRow method otherwise.
+		
+		var self = this,
+			store = this.store;
+		
+		// Remove anything previously configured
+		if(this._deselectionSignal){
+			this._deselectionSignal.remove();
+		}
+		
+		// Is there currently an observable store?
+		if(store && store.notify){
+			this._deselectionSignal = aspect.after(store, "notify", function(object, idToUpdate){
+				var id = idToUpdate || (object && object[this.idProperty || "id"]);
+				if (id) {
+					var row = self.row(id),
+						selection = row && self.selection[row.id];
+					// Is the row currently in the selection list.
+					if(selection){
+						// Ensure consistency between DOM and state on add/put;
+						// prune from selection on remove
+						self[(object ? "" : "de") + "select"](row, null, selection);
+					}
+				}
+			}, true);
+		}else{
+			this._deselectionSignal = aspect.before(this, "removeRow", function(rowElement, justCleanup){
+				var row;
+				if(!justCleanup){
+					row = this.row(rowElement);
+					// if it is a real row removal for a selected item, deselect it
+					if(row && (row.id in this.selection)){
+						this.deselect(row);
+					}
+				}
+			});
+		}
 	},
 	
 	allowSelect: function(row){
@@ -332,7 +417,12 @@ return declare(null, {
 		if(!row.element){
 			row = this.row(row);
 		}
-		if(this.allowSelect(row)){
+		
+		// Check whether we're allowed to select the given row before proceeding.
+		// If a deselect operation is being performed, this check is skipped,
+		// to avoid errors when changing column definitions, and since disabled
+		// rows shouldn't ever be selected anyway.
+		if(value === false || this.allowSelect(row)){
 			var selection = this.selection;
 			var previousValue = selection[row.id];
 			if(value === null){
@@ -369,7 +459,7 @@ return declare(null, {
 					toElement.compareDocumentPosition(fromElement) == 2 :
 					toElement.sourceIndex > fromElement.sourceIndex)) ? "down" : "up";
 				while(row.element != toElement && (row = this[traverser](row))){
-					this.select(row);
+					this.select(row, null, value);
 				}
 			}
 		}

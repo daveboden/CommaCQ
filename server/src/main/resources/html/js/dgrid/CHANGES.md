@@ -1,6 +1,249 @@
 This document outlines changes since 0.3.0.  For older changelogs, see the
 [dgrid wiki](https://github.com/SitePen/dgrid/wiki).
 
+# 0.3.9
+
+## Significant changes
+
+### General/Core
+
+* dgrid now uses [Intern](http://theintern.io) for unit and functional tests,
+  instead of DOH.  See the README for setup instructions.
+* Fixed a regression with `OnDemandList` which would cause improper rendering
+  after scrolling. (#548)
+* Fixed an issue with `OnDemandList` causing `queryRowsOverlap` only taking
+  effect between the first two queries. (#644)
+* Added the capability to opt out of custom TouchScroll logic on devices that
+  support touch, by setting `useTouchScroll: false` on the instance. (#656)
+* Fixed logic in `Grid`, `GridFromHtml`, and `selector` to allow specifying a
+  blank label for a column by passing an empty string to `column.label`. (#664)
+
+### Mixins
+
+* The `Selection` mixin now uses MSPointer events where available, which avoids
+  issues in cases where something cancels a MSPointer event, preventing relevant
+  mouse events from firing (for example, `dojo/dnd` + `dojo/touch` in 1.9). (#658)
+* The `CellSelection` mixin now supports selecting or deselecting all columns
+  in a row if a row object is passed.
+* Fixed a regression in the `Selection` mixin where unselectable rows could still
+  be selected via ctrl+click.
+
+### Column Plugins
+
+* Fixed a regression in `selector` which caused an error when clicking the
+  select-all checkbox. (#674)
+
+### Extensions
+
+* Fixed a regression in the `Pagination` extension where duplicate rows could
+  be displayed if several paging/sorting requests are fired in quick succession
+  to an asynchronous store.  Note that the fix involves canceling old requests,
+  which may cause Deferred errors to be logged to the console; this is normal.
+  The `dgrid-error` event will *not* be emitted for canceled requests. (#635)
+
+## Other changes and fixes
+
+### General/Core
+
+* Fixed a potential issue in `Grid` in non-ES5 environments that augment the
+  Array prototype. (#624)
+* Fixed an issue with `OnDemandList` involving where a new row is inserted in
+  the DOM when the relevant result set is currently empty. (#647)
+* Fixed issues involving `List` and `OnDemandList` not properly cleaning up
+  observers that are no longer needed. (#642, #677)
+* Reworked logic in `List#adjustRowIndices` to not skip updating row indices
+  even when `maintainOddEven` is `false`.
+* Fixed an edge case in `OnDemandList` where it would refuse to load additional
+  data if the grid were resized larger while its viewport is scrolled to the top.
+  (#361)
+
+### Mixins
+
+* Fixed an issue in the `ColumnSet` mixin which affected horizontal scrolling at
+  certain zoom levels on Chrome.
+* The `Selection` and `CellSelection` mixins no longer lose selection of rows
+  when items are modified.  Rows are still deselected if items are removed.
+  (#226)
+
+### Column Plugins
+
+* Fixed issues in the `editor` column plugin regarding consistency of
+  dirty data and `dgrid-datachange` event firing for always-on radio buttons.
+* Fixed an issue in the `editor` plugin that caused errors in Chrome/Safari when
+  an editor loses focus and hides due to clicking within the browser's UI
+  controls. (#603)
+* Fixed an issue in the `editor` column plugin's cleanup logic which could occur
+  when the loading node for a request is removed before the request completes.
+  (#195)
+* The `editor` column plugin will now directly update row data in cases where
+  a store is not being used. (#171)
+
+### Extensions
+
+* Fixed an issue with the `ColumnReorder` extension involving grids whose IDs
+  end with a hyphen followed by numbers. (#556)
+* The `ColumnResizer` extension now properly calls the grid's `resize` method,
+  even on programmatically-triggered resize operations.
+* Fixed a potential issue in the `CompoundColumns` extension in non-ES5
+  environments that augment the Array prototype. (#624)
+* Added localizations for the `Pagination` extension:
+  * German (#657, thanks tryte)
+  * Traditional and Simplified Chinese (#671, thanks expando)
+  * Thai (#672, thanks dylans)
+
+# 0.3.8
+
+## Significant changes
+
+### General/Core
+
+* The `dgrid-sort` event now emits off of the original target of the event which
+  triggered it, rather than always off of the header cell. (#539)
+* Fixed a regression (present since 0.3.5) in `OnDemandList` which prevented
+  `noDataMessage` from being displayed for async stores. (#519)
+* `_StoreMixin` (used by `OnDemandList`, `OnDemandGrid`, and `Pagination`) now
+  supports calling the `set` method of Stateful objects during `save`.  (#563)
+
+### Column Plugins
+
+* Resolved an infinite-recursion regression in `selector`, observable when used
+  in conjunction with the `ColumnReorder` extension. (#525)
+
+### Extensions
+
+* Fixed a regression in the `ColumnResizer` extension where columns were no
+  longer appropriately adjusted when the first resize occurred. (#526)
+
+## Other changes and fixes
+
+### General/Core
+
+* Fixed issues in `OnDemandList` and the `Pagination` extension where
+  `noDataMessage` could potentially appear multiple times for successive
+  empty query results. (#542)
+
+### Mixins
+
+* Resolved an issue in the `ColumnSet` mixin which caused some browsers to block
+  clicks near the bottom of the grid when no ColumnSet scrollbars are shown.
+  (#571)
+
+### Column Plugins
+
+* Resolved an issue in `selector` where selectors would not work in cases where
+  the initial column structure did not contain a selector column, but the
+  structure was later changed to include one. (#533)
+* Resolved an issue in `selector` where rows that should be unselectable were
+  still selectable by clicking within the selector column. (#545)
+
+### Extensions
+
+* Revised the previous workaround for IE8 in the `ColumnHider` extension to
+  an alternative which involves less code and avoids an issue when all columns
+  are hidden. (#537)
+* The `DijitRegistry` extension now implements the `isLeftToRight` method, to
+  accommodate needs of Dijit layout widgets in Dojo 1.9. (#536)
+* The `DijitRegistry` extension now implements the `getParent` method, to
+  accommodate e.g. `dijit/_KeyNavContainer`. (#538, thanks k2s)
+* The `Pagination` extension now properly only shows page 1 once if there is
+  only one page of results. (#520)
+* The `Pagination` extension now properly initializes the page size drop-down
+  based on the initial `rowsPerPage` value, if one matches.
+  (#577, thanks Gordon Smith)
+
+# 0.3.7
+
+## Significant changes
+
+### General/Core
+
+* `Grid` now supports the `formatterScope` instance property, along the same
+  lines as `dojox/grid`. (#470; thanks gratex)
+* `Grid` has been refactored to include `formatter` considerations within the
+  default `renderCell` logic; this allows `formatter` functions to coexist with
+  the `editor` and `tree` column plugins. (#495, #497; thanks gratex)
+* Fixed an issue with `_StoreMixin` which caused `set` functions in column
+  definitions to be ignored for all but the last subrow or columnset. (#489)
+
+### Mixins
+
+* Fixed a regression in the `Selection` mixin due to text selection changes,
+  where Firefox would not allow selecting text or moving the cursor inside
+  form inputs. (#492)
+* The `Selection` mixin no longer calls `allowSelect` for `deselect` calls
+  (only `select` calls).  This avoids potential errors when resetting column
+  structures, and reduces unnecessary calls.
+* The `Selection` mixin has been refactored to break out logic for each selection
+  mode to a separate method.  These methods follow the naming convention
+  `_modeSelectionHandler` (where "mode" would be the name of the mode).
+  This allows custom selection modes to be added easily.
+* The `Selection` mixin now supports a `toggle` mode, useful for touch input
+  where holding a modifier key to deselect is generally not an option.
+* Fixed an issue with the `Selection` and `CellSelection` mixins where calling
+  `deselect` with a range would actually deselect the first target, then select
+  everything else in the range. (#491)
+
+### Column Plugins
+
+* The `selector` plugin will now match its disabled state against the
+  `allowSelect` method on the grid, as well as the column definition's
+  `disabled` function.
+* The `tree` plugin's `renderExpando` function now receives a 4th argument:
+  the object represented by the current row. (#427; thanks pags)
+
+### Extensions
+
+* The `ColumnResizer` extension no longer emits superfluous events for all columns
+  on the first resize. (#441)
+* The `DnD` extension now inherits the `Selection` mixin to guarantee resilient
+  handling of drag operations where part of the selection has scrolled out of
+  view and been unrendered.
+* The `Pagination` extension now applies the `dgrid-page-link` class to all
+  navigation controls (not just the page numbers), to make them distinguishable
+  by something other than what tag they use. (related to #379)
+
+## Other changes and fixes
+
+### General/Core
+
+* The `List` module's `startup` method now correctly checks `_started` before
+  calling `this.inherited`.  (Thanks dancrumb)
+* Fixed an issue in `List` which could cause errors on certain successive tree
+  row removals/insertions. (#418, #467)
+
+### Mixins
+
+* The `ColumnSet` mixin now adjusts the positioning of its scrollbars
+  appropriately if the footer node is present. (#463)
+* The `CellSelection` mixin now properly deselects if an unselected cell within
+  the same row as a selected cell is right-clicked.
+* Fixed issues with the `Keyboard` mixin pertaining to resetting columns, or
+  not setting them initially. (#494)
+* The `Keyboard` mixin now ensures that if the header area is scrolled due to a
+  focus shift, the body scrolls with it. (#474)
+
+### Column Plugins
+
+* Fixed an issue in the `editor` plugin that caused checkboxes to fail to
+  initialize values properly in IE < 8. (#479)
+* The `tree` plugin no longer completely overwrites classes on the expando node
+  when expanding/collapsing, so custom classes will be preserved. (#409)
+
+### Extensions
+
+* The `ColumnHider` extension now absolutely-positions the node for opening the
+  menu, which ensures it is visible even on platforms with no vertical scrollbars.
+  (#406)
+* The `ColumnHider` extension now relies on CSS to specify an icon, rather than
+  using text to show a plus sign.  The icon can be changed by overriding
+  the background on the `dgrid-hider-toggle` class.  (#306)
+* Fixed issues in the `ColumnHider` extension involving redundant calls to
+  `toggleColumnHiddenState`. (#464)
+* The `DnD` extension now cleans references from the dnd source's hash when
+  `removeRow` is called on the grid. (#335)
+* Resolved an issue in `Pagination` where IE9+ would dispatch events to the
+  wrong handlers after clicking one of the navigation controls. (#379)
+
 # 0.3.6
 
 ## Breaking changes

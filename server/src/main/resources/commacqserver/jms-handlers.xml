@@ -16,7 +16,7 @@ http://www.springframework.org/schema/jee http://www.springframework.org/schema/
 http://www.springframework.org/schema/jms http://www.springframework.org/schema/jms/spring-jms-3.1.xsd
 ">
    
-    <bean id="updateInboundHandler" class="org.commacq.UpdateInboundHandler"
+    <bean id="updateInboundHandler" class="org.commacq.jms.UpdateInboundHandler"
           c:dataManager-ref="dataManager"
     />
     
@@ -26,7 +26,7 @@ http://www.springframework.org/schema/jms http://www.springframework.org/schema/
     -->
     <bean id="outboundHub" class="org.commacq.UpdateOutboundHub" autowire="constructor"/>
           
-    <bean id="queryInboundHandler" class="org.commacq.QueryInboundHandler"    
+    <bean id="queryInboundHandler" class="org.commacq.jms.QueryInboundHandler"    
           c:dataManager-ref="dataManager"
     />
     

@@ -1,4 +1,4 @@
-package org.commacq;
+package org.commacq.jms;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -13,7 +13,8 @@ import javax.jms.TextMessage;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
+import org.commacq.DataManager;
+import org.commacq.MessageFields;
 import org.commacq.DataManager.UpdateCsvCacheResult;
 
 public class UpdateInboundHandler implements MessageListener {
