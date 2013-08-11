@@ -12,8 +12,8 @@ import java.util.TreeSet;
 
 import org.commacq.CsvCache;
 import org.commacq.CsvDataSource;
-import org.commacq.CsvParser;
-import org.commacq.CsvParser.CsvLine;
+import org.commacq.CsvMarshaller;
+import org.commacq.CsvMarshaller.CsvLine;
 import org.commacq.EntityConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,7 +25,7 @@ public class CsvDataSourceDatabase implements CsvDataSource {
 
     private final CsvCacheFactory csvCacheFactory = new CsvCacheFactory();
     private final Map<String, EntityConfig> entityConfigs;
-    private final SortedSet<String> entityNames;
+    private final SortedSet<String> entityIds;
     private final DataSourceAccess dataSourceAccess;
     
     public CsvDataSourceDatabase(DataSourceAccess dataSourceAccess, Map<String, EntityConfig> entityConfigs) {
@@ -37,7 +37,7 @@ public class CsvDataSourceDatabase implements CsvDataSource {
             names.add(entityName);
         }
         
-        entityNames = Collections.unmodifiableSortedSet(names);
+        entityIds = Collections.unmodifiableSortedSet(names);
         
         logger.info("Successfully created database CSV source with entity names: {}", entityConfigs.keySet());
     }
@@ -67,8 +67,9 @@ public class CsvDataSourceDatabase implements CsvDataSource {
     	return dataSourceAccess.getResultSetForAllRows(entityConfig, csvCacheFactory);
     }
     
-    public SortedSet<String> getEntityNames() {
-        return entityNames;
+    @Override
+    public SortedSet<String> getEntityIds() {
+        return entityIds;
     }
     
     @Override
@@ -88,7 +89,7 @@ public class CsvDataSourceDatabase implements CsvDataSource {
     
     private class CsvRowMapper implements RowMapper<CsvLine> {
     	
-    	final CsvParser csvParser = new CsvParser();
+    	final CsvMarshaller csvParser = new CsvMarshaller();
     	
 	    @Override
     	public CsvLine mapRow(ResultSet result, int rowNum) throws SQLException {

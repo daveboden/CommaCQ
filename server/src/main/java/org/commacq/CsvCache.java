@@ -13,7 +13,7 @@ import javax.annotation.concurrent.ThreadSafe;
 
 import org.apache.commons.lang3.Validate;
 
-import org.commacq.CsvParser.CsvLine;
+import org.commacq.CsvMarshaller.CsvLine;
 
 /**
  * Contains a linked list of CSV lines that can be traversed and written

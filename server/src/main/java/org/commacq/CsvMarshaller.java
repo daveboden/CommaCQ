@@ -43,7 +43,7 @@ import org.apache.commons.lang3.StringEscapeUtils;
  * surrounded by quotes.
  */
 @ThreadSafe
-public class CsvParser {
+public class CsvMarshaller {
 	
 	public static final char COMMA = ',';
 	public static final char QUOTE = '"';

@@ -5,7 +5,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.SortedSet;
 
-import org.commacq.CsvParser.CsvLine;
+import org.commacq.CsvMarshaller.CsvLine;
 
 /**
  * Represents an endpoint that CSV data can be obtained from.
@@ -18,7 +18,7 @@ import org.commacq.CsvParser.CsvLine;
  */
 public interface CsvDataSource {
 
-    SortedSet<String> getEntityNames();
+    SortedSet<String> getEntityIds();
     Map<String, CsvCache> createInitialCaches();
     CsvCache createInitialCache(String entityId);
     List<CsvLine> getCsvLines(String entityId, Collection<String> ids);

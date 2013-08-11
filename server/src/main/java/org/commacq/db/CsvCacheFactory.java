@@ -4,8 +4,8 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 
 import org.commacq.CsvCache;
-import org.commacq.CsvParser;
-import org.commacq.CsvParser.CsvLine;
+import org.commacq.CsvMarshaller;
+import org.commacq.CsvMarshaller.CsvLine;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.ResultSetExtractor;
 
@@ -20,7 +20,7 @@ import org.springframework.jdbc.core.ResultSetExtractor;
  */
 public final class CsvCacheFactory implements ResultSetExtractor<CsvCache> {
 
-	private final CsvParser csvParser = new CsvParser();
+	private final CsvMarshaller csvParser = new CsvMarshaller();
 	
 	@Override
 	public CsvCache extractData(ResultSet result) throws SQLException, DataAccessException {	

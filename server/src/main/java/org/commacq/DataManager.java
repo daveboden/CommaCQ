@@ -13,7 +13,7 @@ import org.springframework.jmx.export.annotation.ManagedAttribute;
 import org.springframework.jmx.export.annotation.ManagedOperation;
 import org.springframework.jmx.export.annotation.ManagedResource;
 
-import org.commacq.CsvParser.CsvLine;
+import org.commacq.CsvMarshaller.CsvLine;
 
 @ManagedResource
 public class DataManager {
@@ -29,7 +29,7 @@ public class DataManager {
 	    this.csvDataSource = csvDataSource;
 	    this.updateOutboundHub = updateOutboundHub;
 		caches = csvDataSource.createInitialCaches();
-		entityIds = csvDataSource.getEntityNames();
+		entityIds = csvDataSource.getEntityIds();
 		logger.info("Successfully started data manager");
 	}
 	

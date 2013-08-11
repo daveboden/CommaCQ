@@ -25,6 +25,11 @@
         </dependency>
         
         <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+        </dependency>
+        
+        <dependency>
             <!--
             Simple plugin with provided scope just so that logging
             works reasonably when running unit or integration
@@ -148,6 +153,11 @@
         <dependency>
             <groupId>org.springframework</groupId>
             <artifactId>spring-jdbc</artifactId>
+        </dependency>
+        
+        <dependency>
+            <groupId>org.apache.servicemix.bundles</groupId>
+            <artifactId>org.apache.servicemix.bundles.commons-csv</artifactId>
         </dependency>
 
         <!-- Test dependencies -->
