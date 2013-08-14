@@ -17,8 +17,13 @@ import org.commacq.CsvMarshaller.CsvLine;
 import org.commacq.EntityConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.dao.DataAccessException;
+import org.springframework.jdbc.core.ResultSetExtractor;
 import org.springframework.jdbc.core.RowMapper;
 
+/**
+ * Makes a DataSourceAccess component into a CsvDataSource.
+ */
 public class CsvDataSourceDatabase implements CsvDataSource {
 
     private static Logger logger = LoggerFactory.getLogger(CsvDataSourceDatabase.class);
@@ -95,6 +100,35 @@ public class CsvDataSourceDatabase implements CsvDataSource {
     	public CsvLine mapRow(ResultSet result, int rowNum) throws SQLException {
 	    	return csvParser.toCsvLine(result);
     	}
+    }
+    
+    /**
+     * Contains a linked list of CSV lines that can be traversed and written
+     * to an output stream quickly in order.
+     * 
+     * The first column must be labelled "id".
+     * 
+     * Keeps track of the header fields and makes sure the fields get added
+     * in the correct order on each line.
+     */
+    private final class CsvCacheFactory implements ResultSetExtractor<CsvCache> {
+
+    	private final CsvMarshaller csvParser = new CsvMarshaller();
+    	
+    	@Override
+    	public CsvCache extractData(ResultSet result) throws SQLException, DataAccessException {	
+    		String columnNamesCsv = csvParser.getColumnLabelsAsCsvLine(result);
+    		
+    		CsvCache csvCache = new CsvCache(columnNamesCsv);
+    		
+    		while(result.next()) {
+    			CsvLine csvLine = csvParser.toCsvLine(result);
+    			csvCache.updateLine(csvLine);
+    		}
+    		
+    		return csvCache;
+    	}
+    	
     }
     
 }
