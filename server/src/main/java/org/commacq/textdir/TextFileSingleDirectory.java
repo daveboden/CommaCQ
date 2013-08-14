@@ -54,9 +54,10 @@ public class TextFileSingleDirectory<ROW> {
         checkEntityId(entityId);
 		ResourceLoader resourceLoader = new DefaultResourceLoader();
 		PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver(resourceLoader);
+		String resourcesString = directory + "/*" + SUFFIX;
 		Resource[] resources;
 		try {
-			resources = resolver.getResources(directory + "/*" + SUFFIX);
+			resources = resolver.getResources(resourcesString);
 		} catch (IOException ex) {
 			throw new RuntimeException("Could not resolve items in directory: " + directory, ex);
 		};
