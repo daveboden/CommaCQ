@@ -62,7 +62,7 @@ public class TextFileSingleDirectory<ROW> {
 			throw new RuntimeException("Could not resolve items in directory: " + directory, ex);
 		};
 		
-		List<ROW> rows = new ArrayList<>();
+		List<ROW> rows = new ArrayList<ROW>();
 		
 		for(Resource resource : resources) {
 			String id = extractEntityId(resource.getFilename());
@@ -106,7 +106,7 @@ public class TextFileSingleDirectory<ROW> {
     public List<ROW> getRows(final String entityId, final Collection<String> ids, TextFileMapper<ROW> mapper) {
     	checkEntityId(entityId);
         //Get info from all the files id1.txt, id2.txt etc.
-        List<ROW> rows = new ArrayList<>(ids.size());
+        List<ROW> rows = new ArrayList<ROW>(ids.size());
         for(String id : ids) {
         	rows.add(getRow(entityId, id, mapper));
         }
