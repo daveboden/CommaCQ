@@ -7,6 +7,7 @@ import java.sql.SQLException;
 import javax.annotation.concurrent.ThreadSafe;
 
 import org.apache.commons.lang3.StringEscapeUtils;
+import org.commacq.db.StringColumnValueConverter;
 
 /**
  * So, why choose to write yet another implementation

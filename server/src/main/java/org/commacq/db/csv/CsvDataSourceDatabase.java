@@ -1,4 +1,4 @@
-package org.commacq.db;
+package org.commacq.db.csv;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -14,7 +14,8 @@ import org.commacq.CsvCache;
 import org.commacq.CsvDataSource;
 import org.commacq.CsvMarshaller;
 import org.commacq.CsvMarshaller.CsvLine;
-import org.commacq.EntityConfig;
+import org.commacq.db.DataSourceAccess;
+import org.commacq.db.EntityConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataAccessException;

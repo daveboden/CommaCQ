@@ -4,6 +4,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 
 import org.commacq.CsvCache;
+import org.commacq.textdir.csv.CsvDataSourceTextFileSingleDirectory;
 import org.junit.Test;
 
 public class CsvDataSourceTextFileSingleDirectoryTest {

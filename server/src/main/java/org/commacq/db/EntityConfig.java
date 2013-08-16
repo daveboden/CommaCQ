@@ -1,4 +1,4 @@
-package org.commacq;
+package org.commacq.db;
 
 import java.util.Collections;
 import java.util.Set;

@@ -11,7 +11,6 @@ import java.util.Set;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.commacq.EntityConfig;
 import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.ResourceLoader;
@@ -40,7 +39,7 @@ public final class ConfigDirectory {
 		ResourceLoader resourceLoader = new DefaultResourceLoader();
 		PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver(resourceLoader);
 		Resource[] resources = resolver.getResources(resourceRoot + "/*" + SQL_SUFFIX);
-		Map<String, EntityConfig> configs = new HashMap<>(resources.length);
+		Map<String, EntityConfig> configs = new HashMap<String, EntityConfig>(resources.length);
 		for(Resource resource : resources) {
 			final String entityId = extractEntityId(resource.getFilename());
 			final String sql = IOUtils.toString(resource.getInputStream());
@@ -50,7 +49,7 @@ public final class ConfigDirectory {
 			final Set<String> groups;
 			if(groupsResource.exists()) {
 				List<String> groupLines = IOUtils.readLines(groupsResource.getInputStream());
-				groups = new HashSet<>(groupLines.size());
+				groups = new HashSet<String>(groupLines.size());
 				for(String groupLine : groupLines) {
 					if(StringUtils.isNotBlank(groupLine)) {
 						groupLine = StringUtils.strip(groupLine);

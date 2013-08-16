@@ -1,4 +1,4 @@
-package org.commacq.textdir;
+package org.commacq.textdir.csv;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -13,6 +13,8 @@ import org.apache.commons.lang3.StringEscapeUtils;
 import org.commacq.CsvCache;
 import org.commacq.CsvDataSource;
 import org.commacq.CsvMarshaller.CsvLine;
+import org.commacq.textdir.TextFileMapper;
+import org.commacq.textdir.TextFileSingleDirectory;
 
 /**
  * The TextFileSingleDirectory data source is a directory representing an entity, containing

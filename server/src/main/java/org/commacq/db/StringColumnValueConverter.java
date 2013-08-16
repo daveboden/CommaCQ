@@ -1,4 +1,4 @@
-package org.commacq;
+package org.commacq.db;
 
 import java.io.IOException;
 import java.io.Reader;

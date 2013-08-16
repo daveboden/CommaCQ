@@ -1,4 +1,4 @@
-package org.commacq.textdir;
+package org.commacq.textdir.csv;
 
 
 /**
