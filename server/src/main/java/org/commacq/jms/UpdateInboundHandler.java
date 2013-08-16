@@ -42,6 +42,8 @@ public class UpdateInboundHandler implements MessageListener {
 
     }
 
+    //TODO - Doesn't have to be ids in the update message. Can be a group column.
+    
     private void onTextMessage(TextMessage textMessage) {
         String entityId;
         String csvHeaderAndBody;

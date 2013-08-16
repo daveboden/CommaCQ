@@ -92,6 +92,14 @@ public class CsvDataSourceDatabase implements CsvDataSource {
         return result;
     }
     
+    public List<CsvLine> getCsvLinesForGroup(final String entityId, final String group, final String idWithinGroup) {
+        EntityConfig entityConfig = entityConfigs.get(entityId);
+        
+        List<CsvLine> result = dataSourceAccess.getResultSetForGroup(entityConfig, new CsvRowMapper(), group, idWithinGroup);
+        
+        return result;
+    }
+    
     private class CsvRowMapper implements RowMapper<CsvLine> {
     	
     	final CsvMarshaller csvParser = new CsvMarshaller();

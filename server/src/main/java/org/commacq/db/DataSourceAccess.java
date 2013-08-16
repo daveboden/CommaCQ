@@ -55,6 +55,30 @@ public class DataSourceAccess {
             throw ex;
         }
     }
+    
+    public <T> List<T> getResultSetForGroup(EntityConfig entityConfig, RowMapper<T> rowMapper, String group, String idWithinGroup) throws DataAccessException {
+    	if(!entityConfig.getGroups().contains(group)) {
+    		throw new RuntimeException("Group " + group + " has not been declared in a .groups.txt file alongside the .sql file");
+    	}
+    	
+        StringBuilder sql = new StringBuilder();
+        //TODO probably best to cache this "nest" string arrangement
+        sql.append("select nest.* from (").append(entityConfig.getSql()).append(") as nest ")
+           .append("where nest." + group + " = '").append(idWithinGroup).append("'");
+        
+        String sqlString = sql.toString();
+        logger.debug("Executing SQL: {}", sqlString);
+        
+        try {
+        	return jdbcTemplate.query(sqlString, rowMapper);
+        } catch(IncorrectResultSizeDataAccessException ex) {
+        	return null;
+        } catch(DataAccessException ex) {
+            String message = "Error executing SQL with = clause";
+            logger.error(message, ex);        	
+            throw ex;
+        }
+    }
 
     public <T> List<T> getResultSetForMultipleRows(final EntityConfig entityConfig, final RowMapper<T> rowMapper, final Collection<String> ids) throws DataAccessException {        
         StringBuilder sql = new StringBuilder();
