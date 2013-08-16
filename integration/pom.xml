@@ -65,7 +65,7 @@
             -->
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-simple</artifactId>
-            <scope>provided</scope>
+            <scope>runtime</scope>
         </dependency>
         
         <!-- Test dependencies -->
@@ -101,5 +101,19 @@
                 <filtering>true</filtering>
             </resource>
         </resources>
+        <plugins>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>exec-maven-plugin</artifactId>
+                <configuration>
+                    <mainClass>org.commacq.CommaCqServer</mainClass>
+                    <arguments>
+                        <argument>classpath:/integration-1/setup/database.xml</argument>
+                        <argument>classpath:/commacqserver/basic/broadcast.xml</argument>
+                        <argument>classpath:/integration-1/server-config/basic-broadcast.properties</argument>
+                    </arguments>
+                </configuration>
+            </plugin>
+        </plugins>
     </build>
 </project>
