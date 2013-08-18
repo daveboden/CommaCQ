@@ -75,6 +75,11 @@ public class CsvDataSourceTextFileSingleDirectory implements CsvDataSource {
     	return textFileSingleDirectory.getRows(entityId, ids, mapper);
     }
     
+    @Override
+    public List<CsvLine> getCsvLinesForGroup(String entityId, String group, String idWithinGroup) {
+        throw new UnsupportedOperationException("Groups are not supported by text file data sources");
+    }
+    
     protected class CsvTextFileMapper implements TextFileMapper<CsvLine> {
     	
     	@Override

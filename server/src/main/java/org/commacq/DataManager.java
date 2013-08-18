@@ -12,7 +12,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.jmx.export.annotation.ManagedAttribute;
 import org.springframework.jmx.export.annotation.ManagedOperation;
 import org.springframework.jmx.export.annotation.ManagedResource;
-
 import org.commacq.CsvMarshaller.CsvLine;
 
 @ManagedResource
@@ -124,6 +123,16 @@ public class DataManager {
 			logger.info("No entities to update. Not sending an outbound message.");
 		}
 		return result;
+	}
+	
+	public UpdateCsvCacheResult updateCsvCacheForGroup(final String entityId, final String group, final String idWithinGroup) {
+	    throw new UnsupportedOperationException("Not yet supported");
+	    /*
+	    final List<CsvLine> lines = csvDataSource.getCsvLinesForGroup(entityId, group, idWithinGroup);
+        final Set<String> updatedIds = new HashSet<>();
+        final Set<String> ignoredIds = new HashSet<>();
+        CsvCache cache = caches.get(entityId);
+        */
 	}
 	
 	public static class UpdateCsvCacheResult {

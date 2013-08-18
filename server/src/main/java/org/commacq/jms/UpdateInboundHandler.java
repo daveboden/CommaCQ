@@ -41,8 +41,6 @@ public class UpdateInboundHandler implements MessageListener {
         }
 
     }
-
-    //TODO - Doesn't have to be ids in the update message. Can be a group column.
     
     private void onTextMessage(TextMessage textMessage) {
         String entityId;
@@ -58,10 +56,7 @@ public class UpdateInboundHandler implements MessageListener {
         log.info("Received an update for entity {}", entityId);
         
         
-        String[][] csv = parseCsv(csvHeaderAndBody);
-        List<String> ids = getIds(csv);
-        
-        UpdateCsvCacheResult result = dataManager.updateCsvCache(entityId, ids);
+        handlePayload(entityId, csvHeaderAndBody);
         
         // TODO Provide a hook in so that if users really want to read off the csv attibutes from the update manager
         // and stop the database manager going back to the database for the details then they can. Ill advised.
@@ -95,12 +90,24 @@ public class UpdateInboundHandler implements MessageListener {
                 log.error("Could not perform update for entity: {}", entityId);
                 continue; // Try the next entityId in the message
             }
-            String[][] csv = parseCsv(csvHeaderAndBody);
-            List<String> ids = getIds(csv);
             
-            UpdateCsvCacheResult result = dataManager.updateCsvCache(entityId, ids);
+            
+            handlePayload(entityId, csvHeaderAndBody);
         }
 
+    }
+    
+    private void handlePayload(String entityId, String csvHeaderAndBody) {
+        String[][] csv = parseCsv(csvHeaderAndBody);
+        List<String> ids = getIds(csv);
+        if(csv[0][0].equals("id")) {            
+            UpdateCsvCacheResult result = dataManager.updateCsvCache(entityId, ids);
+        } else {
+            String group = csv[0][0];
+            for(String idWithinGroup : ids) {
+                UpdateCsvCacheResult result = dataManager.updateCsvCacheForGroup(entityId, group, idWithinGroup);
+            }
+        }
     }
         
     private String[][] parseCsv(String csvHeaderAndBody) {
@@ -114,7 +121,6 @@ public class UpdateInboundHandler implements MessageListener {
         
         Validate.notEmpty(csv, "At least the header row is required in the CSV text");
         Validate.notEmpty(csv[0], "The CSV header row must contain at least one column");
-        Validate.isTrue("id".equals(csv[0][0]), "The CSV header row's first column must be named id");
         
         return csv;
     }

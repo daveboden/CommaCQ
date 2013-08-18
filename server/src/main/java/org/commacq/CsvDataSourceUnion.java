@@ -52,6 +52,11 @@ public class CsvDataSourceUnion implements CsvDataSource {
 	public List<CsvLine> getCsvLines(String entityId, Collection<String> ids) {
 		return getFromMapAndCheck(entityId).getCsvLines(entityId, ids);
 	}
+	
+	@Override
+	public List<CsvLine> getCsvLinesForGroup(String entityId, String group, String idWithinGroup) {
+	    return getFromMapAndCheck(entityId).getCsvLinesForGroup(entityId, group, idWithinGroup);
+	}
 
 	@Override
 	public CsvLine getCsvLine(String entityId, String id) {

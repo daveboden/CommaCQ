@@ -23,5 +23,6 @@ public interface CsvDataSource {
     CsvCache createInitialCache(String entityId);
     List<CsvLine> getCsvLines(String entityId, Collection<String> ids);
     CsvLine getCsvLine(String entityId, String id);
+    List<CsvLine> getCsvLinesForGroup(String entityId, String group, String idWithinGroup);
     
 }

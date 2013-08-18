@@ -5,14 +5,15 @@ import java.io.Writer;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.SortedMap;
 import java.util.TreeMap;
 
 import javax.annotation.concurrent.ThreadSafe;
 
 import org.apache.commons.lang3.Validate;
-
 import org.commacq.CsvMarshaller.CsvLine;
 
 /**
@@ -23,18 +24,28 @@ import org.commacq.CsvMarshaller.CsvLine;
  * 
  * Keeps track of the header fields and makes sure the fields get added
  * in the correct order on each line.
+ * 
+ * Has the additional responsibility of maintaining a map for groups,
+ * mapping each value within a group to a set of CsvLines.
  */
 @ThreadSafe
 public final class CsvCache {
 
 	private final SortedMap<String, String> linesIdMap = new TreeMap<>();
+	private final List<String> groups;
+	private final Map<String, Map<String, String>> groupsMap = new HashMap<String, Map<String,String>>();
 	private final String columnNamesCsv;
 	
 	public CsvCache(final String columnNamesCsv) {
+	    this(columnNamesCsv, null);
+	}
+	
+	public CsvCache(final String columnNamesCsv, final List<String> groups) {
 		Validate.notEmpty(columnNamesCsv);
 		Validate.isTrue(columnNamesCsv.startsWith("id,"), "id must be the first specified column: %s", columnNamesCsv);
 		
-		this.columnNamesCsv = columnNamesCsv; 
+		this.columnNamesCsv = columnNamesCsv;
+		this.groups = groups;
 	}
 	
 	/**

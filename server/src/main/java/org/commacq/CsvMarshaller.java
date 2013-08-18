@@ -88,6 +88,7 @@ public class CsvMarshaller {
 		}		
 	}
 	
+	//TODO needs to also return group values
 	public CsvLine toCsvLine(ResultSet result) throws SQLException {
 		StringBuilder builder = stringBuilder.get();
 		

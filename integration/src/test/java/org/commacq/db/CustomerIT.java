@@ -10,15 +10,12 @@ import java.util.Map;
 import java.util.Set;
 
 import javax.annotation.Resource;
-import javax.jms.ConnectionFactory;
 import javax.jms.JMSException;
 import javax.sql.DataSource;
 
 import org.commacq.client.CacheObserver;
 import org.commacq.client.Manager;
 import org.commacq.client.UpdateManager;
-import org.commacq.client.factory.BeanCacheUpdaterFactory;
-import org.commacq.client.factory.ManagerFactory;
 import org.commacq.testclient.Customer;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -39,17 +36,6 @@ public class CustomerIT {
 
     @Resource
     UpdateManager updateManager;
-
-    @Resource
-    ConnectionFactory connectionFactory;
-
-    // @Resource
-    // Manager<Customer> customerManager;
-    @Resource
-    BeanCacheUpdaterFactory beanCacheUpdaterFactory;
-
-    @Resource
-    ManagerFactory managerFactory;
 
     @Resource
     Manager<Customer> customerManager;
