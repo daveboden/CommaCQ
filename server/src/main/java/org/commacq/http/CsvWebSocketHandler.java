@@ -1,40 +1,50 @@
 package org.commacq.http;
 
 import java.io.IOException;
-import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.List;
 
 import javax.servlet.http.HttpServletRequest;
 
+import lombok.extern.slf4j.Slf4j;
+
+import org.commacq.CsvDataSource;
+import org.commacq.CsvDataSourceLayer;
+import org.commacq.CsvLineCallbackStringWriter;
 import org.eclipse.jetty.websocket.WebSocket;
 import org.eclipse.jetty.websocket.WebSocketHandler;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import org.commacq.CsvCache;
-import org.commacq.DataManager;
 
 //TODO thread safety
+@Slf4j
 public class CsvWebSocketHandler extends WebSocketHandler {
 
-	private static final Logger logger = LoggerFactory.getLogger(CsvWebSocketHandler.class);
+	private ThreadLocal<CsvLineCallbackStringWriter> writerThreadLocal = new ThreadLocal<CsvLineCallbackStringWriter>() {
+		protected CsvLineCallbackStringWriter initialValue() {
+			return new CsvLineCallbackStringWriter();
+		};
+		
+		public CsvLineCallbackStringWriter get() {
+			CsvLineCallbackStringWriter writer = super.get();
+			writer.clear();
+			return writer;
+		};
+	};
 	
-	private DataManager dataManager;
+	private CsvDataSourceLayer layer;
 	
 	private List<PublishWebSocket> websockets = new ArrayList<>();
 	
 	private final WebSocketOutboundHandler webSocketOutboundHandler;
 	
-	public CsvWebSocketHandler(DataManager dataManager, WebSocketOutboundHandler webSocketOutboundHandler) {
-		this.dataManager = dataManager;
+	public CsvWebSocketHandler(CsvDataSourceLayer layer, WebSocketOutboundHandler webSocketOutboundHandler) {
+		this.layer = layer;
 		this.webSocketOutboundHandler = webSocketOutboundHandler;
 	}
 
 	@Override
 	public WebSocket doWebSocketConnect(HttpServletRequest request, String protocol) {
 		String entityId = HttpUtils.getEntityStringFromTarget(request.getRequestURL().toString());
-		logger.info("Creating web socket for entity: {}", entityId);
+		log.info("Creating web socket for entity: {}", entityId);
 		PublishWebSocket webSocket = new PublishWebSocket(entityId);
 		websockets.add(webSocket);
 		return webSocket;
@@ -53,20 +63,20 @@ public class CsvWebSocketHandler extends WebSocketHandler {
 		public void onOpen(Connection connection) {
 			this.connection = connection;
 			try {
-				CsvCache csvCache = dataManager.getCsvCache(entityId);
-				if(csvCache == null) {
+				CsvDataSource source = layer.getCsvDataSource(entityId);
+				if(source == null) {
 				    String message = String.format("Unknown entity id: %s", entityId);
-				    logger.warn(message);
+				    log.warn(message);
 				    connection.sendMessage(message);
 				    return;
 				}
-				StringWriter sw = new StringWriter();
-				csvCache.writeToOutput(sw);
-				connection.sendMessage(sw.toString());
-				logger.info("Pushed {} entities to client", csvCache.size());
+				CsvLineCallbackStringWriter writer = writerThreadLocal.get();
+				source.getAllCsvLines(writer);
+				connection.sendMessage(writer.toString());
+				log.info("Pushed {} entities to client", writer.getProcessUpdateCount());
 				webSocketOutboundHandler.addConnection(connection);
 			} catch (IOException ex) {
-				logger.warn("Could not send message to opened connection", ex);
+				log.warn("Could not send message to opened connection", ex);
 			}
 		};
 		@Override

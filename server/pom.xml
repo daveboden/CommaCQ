@@ -78,6 +78,12 @@
             <artifactId>xbean-spring</artifactId>
             <scope>test</scope>
         </dependency>
+        
+		<dependency>
+		    <groupId>com.carrotsearch</groupId>
+		    <artifactId>junit-benchmarks</artifactId>
+		    <scope>test</scope>
+		</dependency>
 
         <!-- Jetty dependencies - START -->
         <dependency>
@@ -91,10 +97,6 @@
         <dependency>
             <groupId>org.eclipse.jetty</groupId>
             <artifactId>jetty-webapp</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.eclipse.jetty.osgi</groupId>
-            <artifactId>jetty-osgi-boot-jsp</artifactId>
         </dependency>
         <dependency>
             <groupId>org.eclipse.jetty</groupId>

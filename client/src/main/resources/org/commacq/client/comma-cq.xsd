@@ -15,19 +15,19 @@
             <xsd:complexContent>
                 <xsd:extension base="beans:identifiedType">
                     <xsd:attribute use="required" name="entityName" type="xsd:string"/>
-                    <xsd:attribute use="optional" name="beanCacheUpdaterFactory" type="xsd:string" default="beanCacheUpdaterFactory">
+                    <xsd:attribute use="optional" name="beanCacheFactory" type="xsd:string" default="beanCacheFactory">
                         <xsd:annotation>
-                            <xsd:documentation><![CDATA[A reference to the BeanCacheUpdaterFactory used to construct and update the cache of beans.]]></xsd:documentation>
+                            <xsd:documentation><![CDATA[A reference to the BeanCacheFactory used to construct and update the cache of beans.]]></xsd:documentation>
                             <xsd:appinfo>
                                 <tool:annotation kind="ref">
-                                    <tool:expected-type type="org.commacq.client.factory.BeanCacheUpdaterFactory"/>
+                                    <tool:expected-type type="org.commacq.client.BeanCacheFactory"/>
                                 </tool:annotation>
                             </xsd:appinfo>
                         </xsd:annotation>
                     </xsd:attribute>
                     <xsd:attribute use="optional" name="beanType" type="xsd:string">
                         <xsd:annotation>
-                            <xsd:documentation><![CDATA[A bean type to use instead of relying on the BeanCacheUpdaterFactory to choose.]]></xsd:documentation>
+                            <xsd:documentation><![CDATA[A bean type to use instead of relying on the BeanCacheFactory to choose.]]></xsd:documentation>
                             <xsd:appinfo>
                                 <tool:annotation kind="value">
                                     <tool:expected-type type="java.lang.Class"/>

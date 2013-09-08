@@ -12,10 +12,25 @@ http://commacq.org/client http://commacq.org/client/comma-cq-1.0.xsd
     <bean id="beanTypeSelectionStrategy" class="org.commacq.client.factory.BeanTypeSelectionStrategyEntityNameWithinPackages"
           c:packageNames="org.commacq.testclient"
     />
+    
+	<bean id="csvToBeanStrategy" class="org.commacq.client.CsvToBeanStrategySpringConstructor"/>
+	
+	<bean id="csvToBeanConverterFactory" class="org.commacq.client.CsvToBeanConverterFactory"
+	      c:beanTypeSelectionStrategy-ref="beanTypeSelectionStrategy"
+	      c:csvToBeanStrategy-ref="csvToBeanStrategy"
+	/>
 
-    <bean id="beanCacheUpdaterFactory" class="org.commacq.client.factory.BeanCacheUpdaterFactoryJmsBroadcast"
-        c:beanTypeSelectionStrategy-ref="beanTypeSelectionStrategy"
-        c:connectionFactory-ref="jmsClientConnectionFactory"
+	<bean id="csvDataSourceFactory" class="org.commacq.jms.CsvDataSourceBroadcastFactory"
+	      c:connectionFactory-ref="jmsClientConnectionFactory"
+          c:queryQueue="query"
+          c:timeoutInSeconds="2"
+          c:broadcastTopicPattern="broadcast.%s"
+    />
+
+    <!-- beanCacheFactory is a special bean id, referenced by the Manager bean definition parser -->
+    <bean id="beanCacheFactory" class="org.commacq.client.BeanCacheFactoryCsvDataSourceFactory"
+          c:csvDataSourceFactory-ref="csvDataSourceFactory"
+          c:csvToBeanConverterFactory-ref="csvToBeanConverterFactory"
     />
 
     <bean id="managerFactory" class="org.commacq.client.factory.ManagerFactoryDefault"/>

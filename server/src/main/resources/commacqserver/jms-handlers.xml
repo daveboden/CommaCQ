@@ -16,22 +16,22 @@ http://www.springframework.org/schema/jee http://www.springframework.org/schema/
 http://www.springframework.org/schema/jms http://www.springframework.org/schema/jms/spring-jms.xsd
 ">
    
+    <!-- Updates are communicated to the database layer -->
     <bean id="updateInboundHandler" class="org.commacq.jms.UpdateInboundHandler"
-          c:dataManager-ref="dataManager"
+          c:layer-ref="csvDataSourceDatabases"
     />
-    
-    <!--
-    Collect up all the outbound handlers that have been declared in this
-    environment's spring config. These will be presented to the hub.
-    -->
-    <bean id="outboundHub" class="org.commacq.UpdateOutboundHub" autowire="constructor"/>
           
+    <!-- Queries are serviced by the caches -->
     <bean id="queryInboundHandler" class="org.commacq.jms.QueryInboundHandler"    
-          c:dataManager-ref="dataManager"
+          c:layer-ref="csvDataSourceCaches"
     />
     
-    <bean id="jmsOutboundHandler" class="org.commacq.jms.JmsOutboundHandler"
+    <bean id="jmsOutboundHandlerFactory" class="org.commacq.jms.JmsOutboundHandlerFactory"/>
+    
+    <bean id="jmsOutboundHandlers" factory-bean="jmsOutboundHandlerFactory" factory-method="create"
           c:connectionFactory-ref="jmsClientConnectionFactory"
+          c:layer-ref="csvDataSourceCaches"
+          c:broadcastTopicPattern="broadcast.%s"
     />
 
 </beans>

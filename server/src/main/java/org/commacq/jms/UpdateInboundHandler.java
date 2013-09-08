@@ -1,9 +1,7 @@
 package org.commacq.jms;
 
 import java.io.IOException;
-import java.io.Reader;
 import java.io.StringReader;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Enumeration;
 import java.util.List;
@@ -17,18 +15,29 @@ import javax.jms.TextMessage;
 import lombok.extern.slf4j.Slf4j;
 
 import org.apache.commons.csv.CSVParser;
-import org.apache.commons.lang3.Validate;
-import org.commacq.DataManager;
-import org.commacq.DataManager.UpdateCsvCacheResult;
-import org.commacq.MessageFields;
+import org.commacq.CsvDataSourceLayer;
+import org.commacq.CsvTextBlockToCallback;
+import org.commacq.CsvUpdatableDataSource;
 
+/**
+ * A single listener processes updates, directing them to the relevant
+ * CsvDataSource for the entity.
+ * 
+ * If updates came on different channels for each entity, there would be
+ * no chance of coordinating updates transactionally across entities.
+ * 
+ * Updates that arrive with just the id column specified are by default
+ * treaded as untrusted. Updates arrive with many columns specified are
+ * by default trusted.
+ */
 @Slf4j
 public class UpdateInboundHandler implements MessageListener {
+	
+	private final CsvDataSourceLayer layer;
+	private final CsvTextBlockToCallback csvTextBlockToCallback = new CsvTextBlockToCallback();
 
-    private final DataManager dataManager;
-
-    public UpdateInboundHandler(DataManager dataManager) {
-        this.dataManager = dataManager;
+    public UpdateInboundHandler(CsvDataSourceLayer layer) {
+        this.layer = layer;
     }
 
     @Override
@@ -97,40 +106,37 @@ public class UpdateInboundHandler implements MessageListener {
 
     }
     
-    private void handlePayload(String entityId, String csvHeaderAndBody) {
-        String[][] csv = parseCsv(csvHeaderAndBody);
-        List<String> ids = getIds(csv);
-        if(csv[0][0].equals("id")) {            
-            UpdateCsvCacheResult result = dataManager.updateCsvCache(entityId, ids);
-        } else {
-            String group = csv[0][0];
-            for(String idWithinGroup : ids) {
-                UpdateCsvCacheResult result = dataManager.updateCsvCacheForGroup(entityId, group, idWithinGroup);
-            }
-        }
-    }
-        
-    private String[][] parseCsv(String csvHeaderAndBody) {
-        Reader in = new StringReader(csvHeaderAndBody);
-        String[][] csv;
-        try {
-            csv = new CSVParser(in).getAllValues();
-        } catch (IOException ex) {
-            throw new RuntimeException(ex);
-        }
-        
-        Validate.notEmpty(csv, "At least the header row is required in the CSV text");
-        Validate.notEmpty(csv[0], "The CSV header row must contain at least one column");
-        
-        return csv;
+    private void handlePayload(final String entityId, final String csvHeaderAndBody) {
+    	CSVParser parser = new CSVParser(new StringReader(csvHeaderAndBody));
+    	String[] header;
+    	try {
+			header = parser.getLine();
+		} catch (IOException ex) {
+			throw new RuntimeException("Couldn't parse CSV", ex);
+		}
+    	
+    	CsvUpdatableDataSource source = (CsvUpdatableDataSource)layer.getCsvDataSource(entityId);
+    	
+    	if(header.length == 1 && header[0].equals("id")) {
+    		log.info("Update for entity {} contains a list of ids", entityId);
+    		String[] line;
+    		try {
+    			source.startUpdateBlock(source.getColumnNamesCsv());;
+				while((line = parser.getLine()) != null) {
+					source.updateUntrusted(line[0]);
+				}
+				source.finishUpdateBlock();
+			} catch (IOException ex) {				
+				throw new RuntimeException("Couldn't parse CSV", ex);
+			}
+    		return;
+    	}
+    	
+    	log.info("Update for entity {} contains ids and column headings", entityId);
+    	
+    	csvTextBlockToCallback.presentTextBlockToCsvLineCallback(csvHeaderAndBody, source, true);
     }
     
-    private List<String> getIds(String[][] csv) {        
-        List<String> ids = new ArrayList<>();
-        for(int i = 1; i < csv.length; i++) {
-            ids.add(csv[i][0]);
-        }
-        return ids;
-    }
+    
 
 }

@@ -34,9 +34,8 @@ public class UpdateInboundHandlerRepublishHighAvailability extends UpdateInbound
 	private final String republishTopic;
 	private final JmsTemplate jmsTemplate;
 	
-	public UpdateInboundHandlerRepublishHighAvailability(DataManager dataManager,
-			                                             ConnectionFactory connectionFactory, String republishTopic) {
-		super(dataManager);
+	public UpdateInboundHandlerRepublishHighAvailability(ConnectionFactory connectionFactory, String republishTopic) {
+		super(null);
 		this.republishTopic = republishTopic;
 		this.jmsTemplate = new JmsTemplate(connectionFactory);
 	}

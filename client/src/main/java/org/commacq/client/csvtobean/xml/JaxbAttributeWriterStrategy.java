@@ -4,14 +4,15 @@ import java.io.IOException;
 import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.NoSuchElementException;
-import java.util.Set;
 
+import javax.annotation.concurrent.NotThreadSafe;
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Unmarshaller;
@@ -27,27 +28,27 @@ import javax.xml.stream.events.XMLEvent;
 
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.lang3.StringUtils;
-
+import org.commacq.CsvLine;
 import org.commacq.client.CsvToBeanStrategy;
-import org.commacq.client.CsvToBeanStrategyResult;
 
 /**
- * Unmarshals CSV to beans that have Jaxb annotations and are expecting a single XML element with attributes.
- * 
- * Not threadsafe (on purpose). Meant to be used by a single thread responsible for performing the initial load of bean cache data and performing the updates.
+ * Unmarshals CSV to beans that have Jaxb annotations and are expecting a single XML element with attributes. 
  */
-public class JaxbAttributeWriterStrategy<BeanType> implements CsvToBeanStrategy<BeanType> {
-
-    private final Class<BeanType> beanType;
-    protected final JAXBContext context;
-    protected final Unmarshaller unmarshaller;
-    protected final AttributeEventReader attributeEventReader;
-
-    public JaxbAttributeWriterStrategy(final Class<BeanType> beanType) {
-        this.beanType = beanType;
+@NotThreadSafe //Meant to be used by a single thread responsible for performing the initial load of bean cache data and performing the updates.
+public class JaxbAttributeWriterStrategy implements CsvToBeanStrategy {
+    
+    protected final Map<Class<?>, AttributeEventReader> attributeEventReaderMap = new HashMap<Class<?>, AttributeEventReader>();
+    protected final Map<Class<?>, Unmarshaller> unmarshallerMap = new HashMap<Class<?>, Unmarshaller>();
+    
+    private <BeanType> AttributeEventReader getAttributeEventReader(Class<BeanType> beanType) {
+    	AttributeEventReader cached = attributeEventReaderMap.get(beanType);
+    	if(cached != null) {
+    		return cached;
+    	}
+    	Unmarshaller unmarshaller;
         try {
-            this.context = JAXBContext.newInstance(beanType);
-            this.unmarshaller = context.createUnmarshaller();
+            JAXBContext context = JAXBContext.newInstance(beanType);
+            unmarshaller = context.createUnmarshaller();
         } catch (JAXBException ex) {
             throw new RuntimeException("Could not create JAXB Unmarshaller for bean: " + beanType, ex);
         }
@@ -58,7 +59,12 @@ public class JaxbAttributeWriterStrategy<BeanType> implements CsvToBeanStrategy<
             variableName = variableName.substring(variableName.lastIndexOf(".") + 1);
             name = convertClassNameToTagName(variableName);
         }
-        this.attributeEventReader = new AttributeEventReader(new QName(name));
+        
+        AttributeEventReader instance = new AttributeEventReader(new QName(name));
+        
+        attributeEventReaderMap.put(beanType, instance);
+        unmarshallerMap.put(beanType, unmarshaller);
+        return instance;
     }
 
     static String convertClassNameToTagName(String name) {
@@ -87,50 +93,68 @@ public class JaxbAttributeWriterStrategy<BeanType> implements CsvToBeanStrategy<
 
         return camelCaseStringBuilder.toString();
     }
-
-    @SuppressWarnings("unchecked")
+    
     @Override
-    public final CsvToBeanStrategyResult<BeanType> getBeans(final String csvHeaderAndBody) {
+    @SuppressWarnings("unchecked")
+    public <BeanType> Map<String, BeanType> getBeans(Class<BeanType> beanType, List<String> header, Map<String, List<String>> body) {
+        assert header.get(0).equals("id");
+        
+        AttributeEventReader attributeEventReader = getAttributeEventReader(beanType);
+        Unmarshaller unmarshaller = unmarshallerMap.get(beanType);
 
-        try {
-            CSVParser csvParser = new CSVParser(new StringReader(csvHeaderAndBody));
-            String[] headerValues = csvParser.getLine();
+        Map<String, BeanType> output = new HashMap<>();
 
-            assert headerValues[0].equals("id");
+        for(Entry<String, List<String>> row : body.entrySet()) {
 
-            Map<String, BeanType> output = new HashMap<>();
-            Set<String> deleted = new HashSet<>();
+        	List<String> rowValues = row.getValue();
 
-            String[] rowValues;
-            while ((rowValues = csvParser.getLine()) != null) {
+            attributeEventReader.setData(header, rowValues);
 
-                if (rowValues.length == 1) {
-                    deleted.add(rowValues[0]); // Mark id as deleted
-                    continue;
-                }
-
-                attributeEventReader.setData(headerValues, rowValues);
-
-                BeanType item;
-                try {
-                    item = (BeanType) unmarshaller.unmarshal(attributeEventReader);
-                } catch (JAXBException ex) {
-                    throw new RuntimeException("Error while unmarshalling: " + beanType + " - " + Arrays.toString(rowValues), ex);
-                }
-
-                output.put(rowValues[0], item); // id is always in first column
+            BeanType item;
+            try {
+                item = (BeanType) unmarshaller.unmarshal(attributeEventReader);
+            } catch (JAXBException ex) {
+                throw new RuntimeException("Error while unmarshalling: " + beanType + " - " + rowValues, ex);
             }
 
-            return new CsvToBeanStrategyResult<>(output, deleted);
-        } catch (IOException ex) {
-            throw new RuntimeException("Error while parsing CSV", ex);
+            output.put(rowValues.get(0), item); // id is always in first column
         }
-    }
 
-    @Override
-    public final Class<BeanType> getBeanType() {
-        return beanType;
+        return output;
     }
+    
+  //TODO Totally inefficient, converts from string to csv array back to string and back to csv array again.
+    @Override
+    public <BeanType> BeanType getBean(Class<BeanType> beanType, String columnNamesCsv, CsvLine csvLine) {
+		CSVParser parser = new CSVParser(new StringReader(columnNamesCsv));
+		String[] columnNames;
+		try {
+			columnNames = parser.getLine();
+		} catch(IOException ex) {
+			throw new RuntimeException("Error parsing CSV column names: " + columnNamesCsv);
+		}
+		
+		parser = new CSVParser(new StringReader(csvLine.getCsvLine()));
+		
+		String[] values;
+		try {
+			 values = parser.getLine();
+		} catch (IOException ex) {
+			throw new RuntimeException("Error parsing CSV row: " + csvLine.getCsvLine());
+		}
+		
+		Map<String, BeanType> beans = getBeans(beanType, Arrays.asList(columnNames), Collections.singletonMap(csvLine.getId(), Arrays.asList(values)));
+		return beans.get(csvLine.getId());
+    }
+    
+	@Override
+	public <BeanType> Map<String, BeanType> getBeans(Class<BeanType> beanType, String columnNamesCsv, Collection<CsvLine> csvLines) {
+		Map<String, BeanType> beansMap = new HashMap<>(csvLines.size());
+		for(CsvLine csvLine : csvLines) {
+			beansMap.put(csvLine.getId(), getBean(beanType, columnNamesCsv, csvLine));
+		}
+		return beansMap;
+	}
 
     /**
      * Takes key/value pairs and pretends to create an XML tag like: <BeanClassname id="a" name="b" .../> The Bean must have Jaxb annotations. The XMLEventReader pumps events into the Jaxb unmarshaller and Jaxb produces an instance of the bean.
@@ -142,8 +166,8 @@ public class JaxbAttributeWriterStrategy<BeanType> implements CsvToBeanStrategy<
         private final QName tag;
         private final XMLEventFactory xmlEventFactory = XMLEventFactory.newInstance();
 
-        String[] header;
-        String[] row;
+        List<String> header;
+        List<String> row;
         // Decides whether we send the tag event (event 0) or the end tag event (event 1)
         // We only ever deliver 2 events before this object is reset with the next
         // bean of data.
@@ -161,15 +185,15 @@ public class JaxbAttributeWriterStrategy<BeanType> implements CsvToBeanStrategy<
             this.endElement = xmlEventFactory.createEndElement(tag, Collections.emptyIterator());
         }
 
-        public void setData(String[] header, String[] row) {
+        public void setData(List<String> header, List<String> row) {
             this.header = header;
             this.row = row;
             this.currentEventIndex = 0;
 
             attributes.clear();
 
-            for (int i = 0; i < header.length; i++) {
-                String value = row[i];
+            for (int i = 0; i < header.size(); i++) {
+                String value = row.get(i);
                 // TODO tokenise the CSV row before unescaping it so that we can tell
                 // the difference between a truly blank string (null) and a quoted
                 // blank string ("") which should evaluate to empty string.
@@ -185,7 +209,7 @@ public class JaxbAttributeWriterStrategy<BeanType> implements CsvToBeanStrategy<
                         value = "false";
                     }
 
-                    attributes.add(xmlEventFactory.createAttribute(header[i], value));
+                    attributes.add(xmlEventFactory.createAttribute(header.get(i), value));
                 }
             }
 

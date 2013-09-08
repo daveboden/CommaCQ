@@ -2,60 +2,85 @@ package org.commacq.db;
 
 import java.util.Collection;
 import java.util.Iterator;
-import java.util.List;
 
 import javax.sql.DataSource;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.dao.DataAccessException;
 import org.springframework.dao.IncorrectResultSizeDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.ResultSetExtractor;
-import org.springframework.jdbc.core.RowMapper;
 
+/**
+ * Wraps a SQL data source and provides methods to get at entity data based on
+ * information held within EntityConfig objects.
+ * 
+ * Independent from data format; a ResultSetExtractor is passed in
+ * to convert the results of the query into data.
+ */
+@Slf4j
 public class DataSourceAccess {
-
-    private static Logger logger = LoggerFactory.getLogger(DataSourceAccess.class);
 
     private final JdbcTemplate jdbcTemplate;
     
     public DataSourceAccess(DataSource dataSource) {
         this.jdbcTemplate = new JdbcTemplate(dataSource);        
     }
+    
+    
        
     public <T> T getResultSetForAllRows(EntityConfig entityConfig, ResultSetExtractor<T> resultSetExtractor) throws DataAccessException {
     	try {
+    		//Debug hint - put a breakpoint on your ResultSetExtractor's extractData method. You're about to disappear into Spring...
 	    	T result = jdbcTemplate.query(entityConfig.getSql(), resultSetExtractor);
 	    	return result;
         } catch(DataAccessException ex) {
-            logger.error("Error creating entity: {} - error is: {}", entityConfig.getEntityId(), ex.getMessage());
+            log.error("Error creating entity: {} - error is: {}", entityConfig.getEntityId(), ex.getMessage());
             throw ex;
         }
     }
     
     
-    public <T> T getResultSetForSingleRow(EntityConfig entityConfig, RowMapper<T> rowMapper, String id) throws DataAccessException {        
+    public <T> T getResultSetForSingleRow(EntityConfig entityConfig, ResultSetExtractor<T> resultSetExtractor, String id) throws DataAccessException {
         StringBuilder sql = new StringBuilder();
         //TODO probably best to cache this "nest" string arrangement
         sql.append("select nest.* from (").append(entityConfig.getSql()).append(") as nest ")
-           .append("where nest.id = '").append(id).append("'");
+           .append("where nest.\"id\" = '").append(id).append("'");
         
         String sqlString = sql.toString();
-        logger.debug("Executing SQL: {}", sqlString);
+        log.debug("Executing SQL: {}", sqlString);
         
         try {
-        	return jdbcTemplate.queryForObject(sqlString, rowMapper);
+        	//Debug hint - put a breakpoint on your ResultSetExtractor's extractData method. You're about to disappear into Spring...
+        	return jdbcTemplate.query(sqlString, resultSetExtractor);
         } catch(IncorrectResultSizeDataAccessException ex) {
         	return null;
         } catch(DataAccessException ex) {
             String message = "Error executing SQL with = clause";
-            logger.error(message, ex);        	
+            log.error(message, ex);        	
             throw ex;
         }
     }
     
-    public <T> List<T> getResultSetForGroup(EntityConfig entityConfig, RowMapper<T> rowMapper, String group, String idWithinGroup) throws DataAccessException {
+    public <METADATA> METADATA getColumnMetadata(EntityConfig entityConfig, ResultSetExtractor<METADATA> resultSetExtractor) throws DataAccessException {
+        StringBuilder sql = new StringBuilder();
+        sql.append("select nest.* from (").append(entityConfig.getSql()).append(") as nest ")
+           .append("where 1 = 2"); //Won't return any rows
+        
+        String sqlString = sql.toString();
+        log.debug("Executing SQL: {}", sqlString);
+        
+        try {
+        	return jdbcTemplate.query(sqlString, resultSetExtractor);
+        } catch(DataAccessException ex) {
+            String message = "Error executing SQL to get metadata";
+            log.error(message, ex);        	
+            throw ex;
+        }
+    }    
+    
+    public <T> T getResultSetForGroup(EntityConfig entityConfig, ResultSetExtractor<T> resultSetExtractor, String group, String idWithinGroup) throws DataAccessException {
     	if(!entityConfig.getGroups().contains(group)) {
     		throw new RuntimeException("Group " + group + " has not been declared in a .groups.txt file alongside the .sql file");
     	}
@@ -63,23 +88,24 @@ public class DataSourceAccess {
         StringBuilder sql = new StringBuilder();
         //TODO probably best to cache this "nest" string arrangement
         sql.append("select nest.* from (").append(entityConfig.getSql()).append(") as nest ")
-           .append("where nest." + group + " = '").append(idWithinGroup).append("'");
+           .append("where nest.\"" + group + "\" = '").append(idWithinGroup).append("'");
         
         String sqlString = sql.toString();
-        logger.debug("Executing SQL: {}", sqlString);
+        log.debug("Executing SQL: {}", sqlString);
         
         try {
-        	return jdbcTemplate.query(sqlString, rowMapper);
+        	//Debug hint - put a breakpoint on your ResultSetExtractor's extractData method. You're about to disappear into Spring...
+        	return jdbcTemplate.query(sqlString, resultSetExtractor);
         } catch(IncorrectResultSizeDataAccessException ex) {
         	return null;
         } catch(DataAccessException ex) {
             String message = "Error executing SQL with = clause";
-            logger.error(message, ex);        	
+            log.error(message, ex);        	
             throw ex;
         }
     }
 
-    public <T> List<T> getResultSetForMultipleRows(final EntityConfig entityConfig, final RowMapper<T> rowMapper, final Collection<String> ids) throws DataAccessException {        
+    public <T> T getResultSetForMultipleRows(final EntityConfig entityConfig, final ResultSetExtractor<T> resultSetExtractor, final Collection<String> ids) throws DataAccessException {        
         StringBuilder sql = new StringBuilder();
         //TODO probably best to cache this "nest" string arrangement
         sql.append("select nest.* from (").append(entityConfig.getSql()).append(") as nest ")
@@ -96,13 +122,14 @@ public class DataSourceAccess {
         sql.append(")");
                 
         String sqlString = sql.toString();
-        logger.debug("Executing SQL: {}", sqlString);
+        log.debug("Executing SQL: {}", sqlString);
         
         try {
-        	return jdbcTemplate.query(sqlString, rowMapper);
+        	//Debug hint - put a breakpoint on your ResultSetExtractor's extractData method. You're about to disappear into Spring...
+        	return jdbcTemplate.query(sqlString, resultSetExtractor);
         } catch(DataAccessException ex) {
             String message = "Error executing SQL with 'in' clause";
-            logger.error(message, ex);
+            log.error(message, ex);
             throw ex;
         }
     }

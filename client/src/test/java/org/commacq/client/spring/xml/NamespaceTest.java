@@ -15,9 +15,7 @@ import org.commacq.testclient.Customer2;
 import org.commacq.testclient.CustomerManager2;
 
 @RunWith(SpringJUnit4ClassRunner.class)
-@ContextConfiguration(locations={
-        "classpath:org/commacq/client/spring/xml/manager-client-test.xml"
-})
+@ContextConfiguration
 public class NamespaceTest {
 
 	@Resource(name="customerManager")

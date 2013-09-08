@@ -15,8 +15,8 @@ http://www.springframework.org/schema/context http://www.springframework.org/sch
 	<import resource="classpath:/commacqserver/jms-update-listener.xml"/>
 	<import resource="classpath:/commacqserver/jms-handlers.xml"/>
 	<import resource="classpath:/commacqserver/csv-data-source-database.xml"/>
+	<import resource="classpath:/commacqserver/csv-data-source-database-cache.xml"/>
 	<import resource="classpath:/commacqserver/database-connection.xml"/>
-	<import resource="classpath:/commacqserver/data-manager.xml"/>
 	<import resource="classpath:/commacqserver/http.xml"/>
 	<import resource="classpath:/commacqserver/jmx.xml"/>
 

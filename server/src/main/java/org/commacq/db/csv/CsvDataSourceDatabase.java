@@ -2,140 +2,126 @@ package org.commacq.db.csv;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.SortedSet;
-import java.util.TreeSet;
 
-import org.commacq.CsvCache;
-import org.commacq.CsvDataSource;
-import org.commacq.CsvMarshaller;
-import org.commacq.CsvMarshaller.CsvLine;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+
+import org.commacq.CsvLine;
+import org.commacq.CsvLineCallback;
+import org.commacq.CsvUpdatableDataSourceBase;
 import org.commacq.db.DataSourceAccess;
 import org.commacq.db.EntityConfig;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.ResultSetExtractor;
-import org.springframework.jdbc.core.RowMapper;
 
 /**
  * Makes a DataSourceAccess component into a CsvDataSource.
+ * 
+ * Marshals results into CSV.
+ * 
+ * Processes updates so that if multiple downstream sources can subscribe
+ * to this source and all get notified of changes. If the update is trusted,
+ * it propagates the change directly downstream. If the update is not trusted,
+ * or the update is marked for reconciliation, it looks the CSV up from the
+ * database and propagates that. Additionally, for reconciliation, a string
+ * comparison is done between the incoming update and the database CSV. If
+ * there are differences, an error is logged.
  */
-public class CsvDataSourceDatabase implements CsvDataSource {
+@Slf4j
+public class CsvDataSourceDatabase extends CsvUpdatableDataSourceBase {
 
-    private static Logger logger = LoggerFactory.getLogger(CsvDataSourceDatabase.class);
-
-    private final CsvCacheFactory csvCacheFactory = new CsvCacheFactory();
-    private final Map<String, EntityConfig> entityConfigs;
-    private final SortedSet<String> entityIds;
+    private final EntityConfig entityConfig;
     private final DataSourceAccess dataSourceAccess;
     
-    public CsvDataSourceDatabase(DataSourceAccess dataSourceAccess, Map<String, EntityConfig> entityConfigs) {
+    public CsvDataSourceDatabase(DataSourceAccess dataSourceAccess, EntityConfig entityConfig) {
     	this.dataSourceAccess = dataSourceAccess;
-        this.entityConfigs = entityConfigs;
+        this.entityConfig = entityConfig;
         
-        SortedSet<String> names = new TreeSet<>();
-        for(String entityName : entityConfigs.keySet()) {
-            names.add(entityName);
-        }
-        
-        entityIds = Collections.unmodifiableSortedSet(names);
-        
-        logger.info("Successfully created database CSV source with entity names: {}", entityConfigs.keySet());
-    }
-    
-    public Map<String, CsvCache> createInitialCaches() {
-        final Map<String, CsvCache> caches = new HashMap<>(entityConfigs.size());
-        
-        for(Map.Entry<String, EntityConfig> entry : entityConfigs.entrySet()) {
-
-            CsvCache csvCache = createInitialCache(entry.getKey(), entry.getValue());
-            
-            caches.put(entry.getKey(), csvCache);
-        }
-        
-        return caches;
-    }
-    
-    public CsvCache createInitialCache(String entityId) {
-        EntityConfig entityConfig = entityConfigs.get(entityId);
-        
-        CsvCache csvCache = createInitialCache(entityId, entityConfig);
-        
-        return csvCache;
-    }
-    
-    private CsvCache createInitialCache(String entityId, EntityConfig entityConfig) {
-    	return dataSourceAccess.getResultSetForAllRows(entityConfig, csvCacheFactory);
+        log.info("Successfully created database CSV source with entity id: {}", entityConfig.getEntityId());
     }
     
     @Override
-    public SortedSet<String> getEntityIds() {
-        return entityIds;
+    public String getEntityId() {
+    	return entityConfig.getEntityId();
     }
     
     @Override
-    public CsvLine getCsvLine(String entityId, String id) {
-        EntityConfig entityConfig = entityConfigs.get(entityId);
-        
-        return dataSourceAccess.getResultSetForSingleRow(entityConfig, new CsvRowMapper(), id);
+    public void getAllCsvLines(CsvLineCallback callback) {
+    	dataSourceAccess.getResultSetForAllRows(entityConfig, new CsvListFactory(callback, null));
+    }
+    
+    @Override
+    public void getCsvLine(String id, CsvLineCallback callback) {
+        dataSourceAccess.getResultSetForSingleRow(entityConfig, new CsvListFactory(callback, Collections.singleton(id)), id);
     }
 
-    public List<CsvLine> getCsvLines(final String entityId, final Collection<String> ids) {
-        EntityConfig entityConfig = entityConfigs.get(entityId);
-        
-        List<CsvLine> result = dataSourceAccess.getResultSetForMultipleRows(entityConfig, new CsvRowMapper(), ids);
-        
-        return result;
+    @Override
+    public void getCsvLines(final Collection<String> ids, CsvLineCallback callback) {     
+        dataSourceAccess.getResultSetForMultipleRows(entityConfig, new CsvListFactory(callback, ids), ids);
     }
     
-    public List<CsvLine> getCsvLinesForGroup(final String entityId, final String group, final String idWithinGroup) {
-        EntityConfig entityConfig = entityConfigs.get(entityId);
-        
-        List<CsvLine> result = dataSourceAccess.getResultSetForGroup(entityConfig, new CsvRowMapper(), group, idWithinGroup);
-        
-        return result;
+    @Override
+    public void getCsvLinesForGroup(final String group, final String idWithinGroup, CsvLineCallback callback) {        
+        dataSourceAccess.getResultSetForGroup(entityConfig, new CsvListFactory(callback, null), group, idWithinGroup);
     }
     
-    private class CsvRowMapper implements RowMapper<CsvLine> {
-    	
-    	final CsvMarshaller csvParser = new CsvMarshaller();
-    	
-	    @Override
-    	public CsvLine mapRow(ResultSet result, int rowNum) throws SQLException {
-	    	return csvParser.toCsvLine(result);
-    	}
+    @Override
+    public String getColumnNamesCsv() {
+    	String columnNamesCsv = dataSourceAccess.getColumnMetadata(entityConfig, new ResultSetExtractor<String>() {
+    		@Override
+    		public String extractData(ResultSet rs) throws SQLException, DataAccessException {
+    			CsvMarshaller csvParser = new CsvMarshaller();
+    			return csvParser.getColumnLabelsAsCsvLine(rs.getMetaData(), entityConfig.getGroups());
+    		}
+		});
+    	return columnNamesCsv;
     }
     
     /**
-     * Contains a linked list of CSV lines that can be traversed and written
-     * to an output stream quickly in order.
-     * 
-     * The first column must be labelled "id".
-     * 
-     * Keeps track of the header fields and makes sure the fields get added
-     * in the correct order on each line.
+     * Convert a resultset row into a CsvLine, line by line.
      */
-    private final class CsvCacheFactory implements ResultSetExtractor<CsvCache> {
+    @RequiredArgsConstructor
+    private final class CsvListFactory implements ResultSetExtractor<Void> {
 
+    	
+    	private final CsvLineCallback callback;
+    	/**
+    	 * Use null if working with a bulk update. No need to work out which ids
+    	 * are missing from the dataset because all the ids not mentioned in the
+    	 * database will be naturally removed anyway.
+    	 */
+    	private final Collection<String> ids; 
+    	
     	private final CsvMarshaller csvParser = new CsvMarshaller();
     	
     	@Override
-    	public CsvCache extractData(ResultSet result) throws SQLException, DataAccessException {	
-    		String columnNamesCsv = csvParser.getColumnLabelsAsCsvLine(result);
+    	public Void extractData(ResultSet result) throws SQLException, DataAccessException {	
+    		String columnNamesCsv = csvParser.getColumnLabelsAsCsvLine(result.getMetaData(), entityConfig.getGroups());
     		
-    		CsvCache csvCache = new CsvCache(columnNamesCsv);
-    		
-    		while(result.next()) {
-    			CsvLine csvLine = csvParser.toCsvLine(result);
-    			csvCache.updateLine(csvLine);
+    		List<String> copyOfIds = null;
+    		if(ids != null) {
+    			copyOfIds = new ArrayList<>(ids);
     		}
     		
-    		return csvCache;
+    		while(result.next()) {    			
+    			CsvLine csvLine = csvParser.toCsvLine(result, entityConfig.getGroups());
+    			callback.processUpdate(columnNamesCsv, csvLine);
+    			if(ids != null) {
+    				copyOfIds.remove(csvLine.getId());
+    			}
+    		}
+    		
+    		if(ids != null) {
+				for(String remainingId : copyOfIds) {
+					callback.processRemove(remainingId);
+				}
+    		}
+    		
+    		return null;
     	}
     	
     }

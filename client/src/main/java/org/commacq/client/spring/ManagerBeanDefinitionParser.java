@@ -1,5 +1,7 @@
 package org.commacq.client.spring;
 
+import org.commacq.client.BeanCache;
+import org.commacq.client.Manager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.BeanDefinitionStoreException;
@@ -13,15 +15,12 @@ import org.springframework.beans.factory.xml.ParserContext;
 import org.springframework.util.StringUtils;
 import org.w3c.dom.Element;
 
-import org.commacq.client.BeanCacheUpdater;
-import org.commacq.client.Manager;
-
 public class ManagerBeanDefinitionParser extends AbstractBeanDefinitionParser {
 
 	Logger logger = LoggerFactory.getLogger(ManagerBeanDefinitionParser.class);
 	
 	private static String ATTRIBUTE_entityName = "entityName";
-	private static String ATTRIBUTE_beanCacheUpdaterFactory = "beanCacheUpdaterFactory";
+	private static String ATTRIBUTE_beanCacheFactory = "beanCacheFactory";
 	private static String ATTRIBUTE_beanType = "beanType";
 	private static String ATTRIBUTE_managerType = "managerType";
 	private static String ATTRIBUTE_managerFactory = "managerFactory";
@@ -30,14 +29,14 @@ public class ManagerBeanDefinitionParser extends AbstractBeanDefinitionParser {
 	protected AbstractBeanDefinition parseInternal(Element element, ParserContext parserContext) {
 		final String entityName = element.getAttribute(ATTRIBUTE_entityName); //Required attribute
 
-		final String beanCacheUpdaterFactory = element.getAttribute(ATTRIBUTE_beanCacheUpdaterFactory);
+		final String beanCacheFactory = element.getAttribute(ATTRIBUTE_beanCacheFactory);
 		
 		//TODO allow this to be overridden by an attribute
 		
-		BeanDefinitionBuilder beanCacheUpdaterBuilder = BeanDefinitionBuilder.genericBeanDefinition(BeanCacheUpdater.class);
+		BeanDefinitionBuilder beanCacheUpdaterBuilder = BeanDefinitionBuilder.genericBeanDefinition(BeanCache.class);
 		AbstractBeanDefinition beanCacheUpdaterBuilderRaw = beanCacheUpdaterBuilder.getRawBeanDefinition();
-		beanCacheUpdaterBuilderRaw.setFactoryBeanName(beanCacheUpdaterFactory);
-		beanCacheUpdaterBuilderRaw.setFactoryMethodName("createBeanCacheUpdater");
+		beanCacheUpdaterBuilderRaw.setFactoryBeanName(beanCacheFactory);
+		beanCacheUpdaterBuilderRaw.setFactoryMethodName("createBeanCache");
 		beanCacheUpdaterBuilder.addConstructorArgValue(entityName);
 		
 		final String beanTypeOverride = element.getAttribute(ATTRIBUTE_beanType);

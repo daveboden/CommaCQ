@@ -1,6 +1,5 @@
 package org.commacq.client;
 
-import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -30,34 +29,32 @@ public class Manager<BeanType> {
 	
 	//Will be a ConcurrentHashMap in normal operation or a
 	//copy (HashMap) if in snapshot operation.
-	protected final Map<String, BeanType> beanCache;
-	
-	protected final BeanCacheUpdater<BeanType> beanCacheUpdater;
+	protected final BeanCache<BeanType> beanCache;
 	
 	/**
 	 * @param beanType
 	 * @param entityId The server knows the entity by this name
 	 */
-	public Manager(BeanCacheUpdater<BeanType> beanCacheUpdater) {
-		this.beanCacheUpdater = beanCacheUpdater;
-		this.beanType = beanCacheUpdater.getBeanType();
-		this.entityId = beanCacheUpdater.getEntityId();
-		
-		this.beanCache = beanCacheUpdater.getInitializedBeanCache();
+	public Manager(BeanCache<BeanType> beanCache) {
+		this.beanCache = beanCache;
+		this.beanType = beanCache.getBeanType();
+		this.entityId = beanCache.getEntityId();
 	}
 	
 	/**
 	 * For use with getSnapshot()
 	 */
+	/*
 	protected Manager(Class<BeanType> beanType, String entityId, Map<String, BeanType> beanCache) {
 		this.beanType = beanType;
 		this.entityId = entityId;
-		this.beanCacheUpdater = null;
+		this.beanCache = null;
 		
 		//shallow copy that doesn't have an updater associated
 		//with it and therefore does not need to support concurrency
-		this.beanCache = new HashMap<String, BeanType>(beanCache); 
+		this.beanCache = new HashMap<String, BeanType>(beanCache.getAllMappings()); 
 	}
+	*/
 
 	/**
 	 * Returns the bean using its identifier, or null if the bean is not
@@ -88,7 +85,7 @@ public class Manager<BeanType> {
 	 * Therefore, this method returns a map of identifiers to beans.
 	 */
 	protected Map<String, BeanType> getAllMappings() {
-		return beanCache;
+		return beanCache.getAllMappings();
 	}
 	
 	/**
@@ -100,26 +97,28 @@ public class Manager<BeanType> {
 	 * atomic transaction. Release it and let it be garbage collected once
 	 * you've finished with it.
 	 */
+	/*
 	public final Manager<BeanType> getSnapshot() {
 		return new Manager<BeanType>(this.beanType, this.entityId, this.beanCache);
 	}
+	*/
 	
 	public Class<BeanType> getBeanType() {
 		return beanType;
 	}
 	
 	public void addCacheObserver(CacheObserver<BeanType> cacheObserver) {
-		if(beanCacheUpdater == null) {
+		if(beanCache == null) {
 			throw new UnsupportedOperationException("Cannot register an observer on a snapshot");	
 		}
-		beanCacheUpdater.addCacheObserver(cacheObserver);
+		beanCache.addCacheObserver(cacheObserver);
 	}
 	
 	public void removeCacheObserver(CacheObserver<BeanType> cacheObserver) {
-		if(beanCacheUpdater == null) {
+		if(beanCache == null) {
 			throw new UnsupportedOperationException("Cannot remove an observer on a snapshot");	
 		}
-		beanCacheUpdater.removeCacheObserver(cacheObserver);
+		beanCache.removeCacheObserver(cacheObserver);
 	}
 	
 }

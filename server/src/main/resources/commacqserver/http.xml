@@ -20,7 +20,7 @@ http://www.springframework.org/schema/jms http://www.springframework.org/schema/
     
 
     <bean id="csvHttpFileHandler" class="org.commacq.http.CsvHttpFileHandler"
-          c:dataManager-ref="dataManager"
+          c:layer-ref="csvDataSourceCaches"
     />
           
     <!--
@@ -28,7 +28,7 @@ http://www.springframework.org/schema/jms http://www.springframework.org/schema/
     a web socket from javascript.
     -->
     <bean id="csvGridHandler" class="org.commacq.http.CsvGridHandler"
-          c:dataManager-ref="dataManager"
+          c:layer-ref="csvDataSourceCaches"
     />
     
     <!--
@@ -37,7 +37,7 @@ http://www.springframework.org/schema/jms http://www.springframework.org/schema/
     Contains a reference to the collection of normal HTTP handlers.
     -->
     <bean id="csvWebSocketHandler" class="org.commacq.http.CsvWebSocketHandler"
-          c:dataManager-ref="dataManager"
+          c:layer-ref="csvDataSourceCaches"
           c:webSocketOutboundHandler-ref="webSocketOutboundHandler"
           p:handler-ref="contextHandlerCollection"
     />

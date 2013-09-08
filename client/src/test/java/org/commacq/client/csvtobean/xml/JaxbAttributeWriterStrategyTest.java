@@ -7,9 +7,10 @@ import static org.junit.Assert.assertTrue;
 
 import java.util.Map;
 
+import org.commacq.CsvLineCallbackListImpl;
+import org.commacq.CsvTextBlockToCallback;
+import org.commacq.client.CsvToBeanStrategy;
 import org.junit.Test;
-
-import org.commacq.client.CsvToBeanStrategyResult;
 
 public class JaxbAttributeWriterStrategyTest {
 
@@ -20,9 +21,9 @@ public class JaxbAttributeWriterStrategyTest {
 		             "BMW,A car" + "\n" +
 				     "MERC,Another car";
 		
-		JaxbAttributeWriterStrategy<BeanWithXmlAnnotations> strategy = new JaxbAttributeWriterStrategy<>(BeanWithXmlAnnotations.class);
+		JaxbAttributeWriterStrategy strategy = new JaxbAttributeWriterStrategy();
 		
-		Map<String, BeanWithXmlAnnotations> output = strategy.getBeans(csv).getUpdated();
+		Map<String, BeanWithXmlAnnotations> output = getBeans(BeanWithXmlAnnotations.class, strategy, csv);
 		
 		assertEquals("BMW", output.get("BMW").getId());		
 	}
@@ -34,9 +35,9 @@ public class JaxbAttributeWriterStrategyTest {
 				"BMW,A car" + "\n" +
 				"MERC,Another car";
 		
-		JaxbAttributeWriterStrategy<UPPERCASEBeanWithXmlAnnotations> strategy = new JaxbAttributeWriterStrategy<>(UPPERCASEBeanWithXmlAnnotations.class);
+		JaxbAttributeWriterStrategy strategy = new JaxbAttributeWriterStrategy();
 		
-		Map<String, UPPERCASEBeanWithXmlAnnotations> output = strategy.getBeans(csv).getUpdated();
+		Map<String, UPPERCASEBeanWithXmlAnnotations> output = getBeans(UPPERCASEBeanWithXmlAnnotations.class, strategy, csv);
 		
 		assertEquals("BMW", output.get("BMW").getId());		
 	}
@@ -48,9 +49,9 @@ public class JaxbAttributeWriterStrategyTest {
 				"BMW,A car" + "\n" +
 				"MERC,";
 		
-		JaxbAttributeWriterStrategy<BeanWithXmlAnnotations> strategy = new JaxbAttributeWriterStrategy<>(BeanWithXmlAnnotations.class);
+		JaxbAttributeWriterStrategy strategy = new JaxbAttributeWriterStrategy();
 		
-		Map<String, BeanWithXmlAnnotations> output = strategy.getBeans(csv).getUpdated();
+		Map<String, BeanWithXmlAnnotations> output = getBeans(BeanWithXmlAnnotations.class, strategy, csv);
 		
 		assertNull(output.get("MERC").getName());		
 	}
@@ -68,25 +69,12 @@ public class JaxbAttributeWriterStrategyTest {
 	                 "ABC,TRUE" + "\n" +
 				     "DEF,FALSE";
 		
-		JaxbAttributeWriterStrategy<BeanWithXmlAnnotationsBoolean> strategy = new JaxbAttributeWriterStrategy<>(BeanWithXmlAnnotationsBoolean.class);
+		JaxbAttributeWriterStrategy strategy = new JaxbAttributeWriterStrategy();
 		
-		Map<String, BeanWithXmlAnnotationsBoolean> output = strategy.getBeans(csv).getUpdated();
+		Map<String, BeanWithXmlAnnotationsBoolean> output = getBeans(BeanWithXmlAnnotationsBoolean.class, strategy, csv);
 		
 		assertTrue(output.get("ABC").isActive());
 		assertFalse(output.get("DEF").isActive());
-	}
-	
-	@Test
-	public void testDeletedRows() {
-		String csv = "id,active" + "\n" +
-                     "ABC,TRUE" + "\n" +
-				     "DEF"; //Indicates that DEF is deleted
-		
-		JaxbAttributeWriterStrategy<BeanWithXmlAnnotationsBoolean> strategy = new JaxbAttributeWriterStrategy<>(BeanWithXmlAnnotationsBoolean.class);
-		
-		CsvToBeanStrategyResult<BeanWithXmlAnnotationsBoolean> result = strategy.getBeans(csv);
-		
-		assertTrue(result.getDeleted().contains("DEF"));
 	}
 	
 	@Test
@@ -94,6 +82,13 @@ public class JaxbAttributeWriterStrategyTest {
 		assertEquals("lowerCamelCase", JaxbAttributeWriterStrategy.convertClassNameToTagName("lowerCamelCase"));
 		assertEquals("upperCamelCase", JaxbAttributeWriterStrategy.convertClassNameToTagName("UpperCamelCase"));
 		assertEquals("abcdUppercase", JaxbAttributeWriterStrategy.convertClassNameToTagName("ABCDUppercase"));
+	}
+	
+	private <BeanType> Map<String, BeanType> getBeans(Class<BeanType> beanType, CsvToBeanStrategy strategy, String csvHeaderAndBody) {
+		CsvTextBlockToCallback csvTextBlockToCallback = new CsvTextBlockToCallback();
+		CsvLineCallbackListImpl callbackListImpl = new CsvLineCallbackListImpl();
+		csvTextBlockToCallback.presentTextBlockToCsvLineCallback(csvHeaderAndBody, callbackListImpl, true);
+		return strategy.getBeans(beanType, callbackListImpl.getColumnNamesCsv(), callbackListImpl.getUpdateList());
 	}
 	
 }

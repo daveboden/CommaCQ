@@ -3,11 +3,8 @@ package org.commacq.db;
 import java.util.Collections;
 import java.util.Set;
 
-import javax.annotation.concurrent.Immutable;
-
 import lombok.Data;
 
-@Immutable
 @Data
 public final class EntityConfig {
 	

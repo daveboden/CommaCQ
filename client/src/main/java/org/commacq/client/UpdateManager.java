@@ -12,8 +12,7 @@ import javax.jms.TextMessage;
 import org.apache.commons.lang3.Validate;
 import org.springframework.jms.core.JmsTemplate;
 import org.springframework.jms.core.MessageCreator;
-
-import org.commacq.MessageFields;
+import org.commacq.jms.MessageFields;
 
 public class UpdateManager {
 	

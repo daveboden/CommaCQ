@@ -1,18 +1,12 @@
 package org.commacq.textdir.csv;
 
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
-import java.util.Map;
-import java.util.SortedSet;
-import java.util.TreeSet;
-
-import lombok.extern.slf4j.Slf4j;
 
 import org.apache.commons.lang3.StringEscapeUtils;
-import org.commacq.CsvCache;
-import org.commacq.CsvDataSource;
-import org.commacq.CsvMarshaller.CsvLine;
+import org.commacq.CsvLine;
+import org.commacq.CsvLineCallback;
+import org.commacq.CsvUpdatableDataSourceBase;
 import org.commacq.textdir.TextFileMapper;
 import org.commacq.textdir.TextFileSingleDirectory;
 
@@ -27,62 +21,63 @@ import org.commacq.textdir.TextFileSingleDirectory;
  * id1,Whatever the contents of id1.txt are
  * id2,Whatever the contents of id2.txt are
  */
-@Slf4j
-public class CsvDataSourceTextFileSingleDirectory implements CsvDataSource {
+public class CsvDataSourceTextFileSingleDirectory extends CsvUpdatableDataSourceBase {
 	
 	private static final String TEXT_ATTRIBUTE = "text";
+	private static final String CSV_COLUMN_HEADINGS = "id," + TEXT_ATTRIBUTE;
 
     private final String entityId;
     private final TextFileSingleDirectory<CsvLine> textFileSingleDirectory;
     private final CsvTextFileMapper mapper = new CsvTextFileMapper();
     
     public CsvDataSourceTextFileSingleDirectory(String entityId, String directory) {
-    	
-        this.entityId = entityId;
-        
+        this.entityId = entityId;      
         this.textFileSingleDirectory = new TextFileSingleDirectory<>(entityId, directory);
+    }
+    
+    @Override
+	public void getAllCsvLines(CsvLineCallback callback) {
+		List<CsvLine> csvLines = textFileSingleDirectory.getAll(mapper);
+		for(CsvLine csvLine : csvLines) {
+			callback.processUpdate(CSV_COLUMN_HEADINGS, csvLine);
+		}
+	}
 
-    }
-    
-    @Override
-    public Map<String, CsvCache> createInitialCaches() {
-        return Collections.singletonMap(entityId, createInitialCache(entityId));
-    }
-    
-    @Override
-    public CsvCache createInitialCache(String entityId) {
-    	CsvCache csvCache = new CsvCache("id," + TEXT_ATTRIBUTE);
-    	
-    	List<CsvLine> csvLines = textFileSingleDirectory.getAll(entityId, mapper);
-    	for(CsvLine csvLine : csvLines) {
-    		csvCache.updateLine(csvLine);    		
-    	}
-    	
-    	return csvCache;
-    }
-    
-    @Override
-    public SortedSet<String> getEntityIds() {
-        return new TreeSet<>(Collections.singleton(entityId));
-    }
-    
-    @Override
-    public CsvLine getCsvLine(String entityId, String id) {
-    	return textFileSingleDirectory.getRow(entityId, id, mapper);
-    }
+	@Override
+	public void getCsvLines(Collection<String> ids, CsvLineCallback callback) {
+		for(String id : ids) {
+			getCsvLine(id, callback);
+		}
+	}
 
-    public List<CsvLine> getCsvLines(final String entityId, final Collection<String> ids) {
-    	return textFileSingleDirectory.getRows(entityId, ids, mapper);
+	@Override
+	public void getCsvLine(String id, CsvLineCallback callback) {
+		CsvLine csvLine = textFileSingleDirectory.getRow(id, mapper);
+		if(csvLine != null) {
+			callback.processUpdate(CSV_COLUMN_HEADINGS, csvLine);
+		} else {
+			callback.processRemove(id);
+		}
+	}
+
+	@Override
+	public void getCsvLinesForGroup(String group, String idWithinGroup, CsvLineCallback callback) {
+		throw new UnsupportedOperationException("Groups are not supported by text file data sources");
+	}
+    
+    @Override
+    public String getEntityId() {
+        return entityId;
     }
     
     @Override
-    public List<CsvLine> getCsvLinesForGroup(String entityId, String group, String idWithinGroup) {
-        throw new UnsupportedOperationException("Groups are not supported by text file data sources");
+    public String getColumnNamesCsv() {
+    	return CSV_COLUMN_HEADINGS;
     }
     
     protected class CsvTextFileMapper implements TextFileMapper<CsvLine> {
-    	
-    	@Override
+
+		@Override
     	public CsvLine mapTextFile(String id, String text) {
     		String idEscaped = StringEscapeUtils.escapeCsv(id);
     		String textEscaped = StringEscapeUtils.escapeCsv(text);

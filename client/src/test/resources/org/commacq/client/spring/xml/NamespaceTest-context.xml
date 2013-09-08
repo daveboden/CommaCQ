@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:c="http://www.springframework.org/schema/c"
+       xmlns:cq="http://commacq.org/client"
+       xsi:schemaLocation="
+http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd
+http://commacq.org/client http://commacq.org/client/comma-cq-1.0.xsd
+">
+    <bean id="beanTypeSelectionStrategy" class="org.commacq.client.factory.BeanTypeSelectionStrategyEntityNameWithinPackages">
+        <constructor-arg value="org.commacq.testclient"/>
+    </bean>
+
+	<bean id="csvDataSourceResourceFactory" class="org.commacq.CsvDataSourceResourceFactory"
+        c:resourceBase="classpath:/"
+        c:capitalizeEntityName="false"
+        c:extension=".csv"
+	/>
+	
+	<bean id="csvToBeanStrategy" class="org.commacq.client.CsvToBeanStrategySpringConstructor"/>
+	
+	<bean id="csvToBeanConverterFactory" class="org.commacq.client.CsvToBeanConverterFactory"
+	      c:beanTypeSelectionStrategy-ref="beanTypeSelectionStrategy"
+	      c:csvToBeanStrategy-ref="csvToBeanStrategy"
+	/>
+	
+
+	<!-- beanCacheFactory is a special bean id, referenced by the Manager bean definition parser -->
+    <bean id="beanCacheFactory" class="org.commacq.client.BeanCacheFactoryCsvDataSourceFactory"
+          c:csvDataSourceFactory-ref="csvDataSourceResourceFactory"
+          c:csvToBeanConverterFactory-ref="csvToBeanConverterFactory"
+    />
+
+    <bean id="managerFactory" class="org.commacq.client.factory.ManagerFactoryDefault"/>
+
+    <cq:manager entityName="customer" beanType="org.commacq.testclient.Customer"/> <!-- id defaults to customerManager -->
+    <cq:manager id="customerManager2" entityName="customer" beanType="org.commacq.testclient.Customer2"/>
+    <cq:manager id="customerManager3" entityName="customer" managerType="org.commacq.testclient.CustomerManager2" beanType="org.commacq.testclient.Customer2"/>
+
+</beans>

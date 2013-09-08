@@ -3,7 +3,7 @@ package org.commacq.textdir;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 
-import org.commacq.CsvCache;
+import org.commacq.CsvLineCallbackSingleImpl;
 import org.commacq.textdir.csv.CsvDataSourceTextFileSingleDirectory;
 import org.junit.Test;
 
@@ -16,20 +16,23 @@ public class CsvDataSourceTextFileSingleDirectoryTest {
 				"classpath:/org/commacq/textdir/CsvDataSourceTextFileSingleDirectoryTestFiles"
 		);
 		
-		CsvCache csvCache = source.createInitialCache("testEntity");
+		CsvLineCallbackSingleImpl callback = new CsvLineCallbackSingleImpl();
 		
-		assertEquals("id1,Contents of id1", csvCache.getLine("id1"));
+		source.getCsvLine("id1", callback);
+		assertEquals("id1,Contents of id1", callback.getCsvLineAndClear().getCsvLine());
 		
+		source.getCsvLine("id2", callback);
 		assertEquals("Quoted because of the comma in the text",
 				     "id2,\"Contents of id2, which contains a comma.\"",
-				     csvCache.getLine("id2"));
+				     callback.getCsvLineAndClear().getCsvLine());
 		
-		
+		source.getCsvLine("id3,filename,with,commas", callback);
 		assertEquals("Quoted id and empty text",
 				     "\"id3,filename,with,commas\",",
-				     csvCache.getLine("id3,filename,with,commas"));
+				     callback.getCsvLineAndClear().getCsvLine());
 		
-		assertNull(csvCache.getLine("madeUpIdentifier"));
+		source.getCsvLine("madeUpIdentifier", callback);
+		assertNull(callback.getCsvLineAndClear().getCsvLine());
 	}
 
 }

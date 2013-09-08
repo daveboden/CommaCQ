@@ -1,16 +1,17 @@
 package org.commacq.client;
 
 import java.io.IOException;
-import java.io.Reader;
 import java.io.StringReader;
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
+import java.util.Map.Entry;
 
 import org.apache.commons.csv.CSVParser;
+import org.commacq.CsvLine;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.config.ConstructorArgumentValues;
@@ -29,46 +30,63 @@ import org.springframework.context.support.GenericXmlApplicationContext;
  * 
  * NOT THREADSAFE
  */
-public class CsvToBeanStrategySpringConstructor<BeanType> implements CsvToBeanStrategy<BeanType> {
+public class CsvToBeanStrategySpringConstructor implements CsvToBeanStrategy {
 	
 	Logger logger = LoggerFactory.getLogger(CsvToBeanStrategySpringConstructor.class);
 	
-	private final Class<BeanType> beanType;
-	private final GenericBeanDefinition beanDef;
 	private final GenericXmlApplicationContext context;
-	private final ConstructorArgumentValues cav = new ConstructorArgumentValues();
 
-	public CsvToBeanStrategySpringConstructor(Class<BeanType> beanType) {
-		this.beanType = beanType;
-		beanDef = new GenericBeanDefinition();
-		beanDef.setBeanClass(beanType);
-		
+	public CsvToBeanStrategySpringConstructor() {
 		context = new GenericXmlApplicationContext("classpath:org/commacq/client/csv/csvConversionService.xml");
 	}
 	
+	//TODO Totally inefficient, converts from string to csv array back to string and back to csv array again.
 	@Override
-	public CsvToBeanStrategyResult<BeanType> getBeans(String csvHeaderAndBody) {
-		 Reader in = new StringReader(csvHeaderAndBody);
-		 String[][] csv;
-		 try {
-			 csv = new CSVParser(in).getAllValues();
-		} catch (IOException ex) {
-			throw new RuntimeException(ex);
+	public <BeanType> BeanType getBean(Class<BeanType> beanType, String columnNamesCsv, CsvLine csvLine) {
+		CSVParser parser = new CSVParser(new StringReader(columnNamesCsv));
+		String[] columnNames;
+		try {
+			columnNames = parser.getLine();
+		} catch(IOException ex) {
+			throw new RuntimeException("Error parsing CSV column names: " + columnNamesCsv);
 		}
-		 
-		Map<String, BeanType> beans = new HashMap<>(csv.length);
-		Set<String> deleted = new HashSet<>();
 		
-		List<String> columnNames = Arrays.asList(csv[0]);
+		parser = new CSVParser(new StringReader(csvLine.getCsvLine()));
+		
+		String[] values;
+		try {
+			 values = parser.getLine();
+		} catch (IOException ex) {
+			throw new RuntimeException("Error parsing CSV row: " + csvLine.getCsvLine());
+		}
+		
+		Map<String, BeanType> beans = getBeans(beanType, Arrays.asList(columnNames), Collections.singletonMap(csvLine.getId(), Arrays.asList(values)));
+		return beans.get(csvLine.getId());
+	}
+	
+	@Override
+	public <BeanType> Map<String, BeanType> getBeans(Class<BeanType> beanType, String columnNamesCsv, Collection<CsvLine> csvLines) {
+		Map<String, BeanType> beansMap = new HashMap<>(csvLines.size());
+		for(CsvLine csvLine : csvLines) {
+			beansMap.put(csvLine.getId(), getBean(beanType, columnNamesCsv, csvLine));
+		}
+		return beansMap;
+	}
+	
+	@Override
+	public <BeanType> Map<String, BeanType> getBeans(Class<BeanType> beanType, List<String> columnNames, Map<String, List<String>> body) {
+
+		final ConstructorArgumentValues cav = new ConstructorArgumentValues();
+		
+		final GenericBeanDefinition beanDef = new GenericBeanDefinition();
+		beanDef.setBeanClass(beanType);
+		
 		logger.info("Parsing CSV; column names are {}", columnNames);
+
+		Map<String, BeanType> beans = new HashMap<>(body.size());
 		
-		for(int lineIndex = 1; lineIndex < csv.length; lineIndex++) {
-			List<String> line = Arrays.asList(csv[lineIndex]);
-			
-			if(line.size() == 1) {
-				deleted.add(line.get(0));
-				continue;
-			}
+		for(Entry<String, List<String>> lineEntry : body.entrySet()) {
+			List<String> line = lineEntry.getValue();
 			
 			for(int i = 0; i < columnNames.size(); i++) {
 				String columnName = columnNames.get(i);
@@ -93,17 +111,8 @@ public class CsvToBeanStrategySpringConstructor<BeanType> implements CsvToBeanSt
 		
 		logger.info("Updated {} beans", beans.size());
 		logger.debug("Updated beans {}", beans); //Potentially very slow logging operation
-		if(logger.isDebugEnabled()) {
-			if(!deleted.isEmpty()) {
-				logger.debug("Deleted ids {}", deleted);
-			}
-		}
-		return new CsvToBeanStrategyResult<>(beans, deleted); 
-	}
-	
-	@Override
-	public Class<BeanType> getBeanType() {
-		return beanType;
+
+		return beans; 
 	}
 	
 }

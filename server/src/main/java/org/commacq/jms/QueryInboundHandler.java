@@ -1,9 +1,5 @@
 package org.commacq.jms;
 
-import java.io.IOException;
-import java.io.StringWriter;
-import java.io.Writer;
-
 import javax.jms.InvalidDestinationException;
 import javax.jms.JMSException;
 import javax.jms.Message;
@@ -11,11 +7,11 @@ import javax.jms.MessageProducer;
 import javax.jms.Session;
 import javax.jms.TextMessage;
 
-import org.commacq.CsvCache;
-import org.commacq.DataManager;
-import org.commacq.MessageFields;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
+
+import org.commacq.CsvDataSource;
+import org.commacq.CsvDataSourceLayer;
+import org.commacq.CsvLineCallbackStringWriter;
 import org.springframework.jms.listener.SessionAwareMessageListener;
 
 /**
@@ -26,79 +22,75 @@ import org.springframework.jms.listener.SessionAwareMessageListener;
  * 
  * Incoming messages always have a reply queue set (normally a temporary queue).
  */
+@Slf4j
 public class QueryInboundHandler implements SessionAwareMessageListener<Message> {
-
-	private static Logger logger = LoggerFactory.getLogger(QueryInboundHandler.class);
 	
-	private final DataManager dataManager;
+	private final CsvDataSourceLayer layer;
 	
-	public QueryInboundHandler(DataManager dataManager) {
-		this.dataManager = dataManager;
+	public QueryInboundHandler(CsvDataSourceLayer layer) {
+		this.layer = layer;
 	}
 	
-	private ThreadLocal<StringWriter> writerThreadLocal = new ThreadLocal<StringWriter>() {
-		@Override
-		protected StringWriter initialValue() {
-			return new StringWriter(1_000_000);
-		}
+	private ThreadLocal<CsvLineCallbackStringWriter> writerThreadLocal = new ThreadLocal<CsvLineCallbackStringWriter>() {
+		protected CsvLineCallbackStringWriter initialValue() {
+			return new CsvLineCallbackStringWriter();
+		};
 		
-		@Override
-		public StringWriter get() {
-			StringWriter output = super.get();
-			//Clear down the buffer each time
-			output.getBuffer().setLength(0);
-			return output;
-		}
+		public CsvLineCallbackStringWriter get() {
+			CsvLineCallbackStringWriter writer = super.get();
+			writer.clear();
+			return writer;
+		};
 	};
 	
 	@Override
 	public void onMessage(Message message, Session session) throws JMSException {
-		logger.debug("Received query message: {}", message);
-		String entityName;
+		log.debug("Received query message: {}", message);
+		String entityId;
 		try {
-			entityName = message.getStringProperty(MessageFields.entityId);
+			entityId = message.getStringProperty(MessageFields.entityId);
 		} catch (JMSException ex) {
-			logger.error("Could not perform query", ex);
+			log.error("Could not perform query", ex);
 			return;
 		}
 		
-		logger.info("Received a query for entity {}", entityName);
+		log.info("Received a query for entity {}", entityId);
 		
-		CsvCache csvCache = dataManager.getCsvCache(entityName);
+		CsvDataSource source = layer.getCsvDataSource(entityId);
 		
-		if(csvCache == null) {
-			logger.warn("Entity does not exist on this server: {}", entityName);
+		if(source == null) {
+			log.warn("Entity does not exist on this server: {}", entityId);
 			TextMessage outputMessage = session.createTextMessage();
 			outputMessage.setJMSCorrelationID(message.getJMSCorrelationID());
-			outputMessage.setStringProperty("error", "Entity does not exist: " + entityName);
+			outputMessage.setStringProperty("error", "Entity does not exist: " + entityId);
 			MessageProducer messageProducer = session.createProducer(message.getJMSReplyTo());
 			messageProducer.send(outputMessage);
 			return;
 		}
 		
-		Writer writer = writerThreadLocal.get();
-		
-		try {
-			csvCache.writeToOutput(writer);
-		} catch (IOException ex) {
-			//Can't see how this would happen with a StringWriter
-			throw new RuntimeException(ex);
+		String text;
+		if(message.getBooleanProperty(MessageFields.columnNamesOnly)) {
+			text = source.getColumnNamesCsv();
+		} else {			
+			CsvLineCallbackStringWriter writer = writerThreadLocal.get();
+			source.getAllCsvLines(writer);
+			text = writer.toString();
 		}
 		
-		TextMessage outputMessage = session.createTextMessage(writer.toString());
+		TextMessage outputMessage = session.createTextMessage(text);
 		outputMessage.setJMSCorrelationID(message.getJMSCorrelationID());
 		
 		MessageProducer messageProducer;
 		try {
 			messageProducer = session.createProducer(message.getJMSReplyTo());
 		} catch(InvalidDestinationException ex) {
-			logger.warn("Cannot send reply; client has gone away: {}", message.getJMSReplyTo());
+			log.warn("Cannot send reply; client has gone away: {}", message.getJMSReplyTo());
 			return;
 		}
 		
 		messageProducer.send(outputMessage);
 		
-		logger.info("Completed query for entity {}", entityName);
+		log.info("Completed query for entity {}", entityId);
 	}
 	
 }

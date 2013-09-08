@@ -16,10 +16,10 @@ http://commacq.org/client http://commacq.org/client/comma-cq-1.0.xsd
     <import resource="classpath:commacqserver/test/jms-listener-test.xml"/>
     
     <import resource="classpath:commacqserver/jms-handlers.xml"/>
-    <import resource="classpath:commacqserver/data-manager.xml"/>
     <import resource="classpath:commacqserver/database-connection.xml"/>
     
     <import resource="classpath:commacqserver/csv-data-source-database.xml"/>
+    <import resource="classpath:commacqserver/csv-data-source-database-cache.xml"/>
     <!-- <import resource="classpath:commacqserver/http.xml"/> -->
     
     <import resource="classpath:org/commacq/client/update-manager.xml"/>

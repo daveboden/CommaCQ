@@ -2,7 +2,6 @@ package org.commacq.textdir;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 
 import lombok.extern.slf4j.Slf4j;
@@ -31,27 +30,17 @@ public class TextFileSingleDirectory<ROW> {
 	
 	private static final ResourceLoader resourceLoader = new DefaultResourceLoader();
 
-    private final String entityId;
     private final String directory;
     
     public TextFileSingleDirectory(String entityId, String directory) {
     	
-        this.entityId = entityId;
         this.directory = directory;
         
         log.info("Successfully created text file single directory source with entity id {} at: {}",
                  entityId, directory);
     }
-        
-    private void checkEntityId(String entityId) {
-    	if(!entityId.equals(this.entityId)) {
-    		throw new RuntimeException("Entity id " + entityId + " is not supported by this source. Only " +
-    				this.entityId + " is supported.");
-    	}    	
-    }
     
-    public List<ROW> getAll(String entityId, TextFileMapper<ROW> mapper) {
-        checkEntityId(entityId);
+    public List<ROW> getAll(TextFileMapper<ROW> mapper) {
 		ResourceLoader resourceLoader = new DefaultResourceLoader();
 		PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver(resourceLoader);
 		String resourcesString = directory + "/*" + SUFFIX;
@@ -83,34 +72,19 @@ public class TextFileSingleDirectory<ROW> {
 		return filename.substring(0, filename.length() - SUFFIX.length());
 	}
     
-	public ROW getRow(String entityId, String id, TextFileMapper<ROW> mapper) {
-		checkEntityId(entityId);
-
+	public ROW getRow(String id, TextFileMapper<ROW> mapper) {
         //Get info from file id.txt
     	String location = directory + "/" + id + SUFFIX;
         Resource idResource = resourceLoader.getResource(location);
-        if(idResource == null) {
-			throw new RuntimeException("Could not obtain file: " + location);
-		}
         String text;
 		try {
 			text = IOUtils.toString(idResource.getInputStream());
+			return mapper.mapTextFile(id, text);
 		} catch (IOException ex) {
-			throw new RuntimeException("Could not read file: " + idResource);
+			log.debug("Could not read file: {} - returning null", idResource);
+			return null;
 		}
 		
-		return mapper.mapTextFile(id, text);
-	}    
-
-
-    public List<ROW> getRows(final String entityId, final Collection<String> ids, TextFileMapper<ROW> mapper) {
-    	checkEntityId(entityId);
-        //Get info from all the files id1.txt, id2.txt etc.
-        List<ROW> rows = new ArrayList<ROW>(ids.size());
-        for(String id : ids) {
-        	rows.add(getRow(entityId, id, mapper));
-        }
-        return rows;
-    }
+	}
     
 }
