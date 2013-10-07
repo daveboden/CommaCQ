@@ -1,10 +1,6 @@
 package org.commacq.cache.csv;
 
-import java.io.IOException;
-import java.io.Writer;
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -16,6 +12,7 @@ import javax.annotation.concurrent.ThreadSafe;
 import org.apache.commons.lang3.Validate;
 import org.commacq.CsvLine;
 import org.commacq.CsvLineCallback;
+import org.commacq.CsvUpdateBlockException;
 
 /**
  * Contains a linked list of CSV lines that can be traversed and written
@@ -82,7 +79,11 @@ public final class CsvCache {
 	
 	public void visitAll(CsvLineCallback callback) {
 		for(CsvLine csvLine : linesIdMap.values()) {
-			callback.processUpdate(columnNamesCsv, csvLine);
+			try {
+				callback.processUpdate(columnNamesCsv, csvLine);
+			} catch (CsvUpdateBlockException ex) {
+				throw new RuntimeException(ex);
+			}
 		}
 	}
 	
@@ -90,7 +91,11 @@ public final class CsvCache {
 		for(String id : ids) {
 			CsvLine csvLine = linesIdMap.get(id);
 			if(csvLine != null) {
-				callback.processUpdate(columnNamesCsv, csvLine);
+				try {
+					callback.processUpdate(columnNamesCsv, csvLine);
+				} catch (CsvUpdateBlockException ex) {
+					throw new RuntimeException(ex);
+				}
 			}
 		}
 	}
@@ -98,7 +103,11 @@ public final class CsvCache {
 	public void visitGroup(CsvLineCallback callback, String group, String idWithinGroup) {
 		Map<String, CsvLine> groupContents = groupsMap.get(group);
 		for(CsvLine csvLine : groupContents.values()) {
-			callback.processUpdate(idWithinGroup, csvLine);
+			try {
+				callback.processUpdate(idWithinGroup, csvLine);
+			} catch (CsvUpdateBlockException ex) {
+				throw new RuntimeException(ex);
+			}
 		}
 	}
 

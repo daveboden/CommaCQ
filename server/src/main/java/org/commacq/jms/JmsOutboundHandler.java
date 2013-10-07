@@ -14,6 +14,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.commacq.CsvDataSource;
 import org.commacq.CsvLine;
 import org.commacq.CsvLineCallback;
+import org.commacq.CsvUpdateBlockException;
 import org.springframework.jms.core.JmsTemplate;
 import org.springframework.jms.core.MessageCreator;
 
@@ -44,12 +45,12 @@ public class JmsOutboundHandler implements CsvLineCallback {
     }
     
     @Override
-    public void startUpdateBlock(String columnNamesCsv) {
+    public void startUpdateBlock(String columnNamesCsv) throws CsvUpdateBlockException {
     	currentWriter.println(columnNamesCsv);
     }
     
     @Override
-    public void finishUpdateBlock() {    	
+    public void finishUpdateBlock() throws CsvUpdateBlockException {    	
         jmsTemplate.send(broadcastTopic, new MessageCreator() {
             @Override
             public Message createMessage(Session session) throws JMSException {
@@ -67,28 +68,37 @@ public class JmsOutboundHandler implements CsvLineCallback {
             }
         });
     	
-    	//Reset the buffer
-    	currentText.getBuffer().setLength(0);
-    	bulkUpdate = false;
+    	resetTheBuffer();
     }
     
     @Override
-    public void processUpdate(String columnNamesCsv, CsvLine csvLine) {
+    public void cancel() {
+    	//When batching is introduced, cancelling may need to send a message.
+    	resetTheBuffer();
+    }
+    
+    private void resetTheBuffer() {
+    	currentText.getBuffer().setLength(0);
+    	bulkUpdate = false;    	
+    }
+    
+    @Override
+    public void processUpdate(String columnNamesCsv, CsvLine csvLine) throws CsvUpdateBlockException {
     	currentWriter.println(csvLine.getCsvLine());
     }
     
     @Override
-    public void processRemove(String id) {
+    public void processRemove(String id) throws CsvUpdateBlockException {
     	currentWriter.println(id);
     }
     
     @Override
-    public void startBulkUpdate(String columnNamesCsv) {
+    public void startBulkUpdate(String columnNamesCsv) throws CsvUpdateBlockException {
     	bulkUpdate = true;
     }
     
     @Override
-    public void startBulkUpdateForGroup(String group, String idWithinGroup) {
+    public void startBulkUpdateForGroup(String group, String idWithinGroup) throws CsvUpdateBlockException {
     	//Not yet supported
     }
     

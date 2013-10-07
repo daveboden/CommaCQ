@@ -35,13 +35,13 @@ public abstract class CsvUpdatableDataSourceBase implements CsvUpdatableDataSour
     }
     
     @Override
-	public void startBulkUpdate(String columnNamesCsv) {
+	public void startBulkUpdate(String columnNamesCsv) throws CsvUpdateBlockException {
 		composite.startBulkUpdate(columnNamesCsv);
 		getAllCsvLines(composite);
 	}
 
 	@Override
-	public void startBulkUpdateForGroup(String group, String idWithinGroup) {
+	public void startBulkUpdateForGroup(String group, String idWithinGroup) throws CsvUpdateBlockException {
 		//By definition an "untrusted" update. The only information that the update contains is the
 		//identifier within the group that needs to be reloaded.
 		composite.startBulkUpdateForGroup(group, idWithinGroup);
@@ -49,22 +49,27 @@ public abstract class CsvUpdatableDataSourceBase implements CsvUpdatableDataSour
 	}
 
 	@Override
-	public void startUpdateBlock(String columnNamesCsv) {
+	public void startUpdateBlock(String columnNamesCsv) throws CsvUpdateBlockException {
 		composite.startUpdateBlock(columnNamesCsv);		
 	}
 
 	@Override
-	public void finishUpdateBlock() {
+	public void finishUpdateBlock() throws CsvUpdateBlockException {
 		composite.finishUpdateBlock();
+	}
+	
+	@Override
+	public void cancel() {
+		composite.cancel();
 	}
 
 	@Override
-	public void processUpdate(String columnNamesCsv, CsvLine csvLine) {
+	public void processUpdate(String columnNamesCsv, CsvLine csvLine) throws CsvUpdateBlockException {
 		composite.processUpdate(columnNamesCsv, csvLine);
 	}
 
 	@Override
-	public void processRemove(String id) {
+	public void processRemove(String id) throws CsvUpdateBlockException {
 		composite.processRemove(id);
 	}
     

@@ -7,6 +7,7 @@ import org.apache.commons.lang3.StringEscapeUtils;
 import org.commacq.CsvLine;
 import org.commacq.CsvLineCallback;
 import org.commacq.CsvUpdatableDataSourceBase;
+import org.commacq.CsvUpdateBlockException;
 import org.commacq.textdir.TextFileMapper;
 import org.commacq.textdir.TextFileSingleDirectory;
 
@@ -39,7 +40,11 @@ public class CsvDataSourceTextFileSingleDirectory extends CsvUpdatableDataSource
 	public void getAllCsvLines(CsvLineCallback callback) {
 		List<CsvLine> csvLines = textFileSingleDirectory.getAll(mapper);
 		for(CsvLine csvLine : csvLines) {
-			callback.processUpdate(CSV_COLUMN_HEADINGS, csvLine);
+			try {
+				callback.processUpdate(CSV_COLUMN_HEADINGS, csvLine);
+			} catch (CsvUpdateBlockException ex) {
+				throw new RuntimeException(ex);
+			}
 		}
 	}
 
@@ -53,10 +58,14 @@ public class CsvDataSourceTextFileSingleDirectory extends CsvUpdatableDataSource
 	@Override
 	public void getCsvLine(String id, CsvLineCallback callback) {
 		CsvLine csvLine = textFileSingleDirectory.getRow(id, mapper);
-		if(csvLine != null) {
-			callback.processUpdate(CSV_COLUMN_HEADINGS, csvLine);
-		} else {
-			callback.processRemove(id);
+		try {
+			if(csvLine != null) {
+					callback.processUpdate(CSV_COLUMN_HEADINGS, csvLine);
+			} else {
+				callback.processRemove(id);
+			}
+		} catch (CsvUpdateBlockException ex) {
+			throw new RuntimeException(ex);
 		}
 	}
 

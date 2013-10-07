@@ -18,6 +18,7 @@ import org.commacq.CsvLine;
 import org.commacq.CsvLineCallback;
 import org.commacq.CsvLineCallbackListImpl;
 import org.commacq.CsvUpdatableDataSourceBase;
+import org.commacq.CsvUpdateBlockException;
 import org.springframework.jms.core.JmsTemplate;
 import org.springframework.jms.core.MessageCreator;
 import org.springframework.jms.core.SessionCallback;
@@ -178,26 +179,30 @@ public class CsvDataSourceJmsQuery extends CsvUpdatableDataSourceBase {
 		printer.println(header);
 		String columnNamesCsv = writer.toString();
 		
-		callback.startUpdateBlock(columnNamesCsv);
-		
-		//Clear writer
-		writer.getBuffer().setLength(0);
-		
-		String[] body;
 		try {
-			while((body = parser.getLine()) != null) {
-				printer.println(body);
-				String line = writer.toString();
-				//Clear writer
-				writer.getBuffer().setLength(0);
-				CsvLine csvLine = new CsvLine(body[0], line);
-				callback.processUpdate(columnNamesCsv, csvLine);
+			callback.startUpdateBlock(columnNamesCsv);
+			
+			//Clear writer
+			writer.getBuffer().setLength(0);
+			
+			String[] body;
+			try {
+				while((body = parser.getLine()) != null) {
+					printer.println(body);
+					String line = writer.toString();
+					//Clear writer
+					writer.getBuffer().setLength(0);
+					CsvLine csvLine = new CsvLine(body[0], line);
+					callback.processUpdate(columnNamesCsv, csvLine);
+				}
+			} catch (IOException ex) {
+				throw new RuntimeException("Error getting CSV line", ex);
 			}
-		} catch (IOException ex) {
-			throw new RuntimeException("Error getting CSV line", ex);
+			
+			callback.finishUpdateBlock();
+		} catch(CsvUpdateBlockException ex) {
+			throw new RuntimeException(ex);
 		}
-		
-		callback.finishUpdateBlock();
 	}
 	
 }

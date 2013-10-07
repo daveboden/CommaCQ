@@ -8,6 +8,7 @@ import org.commacq.CsvDataSource;
 import org.commacq.CsvLine;
 import org.commacq.CsvLineCallback;
 import org.commacq.CsvLineCallbackComposite;
+import org.commacq.CsvUpdateBlockException;
 
 /**
  * Maintains a cache which looks like a CsvDataSource and can be notified of updates.
@@ -32,9 +33,13 @@ public class CsvDataSourceCache implements CsvDataSource {
     	this.csvDataSource = csvDataSource;
     	
     	CsvCacheFactoryInitialLoad initialLoad = new CsvCacheFactoryInitialLoad();
-    	initialLoad.startUpdateBlock(csvDataSource.getColumnNamesCsv());
-    	csvDataSource.getAllCsvLinesAndSubscribe(initialLoad);
-    	initialLoad.finishUpdateBlock();
+    	try {
+			initialLoad.startUpdateBlock(csvDataSource.getColumnNamesCsv());
+			csvDataSource.getAllCsvLinesAndSubscribe(initialLoad);
+			initialLoad.finishUpdateBlock();
+		} catch (CsvUpdateBlockException ex) {
+			throw new RuntimeException(ex);
+		}
     	
     	log.debug("Waiting for initial bulk load to complete");
     	try {
@@ -75,18 +80,26 @@ public class CsvDataSourceCache implements CsvDataSource {
      */
     @Override
     public void getAllCsvLines(CsvLineCallback callback) {
-    	callback.startUpdateBlock(csvCache.getColumnNamesCsv());
-    	csvCache.visitAll(callback);
+    	try {
+			callback.startUpdateBlock(csvCache.getColumnNamesCsv());
+			csvCache.visitAll(callback);
+		} catch (CsvUpdateBlockException ex) {
+			throw new RuntimeException(ex);
+		}
     }
     
     @Override
     public void getCsvLine(String id, CsvLineCallback callback) {
     	CsvLine csvLine = csvCache.getLine(id);
-    	if(csvLine != null) {
-    		callback.processUpdate(csvCache.getColumnNamesCsv(), csvLine);
-    	} else {
-    		callback.processRemove(id);
-    	}
+   		try {
+   			if(csvLine != null) {
+				callback.processUpdate(csvCache.getColumnNamesCsv(), csvLine);
+    		} else {
+    			callback.processRemove(id);
+    		}
+		} catch (CsvUpdateBlockException ex) {
+			throw new RuntimeException(ex);
+		}
     }
     
     @Override
@@ -116,26 +129,26 @@ public class CsvDataSourceCache implements CsvDataSource {
     	private CsvCache localCsvCache;
     	
     	@Override
-    	public void processUpdate(String columnNamesCsv, CsvLine csvLine) { 
+    	public void processUpdate(String columnNamesCsv, CsvLine csvLine) throws CsvUpdateBlockException { 
     		localCsvCache.updateLine(csvLine);
     		subscriptionCallback.processUpdate(columnNamesCsv, csvLine);
     	}
     	
     	@Override
-    	public void processRemove(String id) {
+    	public void processRemove(String id) throws CsvUpdateBlockException {
     		localCsvCache.removeId(id);
     		subscriptionCallback.processRemove(id);
     	}
     	
     	@Override
-    	public void startBulkUpdate(String columnNamesCsv) {
+    	public void startBulkUpdate(String columnNamesCsv) throws CsvUpdateBlockException {
     		log.debug("Initialising local CsvCache with columns {} with context {}.", columnNamesCsv);
     		localCsvCache = new CsvCache(columnNamesCsv);
     		subscriptionCallback.startBulkUpdate(columnNamesCsv);
     	}
     	
     	@Override
-    	public void startUpdateBlock(String columnNamesCsv) {
+    	public void startUpdateBlock(String columnNamesCsv) throws CsvUpdateBlockException {
     		//Check for first time it's ever been called
     		if(localCsvCache == null) {
     			localCsvCache = new CsvCache(columnNamesCsv);
@@ -144,7 +157,7 @@ public class CsvDataSourceCache implements CsvDataSource {
     	}
     	
     	@Override
-    	public void finishUpdateBlock() {
+    	public void finishUpdateBlock() throws CsvUpdateBlockException {
     		if(localCsvCache != csvCache) {
 	    		log.debug("Refresh completed.");
 	    		synchronized(csvCacheMonitor) {
@@ -156,6 +169,18 @@ public class CsvDataSourceCache implements CsvDataSource {
     		subscriptionCallback.finishUpdateBlock();
     	}
     	
+    	@Override
+    	public void cancel() {
+    		if(localCsvCache != csvCache) {
+	    		log.warn("Cancelling update");
+	    		synchronized(csvCacheMonitor) {
+	    			localCsvCache = csvCache;
+	    			csvCacheMonitor.notify();
+	    		}
+    		}
+    		subscriptionCallback.cancel();
+    	}
+    	
     	public synchronized void waitForFirstLoadCompleted() throws InterruptedException {
     		synchronized(csvCacheMonitor){
 	    		while(!firstLoadCompleted) {
@@ -165,7 +190,7 @@ public class CsvDataSourceCache implements CsvDataSource {
     	}
     	
     	@Override
-    	public void startBulkUpdateForGroup(String group, String idWithinGroup) {
+    	public void startBulkUpdateForGroup(String group, String idWithinGroup) throws CsvUpdateBlockException {
     		throw new UnsupportedOperationException("Group updates not yet supported.");
     	}
     }

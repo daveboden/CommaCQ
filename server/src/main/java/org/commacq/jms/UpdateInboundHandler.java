@@ -18,6 +18,7 @@ import org.apache.commons.csv.CSVParser;
 import org.commacq.CsvDataSourceLayer;
 import org.commacq.CsvTextBlockToCallback;
 import org.commacq.CsvUpdatableDataSource;
+import org.commacq.CsvUpdateBlockException;
 
 /**
  * A single listener processes updates, directing them to the relevant
@@ -128,6 +129,8 @@ public class UpdateInboundHandler implements MessageListener {
 				source.finishUpdateBlock();
 			} catch (IOException ex) {				
 				throw new RuntimeException("Couldn't parse CSV", ex);
+			} catch(CsvUpdateBlockException ex) {
+				throw new RuntimeException(ex);
 			}
     		return;
     	}

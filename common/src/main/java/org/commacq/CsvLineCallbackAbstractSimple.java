@@ -10,22 +10,27 @@ package org.commacq;
 public abstract class CsvLineCallbackAbstractSimple implements CsvLineCallback {
 
 	@Override
-	public final void startBulkUpdate(String columnNamesCsv) {
+	public final void startBulkUpdate(String columnNamesCsv) throws CsvUpdateBlockException {
 		//No behaviour defined.
 	}
 	
 	@Override
-	public void startUpdateBlock(String columnNamesCsv) {
+	public void startUpdateBlock(String columnNamesCsv) throws CsvUpdateBlockException {
 		//No behaviour defined.		
 	}
 	
 	@Override
-	public final void finishUpdateBlock() {
+	public final void finishUpdateBlock() throws CsvUpdateBlockException {
 		//No behaviour defined.
 	}
 	
 	@Override
-	public final void startBulkUpdateForGroup(String group, String idWithinGroup) {
+	public final void startBulkUpdateForGroup(String group, String idWithinGroup) throws CsvUpdateBlockException {
 		//No behaviour defined.
+	}
+	
+	@Override
+	public void cancel() {
+		//No behaviour defined.		
 	}
 }

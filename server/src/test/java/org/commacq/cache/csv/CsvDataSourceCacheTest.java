@@ -9,6 +9,7 @@ import java.sql.SQLException;
 
 import org.commacq.CsvLine;
 import org.commacq.CsvLineCallback;
+import org.commacq.CsvUpdateBlockException;
 import org.commacq.db.DataSourceAccess;
 import org.commacq.db.EntityConfig;
 import org.commacq.db.csv.CsvDataSourceDatabase;
@@ -51,7 +52,7 @@ public class CsvDataSourceCacheTest {
 	}
 	
 	@Test
-	public void testSimpleRead() throws SQLException {
+	public void testSimpleRead() throws SQLException, CsvUpdateBlockException {
 		
 		csvDataSourceCache.getCsvLine("1", callback);
 		verify(callback).processUpdate("id,name", new CsvLine("1", "1,ABC"));
@@ -60,7 +61,7 @@ public class CsvDataSourceCacheTest {
 	}
 	
 	@Test
-	public void testUpdate() throws SQLException {
+	public void testUpdate() throws SQLException, CsvUpdateBlockException {
 		dataSource.getConnection().prepareStatement("delete from TestTable where \"id\"='1'").executeUpdate();
 
 		//Line is still returned by cache. Database change has not been propagated to cache.

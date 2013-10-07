@@ -65,7 +65,11 @@ public class CsvDataSourceLayer {
 		}
 		
 		CsvUpdatableDataSource updatableDataSource = (CsvUpdatableDataSource)source;
-		updatableDataSource.updateUntrusted(id);
+		try {
+			updatableDataSource.updateUntrusted(id);
+		} catch (CsvUpdateBlockException ex) {
+			return null;
+		}
 		
 		return getCsvEntry(entityId, id);
 	}

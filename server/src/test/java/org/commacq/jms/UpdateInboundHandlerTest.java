@@ -14,6 +14,7 @@ import javax.jms.TextMessage;
 
 import org.commacq.CsvDataSourceLayer;
 import org.commacq.CsvUpdatableDataSource;
+import org.commacq.CsvUpdateBlockException;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -36,7 +37,7 @@ public class UpdateInboundHandlerTest {
     }
     
     @Test
-    public void testTextMessageWithId() throws JMSException {
+    public void testTextMessageWithId() throws JMSException, CsvUpdateBlockException {
         TextMessage textMessage = mock(TextMessage.class);
         when(textMessage.getStringProperty("entityId")).thenReturn("testEntity");
         when(textMessage.getText()).thenReturn(
@@ -54,7 +55,7 @@ public class UpdateInboundHandlerTest {
     }
     
     @Test
-    public void testMapMessageWithId() throws JMSException {
+    public void testMapMessageWithId() throws JMSException, CsvUpdateBlockException {
         MapMessage mapMessage = mock(MapMessage.class);
         when(mapMessage.getMapNames()).thenReturn(Collections.enumeration(Collections.singleton("testEntity2")));
         when(mapMessage.getString("testEntity2")).thenReturn(

@@ -24,7 +24,7 @@ id,name,alias
 	 */
 
 	@Test
-	public void test() throws IOException {
+	public void test() throws IOException, CsvUpdateBlockException {
 		CsvTextBlockToCallback csvTextBlockToCallback = new CsvTextBlockToCallback();
 		CsvLineCallback callback = mock(CsvLineCallback.class);
 		

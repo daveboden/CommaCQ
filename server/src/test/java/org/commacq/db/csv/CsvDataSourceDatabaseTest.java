@@ -15,6 +15,7 @@ import java.util.List;
 
 import org.commacq.CsvLine;
 import org.commacq.CsvLineCallback;
+import org.commacq.CsvUpdateBlockException;
 import org.commacq.db.DataSourceAccess;
 import org.commacq.db.EntityConfig;
 import org.junit.After;
@@ -61,14 +62,14 @@ public class CsvDataSourceDatabaseTest {
 	}
 	
 	@Test
-	public void testAllCsvLinesAndSubscribe() {
+	public void testAllCsvLinesAndSubscribe() throws CsvUpdateBlockException {
 		csvDataSourceDatabase.getAllCsvLinesAndSubscribe(callback);
 		verify(callback, times(2)).processUpdate(anyString(), any(CsvLine.class));
 		verifyNoMoreInteractions(callback);
 	}
 		
 	@Test
-	public void testUpdates() {
+	public void testUpdates() throws CsvUpdateBlockException {
 		csvDataSourceDatabase.subscribe(callback);
 		
 		csvDataSourceDatabase.processUpdate("id,name", new CsvLine("1", "1,ZZZ"));
@@ -112,7 +113,7 @@ public class CsvDataSourceDatabaseTest {
 	}
 	
 	@Test
-	public void testUpdateForEntryThatHasBeenRemovedFromDatabase() throws SQLException {
+	public void testUpdateForEntryThatHasBeenRemovedFromDatabase() throws SQLException, CsvUpdateBlockException {
 		csvDataSourceDatabase.subscribe(callback);
 		
 		dataSource.getConnection().prepareStatement("delete from TestTable where \"id\"='1'").executeUpdate();

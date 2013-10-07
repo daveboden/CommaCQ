@@ -18,18 +18,18 @@ public class CsvLineCallbackStringWriter implements CsvLineCallback {
 	private int processRemoveCount = 0;
 	
 	@Override
-	public void startUpdateBlock(String columnNamesCsv) {
+	public void startUpdateBlock(String columnNamesCsv) throws CsvUpdateBlockException {
 		printWriter.println(columnNamesCsv);
 	}
 	
 	@Override
-	public void processUpdate(String columnNamesCsv, CsvLine csvLine) {
+	public void processUpdate(String columnNamesCsv, CsvLine csvLine) throws CsvUpdateBlockException {
 		printWriter.println(csvLine.getCsvLine());
 		processUpdateCount++;
 	}
 	
 	@Override
-	public void processRemove(String id) {
+	public void processRemove(String id) throws CsvUpdateBlockException {
 		printWriter.println(id);
 		processRemoveCount++;
 	}
@@ -46,15 +46,19 @@ public class CsvLineCallbackStringWriter implements CsvLineCallback {
 	}
 	
 	@Override
-	public void finishUpdateBlock() {	
+	public void finishUpdateBlock() throws CsvUpdateBlockException {	
 	}
 	
 	@Override
-	public void startBulkUpdate(String columnNamesCsv) {	
+	public void cancel() {	
 	}
 	
 	@Override
-	public void startBulkUpdateForGroup(String group, String idWithinGroup) {	
+	public void startBulkUpdate(String columnNamesCsv) throws CsvUpdateBlockException {	
+	}
+	
+	@Override
+	public void startBulkUpdateForGroup(String group, String idWithinGroup) throws CsvUpdateBlockException {	
 	}
 	
 }

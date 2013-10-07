@@ -22,19 +22,25 @@ public interface CsvLineCallback {
 	 * 
 	 * During a bulk update, even the column structure can change.
 	 */
-	void startBulkUpdate(String columnNamesCsv);
+	void startBulkUpdate(String columnNamesCsv) throws CsvUpdateBlockException;
 	
-	void startBulkUpdateForGroup(String group, String idWithinGroup);
+	void startBulkUpdateForGroup(String group, String idWithinGroup) throws CsvUpdateBlockException;
 	
-	void startUpdateBlock(String columnNamesCsv);
+	void startUpdateBlock(String columnNamesCsv) throws CsvUpdateBlockException;
 	
 	/**
 	 * Allows subscribers to behave transactionally. finishUpdateBlock() is called after
 	 * every block of updates.
+	 * @throws CsvUpdateBlockException
 	 */
-	void finishUpdateBlock();
+	void finishUpdateBlock() throws CsvUpdateBlockException;
 	
-	void processUpdate(String columnNamesCsv, CsvLine csvLine);
-	void processRemove(String id);
+	void processUpdate(String columnNamesCsv, CsvLine csvLine) throws CsvUpdateBlockException;
+	void processRemove(String id) throws CsvUpdateBlockException;
+	
+	/**
+	 * Provides a way of abandoning an update block part-way through.
+	 */
+	void cancel();
 	
 }

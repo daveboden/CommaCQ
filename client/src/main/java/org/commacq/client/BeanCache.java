@@ -9,6 +9,7 @@ import java.util.Set;
 import org.commacq.CsvDataSource;
 import org.commacq.CsvLine;
 import org.commacq.CsvLineCallback;
+import org.commacq.CsvUpdateBlockException;
 
 /**
  * Converts a CsvDataSource into a source of beans.
@@ -80,23 +81,23 @@ public class BeanCache<BeanType> {
 		private Set<String> deleted = new HashSet<String>();
 		
 		@Override
-		public void processUpdate(String columnNamesCsv, CsvLine csvLine) {
+		public void processUpdate(String columnNamesCsv, CsvLine csvLine) throws CsvUpdateBlockException {
 			BeanType bean = csvToBeanConverter.getBean(columnNamesCsv, csvLine);
 			updated.put(csvLine.getId(), bean);
 		}
 		
 		@Override
-		public void processRemove(String id) {
+		public void processRemove(String id) throws CsvUpdateBlockException {
 			deleted.add(id);
 		}
 		
 		@Override
-		public void startBulkUpdate(String columnNamesCsv) {
+		public void startBulkUpdate(String columnNamesCsv) throws CsvUpdateBlockException {
 			cache.clear();
 		}
 		
 		@Override
-		public void startUpdateBlock(String columnNamesCsv) {
+		public void startUpdateBlock(String columnNamesCsv) throws CsvUpdateBlockException {
 			if(!updated.isEmpty()) {
 				throw new RuntimeException("Map of updated beans should have been cleared down after the last update block");
 			}
@@ -109,7 +110,7 @@ public class BeanCache<BeanType> {
 		}
 		
 		@Override
-		public void finishUpdateBlock() {
+		public void finishUpdateBlock() throws CsvUpdateBlockException {
 			//TODO make this update transactional
 			cache.putAll(updated);
 			for(String id : deleted) {
@@ -123,7 +124,12 @@ public class BeanCache<BeanType> {
 		}
 		
 		@Override
-		public void startBulkUpdateForGroup(String group, String idWithinGroup) {
+		public void cancel() {
+			throw new RuntimeException("Update is not transactional so can't cancel");
+		}
+		
+		@Override
+		public void startBulkUpdateForGroup(String group, String idWithinGroup) throws CsvUpdateBlockException {
 			//TODO clear down all items from the cache that are marked as in the group
 			//TODO clear group index
 		}

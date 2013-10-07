@@ -15,12 +15,12 @@ public class CsvLineCallbackWriter extends CsvLineCallbackAbstractSimple {
 	}
 	
 	@Override
-	public void processUpdate(String columnNamesCsv, CsvLine csvLine) {
+	public void processUpdate(String columnNamesCsv, CsvLine csvLine) throws CsvUpdateBlockException {
 		printWriter.println(csvLine.getCsvLine());
 	}
 	
 	@Override
-	public void processRemove(String id) {
+	public void processRemove(String id) throws CsvUpdateBlockException {
 		printWriter.println(id);
 	}
 }

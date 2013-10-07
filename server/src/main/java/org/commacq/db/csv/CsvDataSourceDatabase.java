@@ -13,6 +13,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.commacq.CsvLine;
 import org.commacq.CsvLineCallback;
 import org.commacq.CsvUpdatableDataSourceBase;
+import org.commacq.CsvUpdateBlockException;
 import org.commacq.db.DataSourceAccess;
 import org.commacq.db.EntityConfig;
 import org.springframework.dao.DataAccessException;
@@ -100,6 +101,22 @@ public class CsvDataSourceDatabase extends CsvUpdatableDataSourceBase {
     	
     	@Override
     	public Void extractData(ResultSet result) throws SQLException, DataAccessException {	
+    		try {
+    			extractDataInternal(result);
+    		} catch(SQLException ex) {
+    			log.error("Cancelling update", ex);
+    			callback.cancel();
+    			throw ex;
+    		} catch(DataAccessException ex) {
+    			log.error("Cancelling update", ex);
+    			callback.cancel();
+    			throw ex;
+    		}
+    		
+    		return null;
+    	}
+    	
+    	public void extractDataInternal(ResultSet result) throws SQLException, DataAccessException {
     		String columnNamesCsv = csvParser.getColumnLabelsAsCsvLine(result.getMetaData(), entityConfig.getGroups());
     		
     		List<String> copyOfIds = null;
@@ -107,21 +124,23 @@ public class CsvDataSourceDatabase extends CsvUpdatableDataSourceBase {
     			copyOfIds = new ArrayList<>(ids);
     		}
     		
-    		while(result.next()) {    			
-    			CsvLine csvLine = csvParser.toCsvLine(result, entityConfig.getGroups());
-    			callback.processUpdate(columnNamesCsv, csvLine);
-    			if(ids != null) {
-    				copyOfIds.remove(csvLine.getId());
-    			}
+    		try {
+	    		while(result.next()) {    			
+	    			CsvLine csvLine = csvParser.toCsvLine(result, entityConfig.getGroups());
+						callback.processUpdate(columnNamesCsv, csvLine);
+	    			if(ids != null) {
+	    				copyOfIds.remove(csvLine.getId());
+	    			}
+	    		}
+	    		
+	    		if(ids != null) {
+					for(String remainingId : copyOfIds) {
+						callback.processRemove(remainingId);
+					}
+	    		}
+    		} catch (CsvUpdateBlockException ex) {
+    			log.error("Update failed", ex);
     		}
-    		
-    		if(ids != null) {
-				for(String remainingId : copyOfIds) {
-					callback.processRemove(remainingId);
-				}
-    		}
-    		
-    		return null;
     	}
     	
     }

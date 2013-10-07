@@ -8,12 +8,12 @@ public class CsvLineCallbackSingleImpl extends CsvLineCallbackAbstractSimple {
 	private CsvLine csvLine;
 	
 	@Override
-	public void processUpdate(String columnNamesCsv, CsvLine csvLine) {
+	public void processUpdate(String columnNamesCsv, CsvLine csvLine) throws CsvUpdateBlockException {
 		this.csvLine = csvLine;
 	}
 	
 	@Override
-	public void processRemove(String id) {
+	public void processRemove(String id) throws CsvUpdateBlockException {
 		csvLine = new CsvLine(id, null);
 	}
 	

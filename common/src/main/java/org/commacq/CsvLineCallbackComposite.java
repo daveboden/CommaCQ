@@ -40,7 +40,7 @@ public class CsvLineCallbackComposite implements CsvLineCallback {
 	 * No subscribers can be added or removed half way through a block.
 	 */
 	@Override
-	public void startUpdateBlock(String columnNamesCsv) {
+	public void startUpdateBlock(String columnNamesCsv) throws CsvUpdateBlockException {
 		lock.lock();
 		for(CsvLineCallback callback : callbacks) {
 			callback.startUpdateBlock(columnNamesCsv);
@@ -52,35 +52,48 @@ public class CsvLineCallbackComposite implements CsvLineCallback {
 	 * No subscribers can be added or removed half way through a block.
 	 */
 	@Override
-	public void finishUpdateBlock() {
+	public void finishUpdateBlock() throws CsvUpdateBlockException {
 		for(CsvLineCallback callback : callbacks) {
 			callback.finishUpdateBlock();
 		}
+		lock.unlock();
+	}
+	
+	/**
+	 * Cancelling an update block causes the lock to be released.
+	 * No subscribers can be added or removed half way through a block.
+	 */
+	@Override
+	public void cancel() {
+		for(CsvLineCallback callback : callbacks) {
+			callback.cancel();
+		}
+		lock.unlock();
 	}
 	
 	@Override
-	public void processRemove(String id) {
+	public void processRemove(String id) throws CsvUpdateBlockException {
 		for(CsvLineCallback callback : callbacks) {
 			callback.processRemove(id);
 		}
 	}
 	
 	@Override
-	public void processUpdate(String columnNamesCsv, CsvLine csvLine) {
+	public void processUpdate(String columnNamesCsv, CsvLine csvLine) throws CsvUpdateBlockException {
 		for(CsvLineCallback callback : callbacks) {
 			callback.processUpdate(columnNamesCsv, csvLine);
 		}			
 	}
 	
 	@Override
-	public void startBulkUpdate(String columnNamesCsv) {
+	public void startBulkUpdate(String columnNamesCsv) throws CsvUpdateBlockException {
 		for(CsvLineCallback callback : callbacks) {
 			callback.startBulkUpdate(columnNamesCsv);
 		}
 	}
 	
 	@Override
-	public void startBulkUpdateForGroup(String group, String idWithinGroup) {
+	public void startBulkUpdateForGroup(String group, String idWithinGroup) throws CsvUpdateBlockException {
 		for(CsvLineCallback callback : callbacks) {
 			callback.startBulkUpdateForGroup(group, idWithinGroup);
 		}
