@@ -31,7 +31,7 @@ http://www.springframework.org/schema/jms http://www.springframework.org/schema/
     <bean id="jmsOutboundHandlers" factory-bean="jmsOutboundHandlerFactory" factory-method="create"
           c:connectionFactory-ref="jmsClientConnectionFactory"
           c:layer-ref="csvDataSourceCaches"
-          c:broadcastTopicPattern="broadcast.%s"
+          c:broadcastTopicPattern="${jms.client.broadcast.topic.pattern}"
     />
 
 </beans>
