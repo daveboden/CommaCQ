@@ -61,7 +61,6 @@ public class JmsOutboundHandler implements CsvLineCallback {
                 String payload = currentText.toString();
                 
                 textMessage.setText(payload);
-                textMessage.setBooleanProperty("JMS_TIBCO_COMPRESS", true);
                 
                 log.info("Sending message to topic {}", broadcastTopic);
                 
