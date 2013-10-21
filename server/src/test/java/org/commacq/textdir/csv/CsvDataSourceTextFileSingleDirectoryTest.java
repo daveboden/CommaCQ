@@ -1,4 +1,4 @@
-package org.commacq.textdir;
+package org.commacq.textdir.csv;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
@@ -13,7 +13,7 @@ public class CsvDataSourceTextFileSingleDirectoryTest {
 	public void test() {
 		CsvDataSourceTextFileSingleDirectory source = new CsvDataSourceTextFileSingleDirectory(
 				"testEntity",
-				"classpath:/org/commacq/textdir/CsvDataSourceTextFileSingleDirectoryTestFiles"
+				"classpath:/org/commacq/textdir/files/CsvDataSourceTextFileSingleDirectoryTestFiles"
 		);
 		
 		CsvLineCallbackSingleImpl callback = new CsvLineCallbackSingleImpl();

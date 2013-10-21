@@ -12,11 +12,14 @@ import java.sql.Types;
 import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 
+import org.joda.time.format.DateTimeFormatter;
+import org.joda.time.format.ISODateTimeFormat;
+
 public class StringColumnValueConverter {
 	
-	private ThreadLocal<SimpleDateFormat> yyyy_MM_dd = new ThreadLocal<SimpleDateFormat>() {
-		protected SimpleDateFormat initialValue() {
-			return new SimpleDateFormat("yyyy-MM-dd");
+	private ThreadLocal<DateTimeFormatter> yyyy_MM_dd = new ThreadLocal<DateTimeFormatter>() {
+		protected DateTimeFormatter initialValue() {
+			return ISODateTimeFormat.date();
 		};
 	};
 	
@@ -43,21 +46,11 @@ public class StringColumnValueConverter {
 		switch (colType)
 		{				
 			case Types.BOOLEAN:
-				boolean b = rs.getBoolean(colIndex);
-				return Boolean.valueOf(b).toString();
+				return handleBoolean(rs.getBoolean(colIndex));
 				
 			case Types.NCLOB:
 			case Types.CLOB:
-				Clob c = rs.getClob(colIndex);
-				if (c != null) {
-					try {
-						return read(c);
-					} catch(IOException ex) {
-						throw new SQLException("Error reading CLOB", ex);
-					}
-				} else {
-					return null;
-				}
+				return handleClob(rs.getClob(colIndex));
 				
 			case Types.BIGINT:
 				return handleLong(rs, colIndex);
@@ -94,6 +87,17 @@ public class StringColumnValueConverter {
 
     }
     
+	protected String handleClob(Clob c) throws SQLException {
+		if (c != null) {
+			try {
+				return read(c);
+			} catch(IOException ex) {
+				throw new SQLException("Error reading CLOB", ex);
+			}
+		} else {
+			return null;
+		}
+	}
 	
 	protected String handleBoolean(boolean b) {
 		return Boolean.toString(b);
@@ -121,7 +125,7 @@ public class StringColumnValueConverter {
         java.sql.Date date = rs.getDate(columnIndex);
         String value = null;
         if (date != null) {
-            value =  yyyy_MM_dd.get().format(date);
+            value =  yyyy_MM_dd.get().print(date.getTime());
         }
         return value;
     }

@@ -1,0 +1,2 @@
+The Csv Layer Factory should be scanning for directories only and should avoid picking up this file.
+It can optionally warn that an unexpected file is present.

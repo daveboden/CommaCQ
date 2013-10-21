@@ -34,7 +34,7 @@ public class CsvDataSourceLayer {
 	//Unmodifiable wrapper to give to clients
 	private final Map<String, CsvDataSource> csvDataSourceMapUnmodifiable = Collections.unmodifiableMap(csvDataSourceMap);	
 	
-	public CsvDataSourceLayer(Collection<CsvDataSource> csvDataSources) {
+	public CsvDataSourceLayer(Collection<? extends CsvDataSource> csvDataSources) {
 		for(CsvDataSource source : csvDataSources) {
 			boolean newEntry = entityIds.add(source.getEntityId());
 			if(!newEntry) {
