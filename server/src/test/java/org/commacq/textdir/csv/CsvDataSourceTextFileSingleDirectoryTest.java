@@ -3,8 +3,8 @@ package org.commacq.textdir.csv;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 
+import org.commacq.CsvLine;
 import org.commacq.CsvLineCallbackSingleImpl;
-import org.commacq.textdir.csv.CsvDataSourceTextFileSingleDirectory;
 import org.junit.Test;
 
 public class CsvDataSourceTextFileSingleDirectoryTest {
@@ -19,7 +19,8 @@ public class CsvDataSourceTextFileSingleDirectoryTest {
 		CsvLineCallbackSingleImpl callback = new CsvLineCallbackSingleImpl();
 		
 		source.getCsvLine("id1", callback);
-		assertEquals("id1,Contents of id1", callback.getCsvLineAndClear().getCsvLine());
+		CsvLine line = callback.getCsvLineAndClear();
+		assertEquals("id1,Contents of id1", line.getCsvLine());
 		
 		source.getCsvLine("id2", callback);
 		assertEquals("Quoted because of the comma in the text",

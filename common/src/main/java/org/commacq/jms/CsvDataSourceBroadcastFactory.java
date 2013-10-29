@@ -11,6 +11,7 @@ import lombok.RequiredArgsConstructor;
 import org.commacq.CsvDataSource;
 import org.commacq.CsvDataSourceFactory;
 import org.commacq.CsvDataSourceLayer;
+import org.commacq.CsvDataSourceLayerCollection;
 
 /**
  * Starts listening for updates.
@@ -43,7 +44,7 @@ public class CsvDataSourceBroadcastFactory implements CsvDataSourceFactory {
 			CsvDataSourceJmsQuery source = createCsvDataSource(entityId);
 			sources.add(source);
 		}
-		CsvDataSourceLayer outputLayer = new CsvDataSourceLayer(sources);
+		CsvDataSourceLayer outputLayer = new CsvDataSourceLayerCollection(sources);
 		return outputLayer;
 	}
 }

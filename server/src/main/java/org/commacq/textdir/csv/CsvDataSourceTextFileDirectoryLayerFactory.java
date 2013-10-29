@@ -8,6 +8,7 @@ import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 
 import org.commacq.CsvDataSourceLayer;
+import org.commacq.CsvDataSourceLayerCollection;
 import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.ResourceLoader;
@@ -53,7 +54,7 @@ public class CsvDataSourceTextFileDirectoryLayerFactory {
 			sources.add(source);
 		}
 		
-		return new CsvDataSourceLayer(sources);
+		return new CsvDataSourceLayerCollection(sources);
 	}
 	
 }

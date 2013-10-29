@@ -6,6 +6,7 @@ import java.util.Map.Entry;
 
 import org.commacq.CsvDataSource;
 import org.commacq.CsvDataSourceLayer;
+import org.commacq.CsvDataSourceLayerCollection;
 
 /**
  * Takes a collection of CsvDataSources and prepares a Cache implementation
@@ -19,7 +20,7 @@ public class CsvDataSourceCacheFactory {
 			CsvDataSourceCache cache = new CsvDataSourceCache(sourceEntry.getValue());
 			caches.add(cache);
 		}
-		return new CsvDataSourceLayer(caches);
+		return new CsvDataSourceLayerCollection(caches);
 	}
     
 }

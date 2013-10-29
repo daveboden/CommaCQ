@@ -3,6 +3,8 @@ package org.commacq.textdir.csv;
 import java.util.Collection;
 import java.util.List;
 
+import lombok.extern.slf4j.Slf4j;
+
 import org.apache.commons.lang3.StringEscapeUtils;
 import org.commacq.CsvLine;
 import org.commacq.CsvLineCallback;
@@ -22,6 +24,7 @@ import org.commacq.textdir.TextFileSingleDirectory;
  * id1,Whatever the contents of id1.txt are
  * id2,Whatever the contents of id2.txt are
  */
+@Slf4j
 public class CsvDataSourceTextFileSingleDirectory extends CsvUpdatableDataSourceBase {
 	
 	private static final String TEXT_ATTRIBUTE = "text";
@@ -39,12 +42,18 @@ public class CsvDataSourceTextFileSingleDirectory extends CsvUpdatableDataSource
     @Override
 	public void getAllCsvLines(CsvLineCallback callback) {
 		List<CsvLine> csvLines = textFileSingleDirectory.getAll(mapper);
-		for(CsvLine csvLine : csvLines) {
-			try {
-				callback.processUpdate(CSV_COLUMN_HEADINGS, csvLine);
-			} catch (CsvUpdateBlockException ex) {
-				throw new RuntimeException(ex);
+		try {
+			callback.startUpdateBlock(CSV_COLUMN_HEADINGS);
+			for(CsvLine csvLine : csvLines) {
+				try {
+					callback.processUpdate(CSV_COLUMN_HEADINGS, csvLine);
+				} catch (CsvUpdateBlockException ex) {
+					throw new RuntimeException(ex);
+				}
 			}
+			callback.finishUpdateBlock();
+		} catch (CsvUpdateBlockException e) {
+			log.error("Failed to deliver rows");
 		}
 	}
 

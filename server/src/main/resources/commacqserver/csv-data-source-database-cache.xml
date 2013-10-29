@@ -13,6 +13,6 @@ http://www.springframework.org/schema/context http://www.springframework.org/sch
     <bean id="csvDataSourceCacheFactory" class="org.commacq.cache.csv.CsvDataSourceCacheFactory"/>
           
     <bean id="csvDataSourceCaches" factory-bean="csvDataSourceCacheFactory" factory-method="create"
-          c:layer-ref="csvDataSourceDatabases"/>
+          c:layer-ref="${layerToCache:csvDataSourceDatabases}"/>
 
 </beans>

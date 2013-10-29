@@ -9,6 +9,7 @@ import lombok.RequiredArgsConstructor;
 
 import org.commacq.CsvDataSource;
 import org.commacq.CsvDataSourceLayer;
+import org.commacq.CsvDataSourceLayerCollection;
 import org.commacq.db.DataSourceAccess;
 import org.commacq.db.EntityConfig;
 
@@ -28,7 +29,7 @@ public class CsvDataSourceDatabaseFactory {
 			CsvDataSourceDatabase source = new CsvDataSourceDatabase(dataSourceAccess, entry.getValue());
 			sources.add(source);
 		}
-		return new CsvDataSourceLayer(sources);
+		return new CsvDataSourceLayerCollection(sources);
 	}
 	
 }
