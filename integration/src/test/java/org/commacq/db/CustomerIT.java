@@ -13,23 +13,22 @@ import javax.annotation.Resource;
 import javax.jms.JMSException;
 import javax.sql.DataSource;
 
+import lombok.extern.slf4j.Slf4j;
+
 import org.commacq.client.CacheObserver;
 import org.commacq.client.Manager;
 import org.commacq.client.UpdateManager;
 import org.commacq.testclient.Customer;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration
+@Slf4j
 public class CustomerIT {
-
-    private static Logger logger = LoggerFactory.getLogger(CustomerIT.class);
 
     @Resource
     DataSource integrationDataSource1;
@@ -46,7 +45,7 @@ public class CustomerIT {
         final String BMW_DESCRIPTION_OLD = "BMW Motors";
         final String BMW_DESCRIPTION_NEW = "BMW Motors PLC";
 
-        logger.debug("Taking a snapshot which should return the same results " +
+        log.debug("Taking a snapshot which should return the same results " +
                 "throughout its (short) lifetime regardless of any updates");
         //Manager<Customer> customerManagerSnapshot = customerManager.getSnapshot();
 

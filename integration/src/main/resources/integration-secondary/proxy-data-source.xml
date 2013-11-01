@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!-- 
+Sets up a client with inputs of bean ref:
+
+jmsClientConnectionFactory
+
+and properties:
+
+jms.client.query.queue
+jms.client.broadcast.topic.pattern
+-->
+
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:c="http://www.springframework.org/schema/c"
+       xsi:schemaLocation="
+http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd
+">
+
+	<bean id="csvProxyDataSourceFactory" class="org.commacq.jms.CsvDataSourceBroadcastFactory"
+	      c:connectionFactory-ref="jmsClientConnectionFactory"
+          c:queryQueue="${jms.proxy.query.queue}"
+          c:timeoutInSeconds="2"
+          c:broadcastTopicPattern="${jms.proxy.broadcast.topic.pattern}"
+    />
+    
+    <!-- For now, hardcode customer. Next step is to make a proxy layer then cache that. -->
+    
+    <bean id="customerCache" factory-bean="csvProxyDataSourceFactory" factory-method="createCsvDataSource">
+    	<constructor-arg value="customer"/>
+    </bean>
+    
+    <bean id="csvDataSourceCaches" class="org.commacq.CsvDataSourceLayerCollection">
+    	<constructor-arg>
+    		<list>
+    			<ref bean="customerCache"/>
+    		</list>
+    	</constructor-arg>
+    </bean>
+
+</beans>

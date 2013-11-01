@@ -4,15 +4,13 @@ import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
-import org.eclipse.jetty.websocket.WebSocket.Connection;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 
 import org.commacq.OutboundHandler;
+import org.eclipse.jetty.websocket.WebSocket.Connection;
 
+@Slf4j
 public class WebSocketOutboundHandler implements OutboundHandler {
-    
-    private static final Logger logger = LoggerFactory.getLogger(WebSocketOutboundHandler.class);
 
     private final List<Connection> connections = new CopyOnWriteArrayList<>();
     
@@ -33,7 +31,7 @@ public class WebSocketOutboundHandler implements OutboundHandler {
                 removeConnectionAfterException(connection);
             }
         }
-        logger.info("Pushed updates to {} clients", connections.size());
+        log.info("Pushed updates to {} clients", connections.size());
     }
     
     @Override
@@ -45,11 +43,11 @@ public class WebSocketOutboundHandler implements OutboundHandler {
                 removeConnectionAfterException(connection);
             }
         }
-        logger.info("Pushed bulk updates to {} clients", connections.size());        
+        log.info("Pushed bulk updates to {} clients", connections.size());        
     }
     
     private void removeConnectionAfterException(Connection connection) {
-        logger.info("Client has gone without removing itself cleanly: {}", connection);
+        log.info("Client has gone without removing itself cleanly: {}", connection);
         connections.remove(connection);
     }
     

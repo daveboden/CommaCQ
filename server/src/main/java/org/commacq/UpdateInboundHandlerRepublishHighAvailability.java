@@ -6,9 +6,9 @@ import javax.jms.JMSException;
 import javax.jms.Message;
 import javax.jms.Session;
 
+import lombok.extern.slf4j.Slf4j;
+
 import org.commacq.jms.UpdateInboundHandler;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.jms.core.JmsTemplate;
 import org.springframework.jms.core.MessageCreator;
 
@@ -27,9 +27,8 @@ import org.springframework.jms.core.MessageCreator;
  * high-availability servers should only hear about the update on the republish topic
  * once it has been successfully processed by the server that initially picked up the message.
  */
+@Slf4j
 public class UpdateInboundHandlerRepublishHighAvailability extends UpdateInboundHandler {
-
-	private static Logger logger = LoggerFactory.getLogger(UpdateInboundHandlerRepublishHighAvailability.class);
 
 	private final String republishTopic;
 	private final JmsTemplate jmsTemplate;
@@ -42,7 +41,7 @@ public class UpdateInboundHandlerRepublishHighAvailability extends UpdateInbound
 	
 	@Override
 	public void onMessage(final Message message) {
-		logger.debug("Republishing message to high availability topic");		
+		log.debug("Republishing message to high availability topic");		
 		jmsTemplate.send(republishTopic, new MessageCreator() {
 			@Override
 			public Message createMessage(Session session) throws JMSException {

@@ -12,7 +12,7 @@ http://www.springframework.org/schema/context http://www.springframework.org/sch
     
     <bean id="updateManager" class="org.commacq.client.UpdateManager"
           c:connectionFactory-ref="jmsClientConnectionFactory"
-          c:updateQueue="test.update"
+          c:updateQueue="${jms.update.queue}"
     />
 
 </beans>

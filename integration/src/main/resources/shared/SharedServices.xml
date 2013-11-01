@@ -5,8 +5,6 @@
 http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
 ">
 
-    <import resource="classpath:/shared/SharedServices.xml"/>
-    <import resource="classpath:/integration-1/PrimaryServer.xml"/>
-    <import resource="classpath:/integration-1/PrimaryServer.Client.xml"/>
-
+    <import resource="jms/jms-connection-test.xml"/>
+    
 </beans>

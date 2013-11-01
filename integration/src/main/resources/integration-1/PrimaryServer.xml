@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="
+http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd
+">
+
+    <import resource="setup/database.xml"/>
+    
+    <import resource="../shared/jms/jms-query-listener-test.xml"/>
+    <import resource="jms/create-primary-destinations.xml"/>
+    <import resource="jms/jms-update-listener-test.xml"/>
+    
+    <import resource="classpath:commacqserver/jms-update-handler.xml"/>
+    <import resource="classpath:commacqserver/jms-handlers.xml"/>
+    <import resource="classpath:commacqserver/database-connection.xml"/>
+    
+    <import resource="classpath:commacqserver/csv-data-source-database.xml"/>
+    <import resource="classpath:commacqserver/csv-data-source-database-cache.xml"/>
+    
+	<!-- Allow resolution of ${variables} from the properties files setup in the Environment -->
+    <context:property-placeholder location="
+    	classpath:/integration-1/server-config/basic-broadcast-primary.properties,
+    	classpath:/integration-1/server-config/update-primary.properties
+    "/>
+    
+</beans>

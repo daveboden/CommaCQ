@@ -8,16 +8,17 @@
 http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
 http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd
 ">
-	<import resource="classpath:/commacqserver/placeholder.xml"/>
-	<import resource="classpath:/commacqserver/jms-client-connection.xml"/>
-	<import resource="classpath:/commacqserver/jms-client-listener.xml"/>
-	<import resource="classpath:/commacqserver/jms-update-connection.xml"/>
-	<import resource="classpath:/commacqserver/jms-update-listener.xml"/>
-	<import resource="classpath:/commacqserver/jms-handlers.xml"/>
-	<import resource="classpath:/commacqserver/csv-data-source-database.xml"/>
-	<import resource="classpath:/commacqserver/csv-data-source-database-cache.xml"/>
-	<import resource="classpath:/commacqserver/database-connection.xml"/>
-	<import resource="classpath:/commacqserver/http.xml"/>
-	<import resource="classpath:/commacqserver/jmx.xml"/>
+	<import resource="../placeholder.xml"/>
+	<import resource="../jms-client-connection.xml"/>
+	<import resource="../jms-client-listener.xml"/>
+	<import resource="../jms-update-connection.xml"/>
+	<import resource="../jms-update-listener.xml"/>
+	<import resource="../jms-update-handler.xml"/>
+	<import resource="../jms-handlers.xml"/>
+	<import resource="../csv-data-source-database.xml"/>
+	<import resource="../csv-data-source-database-cache.xml"/>
+	<import resource="../database-connection.xml"/>
+	<import resource="../http.xml"/>
+	<import resource="../jmx.xml"/>
 
 </beans>

@@ -1,4 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
+
+<!-- 
+Sets up a client with inputs of bean ref:
+
+jmsClientConnectionFactory
+
+and properties:
+
+jms.client.query.queue
+jms.client.broadcast.topic.pattern
+-->
+
 <beans xmlns="http://www.springframework.org/schema/beans"
        xmlns:context="http://www.springframework.org/schema/context"
        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
@@ -9,6 +21,7 @@ http://www.springframework.org/schema/beans http://www.springframework.org/schem
 http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd
 http://commacq.org/client http://commacq.org/client/comma-cq-1.0.xsd
 ">
+
     <bean id="beanTypeSelectionStrategy" class="org.commacq.client.factory.BeanTypeSelectionStrategyEntityNameWithinPackages"
           c:packageNames="org.commacq.testclient"
     />
@@ -22,9 +35,9 @@ http://commacq.org/client http://commacq.org/client/comma-cq-1.0.xsd
 
 	<bean id="csvDataSourceFactory" class="org.commacq.jms.CsvDataSourceBroadcastFactory"
 	      c:connectionFactory-ref="jmsClientConnectionFactory"
-          c:queryQueue="query"
+          c:queryQueue="${jms.client.query.queue}"
           c:timeoutInSeconds="2"
-          c:broadcastTopicPattern="broadcast.%s"
+          c:broadcastTopicPattern="${jms.client.broadcast.topic.pattern}"
     />
 
     <!-- beanCacheFactory is a special bean id, referenced by the Manager bean definition parser -->

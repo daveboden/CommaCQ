@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="
+http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+">
+
+    <import resource="proxy-data-source.xml"/>
+    <import resource="classpath:commacqserver/test/jms-listener-test.xml"/>
+    
+    <import resource="classpath:commacqserver/jms-handlers.xml"/>
+    <import resource="classpath:commacqserver/database-connection.xml"/>
+    
+    <import resource="classpath:commacqserver/csv-data-source-database-cache.xml"/>
+    
+    
+<context:property-placeholder location="classpath:/integration-1/server-config/basic-broadcast.properties"/>
+    
+</beans>
