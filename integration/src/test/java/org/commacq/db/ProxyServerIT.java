@@ -1,5 +1,7 @@
 package org.commacq.db;
 
+import static org.junit.Assert.assertNotNull;
+
 import java.io.IOException;
 import java.sql.SQLException;
 
@@ -7,37 +9,43 @@ import javax.jms.JMSException;
 
 import lombok.extern.slf4j.Slf4j;
 
-import org.junit.Ignore;
+import org.commacq.client.Manager;
+import org.commacq.testclient.Customer;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 import org.springframework.context.support.GenericXmlApplicationContext;
-import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
 /**
  * Test a primary server and a separate secondary server proxying all the data from the
  * first.
  */
-@RunWith(SpringJUnit4ClassRunner.class)
-@ContextConfiguration
 @Slf4j
-@Ignore
 public class ProxyServerIT {
 
     @Test
     public void testCustomerDatabase() throws SQLException, IOException, JMSException, ClassNotFoundException {
-    	GenericXmlApplicationContext sharedContext = new GenericXmlApplicationContext("classpath:/org/commacq/db/SharedServices.xml");
+    	GenericXmlApplicationContext sharedContext = new GenericXmlApplicationContext("classpath:/shared/SharedServices.xml");
     	
-    	GenericXmlApplicationContext primaryServerContext = new GenericXmlApplicationContext("classpath:/org/commacq/db/PrimaryServer.xml");
+    	GenericXmlApplicationContext primaryServerContext = new GenericXmlApplicationContext();
     	primaryServerContext.setParent(sharedContext);
+    	primaryServerContext.load("classpath:/integration-1/PrimaryServer.xml");
+    	primaryServerContext.refresh();
+    	primaryServerContext.start();
     	
-    	GenericXmlApplicationContext secondaryServerContext = new GenericXmlApplicationContext("classpath:/org/commacq/db/SecondaryServer.xml");
+    	GenericXmlApplicationContext secondaryServerContext = new GenericXmlApplicationContext();
     	secondaryServerContext.setParent(sharedContext);
+    	secondaryServerContext.load("classpath:/integration-secondary/SecondaryServer.xml");
+    	secondaryServerContext.refresh();
+    	secondaryServerContext.start();
     	
-    	GenericXmlApplicationContext clientContext= new GenericXmlApplicationContext("classpath:/org/commacq/db/SecondaryServer.Client.xml");
+    	GenericXmlApplicationContext clientContext= new GenericXmlApplicationContext();
+    	clientContext.setParent(sharedContext);
+    	clientContext.load("classpath:/integration-secondary/SecondaryServer.Client.xml");
+    	clientContext.refresh();
+    	clientContext.start();
     	
+    	Manager<Customer> customerManager = clientContext.getBean("customerManager", Manager.class);
     	
-    	
+    	assertNotNull(customerManager.get("BMW"));
     }
 
 }

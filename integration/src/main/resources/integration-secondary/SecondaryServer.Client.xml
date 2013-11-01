@@ -6,16 +6,16 @@
 http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
 http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd
 ">
-
-    <import resource="proxy-data-source.xml"/>
-    <import resource="../shared/jms/jms-query-listener-test.xml"/>
-    <import resource="jms/create-secondary-destinations.xml"/>
     
-    <import resource="classpath:commacqserver/jms-handlers.xml"/>
+    <alias name="jmsConnectionFactory" alias="jmsClientConnectionFactory"/>
     
-	<!-- Allow resolution of ${variables} from the properties files setup in the Environment -->
+    <import resource="classpath:org/commacq/client/update-manager.xml"/>
+    
+    <import resource="../client/client-spring-test.xml"/>
+    
     <context:property-placeholder location="
-    	classpath:/integration-secondary/server-config/basic-broadcast-secondary.properties
+    	classpath:/integration-secondary/server-config/basic-broadcast-secondary.properties,
+    	classpath:/integration-1/server-config/update-primary.properties
     "/>
-    
+
 </beans>

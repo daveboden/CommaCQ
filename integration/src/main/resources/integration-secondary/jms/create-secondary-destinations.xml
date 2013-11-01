@@ -7,10 +7,10 @@ http://www.springframework.org/schema/beans http://www.springframework.org/schem
 ">
     
     <!-- Create queues and topics -->
-    <bean factory-bean="destinationManager" factory-method="createQueue">
+    <bean id="queryQueue" factory-bean="destinationManager" factory-method="createQueue">
         <constructor-arg value="${jms.client.query.queue}"/>
     </bean>
-    <bean factory-bean="destinationManager" factory-method="createTopic">
+    <bean id="broadcastTopic" factory-bean="destinationManager" factory-method="createTopic">
         <constructor-arg>
         	<bean class="java.lang.String" factory-method="format">
         		<constructor-arg value="${jms.client.broadcast.topic.pattern}"/>
