@@ -1,17 +1,13 @@
 package org.commacq.db.csv;
 
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyString;
-import static org.mockito.Mockito.times;
+import static org.junit.Assert.fail;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.springframework.jdbc.datasource.embedded.EmbeddedDatabaseType.H2;
 
 import java.util.Set;
 
-import org.commacq.CsvLine;
 import org.commacq.CsvLineCallback;
-import org.commacq.CsvLineCallbackListImpl;
+import org.commacq.CsvUpdateBlockException;
 import org.commacq.db.DataSourceAccess;
 import org.commacq.db.EntityConfig;
 import org.junit.After;
@@ -54,15 +50,22 @@ public class CsvDataSourceDatabaseGroupTest {
 		dataSource.shutdown();
 	}
 	
-	@Test(expected=DataAccessException.class)
-	public void testBadGroupCausesError() {
+	@Test
+	public void testBadGroupCausesError() throws CsvUpdateBlockException {
 		DataSourceAccess dataSourceAccess = new DataSourceAccess(dataSource);
 		Set<String> badGroupNames = ImmutableSet.of("badGroupName");
 		EntityConfig entityConfig = new EntityConfig("test",
 				                                     "select \"id\", \"groupName\", \"superGroupName\", \"value\" from TestTable",
 				                                     badGroupNames);
 		CsvDataSourceDatabase badCsvDataSourceDatabase = new CsvDataSourceDatabase(dataSourceAccess, entityConfig);
-		badCsvDataSourceDatabase.getAllCsvLines(new CsvLineCallbackListImpl());
+		try {
+			badCsvDataSourceDatabase.getAllCsvLines(callback);
+			fail("Expected DataAccessException");
+		} catch(DataAccessException ex) {
+			//Expected exception
+		}
+		
+		verify(callback).cancel();
 	}
 	
 	@Ignore //Group updates not yet handled.
