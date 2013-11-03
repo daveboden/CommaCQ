@@ -3,13 +3,11 @@ package org.commacq.client.csvtobean.xml;
 import java.io.IOException;
 import java.io.StringReader;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.NoSuchElementException;
 
 import javax.annotation.concurrent.NotThreadSafe;
@@ -94,21 +92,35 @@ public class JaxbAttributeWriterStrategy implements CsvToBeanStrategy {
         return camelCaseStringBuilder.toString();
     }
     
+	private String[] splitCsv(String columnNamesCsv) {
+		CSVParser parser = new CSVParser(new StringReader(columnNamesCsv));
+		try {
+			return parser.getLine();
+		} catch(IOException ex) {
+			throw new RuntimeException("Error parsing CSV column names: " + columnNamesCsv);
+		}
+	}
+
     @Override
-    @SuppressWarnings("unchecked")
-    public <BeanType> Map<String, BeanType> getBeans(Class<BeanType> beanType, List<String> header, Map<String, List<String>> body) {
-        assert header.get(0).equals("id");
-        
-        AttributeEventReader attributeEventReader = getAttributeEventReader(beanType);
-        Unmarshaller unmarshaller = unmarshallerMap.get(beanType);
+    public <BeanType> BeanType getBean(Class<BeanType> beanType, String columnNamesCsv, CsvLine csvLine) {
+		Map<String, BeanType> beans = getBeans(beanType, columnNamesCsv, Collections.singleton(csvLine));
+		return beans.get(csvLine.getId());
+    }
+    
+	@SuppressWarnings("unchecked")
+	@Override
+	public <BeanType> Map<String, BeanType> getBeans(Class<BeanType> beanType, String columnNamesCsv, Collection<CsvLine> csvLines) {
+		String[] columnNames = splitCsv(columnNamesCsv);
+		
+		Map<String, BeanType> beansMap = new HashMap<>(csvLines.size());
+		for(CsvLine csvLine : csvLines) {
+			
+	        AttributeEventReader attributeEventReader = getAttributeEventReader(beanType);
+	        Unmarshaller unmarshaller = unmarshallerMap.get(beanType);
+	        
+	        String[] rowValues = splitCsv(csvLine.getCsvLine());
 
-        Map<String, BeanType> output = new HashMap<>();
-
-        for(Entry<String, List<String>> row : body.entrySet()) {
-
-        	List<String> rowValues = row.getValue();
-
-            attributeEventReader.setData(header, rowValues);
+            attributeEventReader.setData(columnNames, rowValues);
 
             BeanType item;
             try {
@@ -116,42 +128,8 @@ public class JaxbAttributeWriterStrategy implements CsvToBeanStrategy {
             } catch (JAXBException ex) {
                 throw new RuntimeException("Error while unmarshalling: " + beanType + " - " + rowValues, ex);
             }
-
-            output.put(rowValues.get(0), item); // id is always in first column
-        }
-
-        return output;
-    }
-    
-  //TODO Totally inefficient, converts from string to csv array back to string and back to csv array again.
-    @Override
-    public <BeanType> BeanType getBean(Class<BeanType> beanType, String columnNamesCsv, CsvLine csvLine) {
-		CSVParser parser = new CSVParser(new StringReader(columnNamesCsv));
-		String[] columnNames;
-		try {
-			columnNames = parser.getLine();
-		} catch(IOException ex) {
-			throw new RuntimeException("Error parsing CSV column names: " + columnNamesCsv);
-		}
-		
-		parser = new CSVParser(new StringReader(csvLine.getCsvLine()));
-		
-		String[] values;
-		try {
-			 values = parser.getLine();
-		} catch (IOException ex) {
-			throw new RuntimeException("Error parsing CSV row: " + csvLine.getCsvLine());
-		}
-		
-		Map<String, BeanType> beans = getBeans(beanType, Arrays.asList(columnNames), Collections.singletonMap(csvLine.getId(), Arrays.asList(values)));
-		return beans.get(csvLine.getId());
-    }
-    
-	@Override
-	public <BeanType> Map<String, BeanType> getBeans(Class<BeanType> beanType, String columnNamesCsv, Collection<CsvLine> csvLines) {
-		Map<String, BeanType> beansMap = new HashMap<>(csvLines.size());
-		for(CsvLine csvLine : csvLines) {
-			beansMap.put(csvLine.getId(), getBean(beanType, columnNamesCsv, csvLine));
+			
+			beansMap.put(csvLine.getId(), item);
 		}
 		return beansMap;
 	}
@@ -166,8 +144,8 @@ public class JaxbAttributeWriterStrategy implements CsvToBeanStrategy {
         private final QName tag;
         private final XMLEventFactory xmlEventFactory = XMLEventFactory.newInstance();
 
-        List<String> header;
-        List<String> row;
+        String[] header;
+        String[] row;
         // Decides whether we send the tag event (event 0) or the end tag event (event 1)
         // We only ever deliver 2 events before this object is reset with the next
         // bean of data.
@@ -185,15 +163,15 @@ public class JaxbAttributeWriterStrategy implements CsvToBeanStrategy {
             this.endElement = xmlEventFactory.createEndElement(tag, Collections.emptyIterator());
         }
 
-        public void setData(List<String> header, List<String> row) {
+        public void setData(String[] header, String[] row) {
             this.header = header;
             this.row = row;
             this.currentEventIndex = 0;
 
             attributes.clear();
 
-            for (int i = 0; i < header.size(); i++) {
-                String value = row.get(i);
+            for (int i = 0; i < header.length; i++) {
+                String value = row[i];
                 // TODO tokenise the CSV row before unescaping it so that we can tell
                 // the difference between a truly blank string (null) and a quoted
                 // blank string ("") which should evaluate to empty string.
@@ -209,7 +187,7 @@ public class JaxbAttributeWriterStrategy implements CsvToBeanStrategy {
                         value = "false";
                     }
 
-                    attributes.add(xmlEventFactory.createAttribute(header.get(i), value));
+                    attributes.add(xmlEventFactory.createAttribute(header[i], value));
                 }
             }
 

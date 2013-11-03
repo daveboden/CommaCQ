@@ -2,13 +2,10 @@ package org.commacq.client;
 
 import java.io.IOException;
 import java.io.StringReader;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 
 import org.apache.commons.csv.CSVParser;
 import org.commacq.CsvLine;
@@ -40,57 +37,40 @@ public class CsvToBeanStrategySpringConstructor implements CsvToBeanStrategy {
 		context = new GenericXmlApplicationContext("classpath:org/commacq/client/csv/csvConversionService.xml");
 	}
 	
-	//TODO Totally inefficient, converts from string to csv array back to string and back to csv array again.
-	@Override
-	public <BeanType> BeanType getBean(Class<BeanType> beanType, String columnNamesCsv, CsvLine csvLine) {
+	private String[] splitCsv(String columnNamesCsv) {
 		CSVParser parser = new CSVParser(new StringReader(columnNamesCsv));
-		String[] columnNames;
 		try {
-			columnNames = parser.getLine();
+			return parser.getLine();
 		} catch(IOException ex) {
 			throw new RuntimeException("Error parsing CSV column names: " + columnNamesCsv);
 		}
-		
-		parser = new CSVParser(new StringReader(csvLine.getCsvLine()));
-		
-		String[] values;
-		try {
-			 values = parser.getLine();
-		} catch (IOException ex) {
-			throw new RuntimeException("Error parsing CSV row: " + csvLine.getCsvLine());
-		}
-		
-		Map<String, BeanType> beans = getBeans(beanType, Arrays.asList(columnNames), Collections.singletonMap(csvLine.getId(), Arrays.asList(values)));
-		return beans.get(csvLine.getId());
+	}
+	
+	@Override
+	public <BeanType> BeanType getBean(Class<BeanType> beanType, String columnNamesCsv, CsvLine csvLine) {
+		return getBeans(beanType, columnNamesCsv, Collections.singleton(csvLine)).get(csvLine.getId());
 	}
 	
 	@Override
 	public <BeanType> Map<String, BeanType> getBeans(Class<BeanType> beanType, String columnNamesCsv, Collection<CsvLine> csvLines) {
-		Map<String, BeanType> beansMap = new HashMap<>(csvLines.size());
-		for(CsvLine csvLine : csvLines) {
-			beansMap.put(csvLine.getId(), getBean(beanType, columnNamesCsv, csvLine));
-		}
-		return beansMap;
-	}
-	
-	@Override
-	public <BeanType> Map<String, BeanType> getBeans(Class<BeanType> beanType, List<String> columnNames, Map<String, List<String>> body) {
 
+		String[] columnNames = splitCsv(columnNamesCsv);
+		
 		final ConstructorArgumentValues cav = new ConstructorArgumentValues();
 		
 		final GenericBeanDefinition beanDef = new GenericBeanDefinition();
 		beanDef.setBeanClass(beanType);
 		
-		logger.info("Parsing CSV; column names are {}", columnNames);
+		logger.info("Parsing CSV; column names are {}", columnNamesCsv);
 
-		Map<String, BeanType> beans = new HashMap<>(body.size());
+		Map<String, BeanType> beans = new HashMap<>(csvLines.size());
 		
-		for(Entry<String, List<String>> lineEntry : body.entrySet()) {
-			List<String> line = lineEntry.getValue();
+		for(CsvLine csvLine : csvLines) {
+			String[] line = splitCsv(csvLine.getCsvLine());
 			
-			for(int i = 0; i < columnNames.size(); i++) {
-				String columnName = columnNames.get(i);
-				String value = line.get(i);
+			for(int i = 0; i < columnNames.length; i++) {
+				String columnName = columnNames[i];
+				String value = line[i];
 				
 				//From SimpleConstructorNamespaceHandler
 				ConstructorArgumentValues.ValueHolder valueHolder = new ValueHolder(value);
@@ -106,7 +86,7 @@ public class CsvToBeanStrategySpringConstructor implements CsvToBeanStrategy {
 			
 			cav.clear(); //Ready for next row
 			
-			beans.put(line.get(0), bean); //id is always first column			
+			beans.put(line[0], bean); //id is always first column			
 		}
 		
 		logger.info("Updated {} beans", beans.size());

@@ -1,7 +1,5 @@
 package org.commacq.jms;
 
-import static org.commacq.CsvUpdatableDataSource.UpdateMode.untrusted;
-
 import javax.jms.ConnectionFactory;
 import javax.jms.JMSException;
 import javax.jms.Message;
@@ -12,7 +10,6 @@ import lombok.extern.slf4j.Slf4j;
 
 import org.commacq.CsvTextBlockToCallback;
 import org.commacq.CsvUpdatableDataSource;
-import org.commacq.CsvUpdatableDataSource.UpdateMode;
 import org.springframework.jms.listener.SimpleMessageListenerContainer;
 
 
@@ -33,7 +30,6 @@ public class JmsBroadcastClient {
 	private final String broadcastTopic;
 	private final CsvTextBlockToCallback csvTextBlockToCallback = new CsvTextBlockToCallback();
 	private final CsvUpdatableDataSource csvUpdatableDataSource;
-	private final UpdateMode updateMode = untrusted;
 	
 	SimpleMessageListenerContainer broadcastUpdateListener;
 	

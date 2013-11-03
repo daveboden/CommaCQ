@@ -1,6 +1,6 @@
 package org.commacq.client;
 
-import java.util.List;
+import java.util.Collection;
 import java.util.Map;
 
 import org.commacq.CsvLine;
@@ -21,8 +21,8 @@ public class CsvToBeanConverterImpl<BeanType> implements CsvToBeanConverter<Bean
 	}
 	
 	@Override
-	public Map<String, BeanType> getBeans(List<String> header, Map<String, List<String>> body) {
-		return csvToBeanStrategy.getBeans(beanType, header, body);
+	public Map<String, BeanType> getBeans(String columnNamesCsv, Collection<CsvLine> csvLines) {
+		return csvToBeanStrategy.getBeans(beanType, columnNamesCsv, csvLines);
 	}
 	
 	public Class<BeanType> getBeanType() {

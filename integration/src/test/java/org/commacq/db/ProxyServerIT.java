@@ -9,8 +9,6 @@ import javax.annotation.Resource;
 import javax.jms.JMSException;
 import javax.sql.DataSource;
 
-import lombok.extern.slf4j.Slf4j;
-
 import org.apache.commons.io.IOUtils;
 import org.commacq.client.Manager;
 import org.commacq.testclient.Customer;
@@ -26,7 +24,6 @@ import org.springframework.jdbc.core.JdbcTemplate;
  * Test a primary server and a separate secondary server proxying all the data from the
  * first.
  */
-@Slf4j
 public class ProxyServerIT extends SharedServices {
 
 	@Resource

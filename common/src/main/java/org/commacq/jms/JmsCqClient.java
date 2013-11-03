@@ -7,8 +7,6 @@ import javax.jms.Queue;
 import javax.jms.Session;
 import javax.jms.TextMessage;
 
-import lombok.extern.slf4j.Slf4j;
-
 import org.commacq.CsvUpdatableDataSource;
 import org.springframework.jms.core.JmsTemplate;
 import org.springframework.jms.core.MessageCreator;
@@ -25,7 +23,6 @@ import org.springframework.jms.listener.SimpleMessageListenerContainer;
  * responsible for picking up where it left off and sending updates on the client's temporary
  * queue.
  */
-@Slf4j
 public class JmsCqClient<BeanType> {
 	
 	private final String entityId;
