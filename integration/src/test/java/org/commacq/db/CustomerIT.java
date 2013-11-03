@@ -15,29 +15,57 @@ import javax.sql.DataSource;
 
 import lombok.extern.slf4j.Slf4j;
 
+import org.apache.commons.io.IOUtils;
 import org.commacq.client.CacheObserver;
 import org.commacq.client.Manager;
 import org.commacq.client.UpdateManager;
 import org.commacq.testclient.Customer;
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.support.GenericXmlApplicationContext;
+import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
-@RunWith(SpringJUnit4ClassRunner.class)
-@ContextConfiguration
 @Slf4j
-public class CustomerIT {
+public class CustomerIT extends SharedServices {
 
+	@Resource
+	ApplicationContext sharedContext;
+	
+	GenericXmlApplicationContext testContext;
+	
     @Resource
     DataSource integrationDataSource1;
 
-    @Resource
     UpdateManager updateManager;
 
-    @Resource
     Manager<Customer> customerManager;
+    
+    @SuppressWarnings("unchecked")
+	@Before
+    public void setup() throws IOException {
+    	JdbcTemplate template = new JdbcTemplate(integrationDataSource1);
+    	DefaultResourceLoader loader = new DefaultResourceLoader();
+    	template.execute(IOUtils.toString(loader.getResource("classpath:integration-1/setup/customerTableData.sql").getInputStream()));
+    	
+    	testContext = new GenericXmlApplicationContext();
+    	testContext.setParent(sharedContext);
+    	testContext.load("classpath:/org/commacq/db/CustomerIT-context.xml");
+    	testContext.refresh();
+    	testContext.start();
+    	updateManager = testContext.getBean("updateManager", UpdateManager.class);
+    	
+    	customerManager = testContext.getBean("customerManager", Manager.class);
+    }
+    
+    @After
+    public void teardown() {
+    	
+    	JdbcTemplate template = new JdbcTemplate(integrationDataSource1);
+    	template.execute("truncate table customer");
+    }
 
     @Test
     public void testCustomerDatabase() throws SQLException, IOException, JMSException, ClassNotFoundException {

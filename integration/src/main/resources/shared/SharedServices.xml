@@ -6,5 +6,6 @@ http://www.springframework.org/schema/beans http://www.springframework.org/schem
 ">
 
     <import resource="jms/jms-connection-test.xml"/>
+    <import resource="database.xml"/>
     
 </beans>
