@@ -83,6 +83,7 @@ public class CsvDataSourceCache implements CsvDataSource {
     	try {
 			callback.startUpdateBlock(csvCache.getColumnNamesCsv());
 			csvCache.visitAll(callback);
+			callback.finishUpdateBlock();
 		} catch (CsvUpdateBlockException ex) {
 			throw new RuntimeException(ex);
 		}

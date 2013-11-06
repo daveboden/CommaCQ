@@ -16,9 +16,6 @@ http://www.springframework.org/schema/jee http://www.springframework.org/schema/
 http://www.springframework.org/schema/jms http://www.springframework.org/schema/jms/spring-jms.xsd
 ">
 
-    <bean id="webSocketOutboundHandler" class="org.commacq.http.WebSocketOutboundHandler"/>
-    
-
     <bean id="csvHttpFileHandler" class="org.commacq.http.CsvHttpFileHandler"
           c:layer-ref="csvDataSourceCaches"
     />
@@ -38,13 +35,13 @@ http://www.springframework.org/schema/jms http://www.springframework.org/schema/
     -->
     <bean id="csvWebSocketHandler" class="org.commacq.http.CsvWebSocketHandler"
           c:layer-ref="csvDataSourceCaches"
-          c:webSocketOutboundHandler-ref="webSocketOutboundHandler"
           p:handler-ref="contextHandlerCollection"
     />
     
     <bean id="htmlHandler" class="org.eclipse.jetty.server.handler.ResourceHandler">
         <property name="resourceBase" 
                   value = "#{new org.springframework.core.io.ClassPathResource('html').getURI().toString()}" />
+        <property name="cacheControl" value="max-age=86400"/> <!-- 1 day cache -->
     </bean> 
           
     <bean id="contextHandlerCollection" class="org.eclipse.jetty.server.handler.ContextHandlerCollection">
@@ -71,13 +68,7 @@ http://www.springframework.org/schema/jms http://www.springframework.org/schema/
     </bean>
           
     <bean id="Server" class="org.eclipse.jetty.server.Server" init-method="start" destroy-method="stop">
-        <property name="connectors">
-          <list>
-            <bean id="Connector" class="org.eclipse.jetty.server.nio.SelectChannelConnector">
-              <property name="port" value="${http.port}"/> <!-- Move to properties file -->
-            </bean>
-          </list>
-        </property>
+        <constructor-arg value="${http.port}"/>
      
         <!--
         Provide the web socket handler which itself has a reference

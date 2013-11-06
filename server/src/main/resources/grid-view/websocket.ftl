@@ -55,10 +55,10 @@ function initWebSocket() {
 	if ("WebSocket" in window) {
 	  var ws = new WebSocket("ws://localhost:8088/socket/${entityId}");
 	  ws.onopen = function() {
-	    // Web Socket is connected. You can send data by send() method.
-	    ws.send("message to send");
+	      console.log("WebSocket open");
 	  };
 	  ws.onmessage = function (evt) {
+	      console.log("Received message");
 	      //If this is the first message received then setup the
 	      //table. Decide on the columns by parsing the CSV header.
           require([
@@ -98,11 +98,11 @@ function initWebSocket() {
 		  
 		  }); //end require
       };
-	  ws.onclose = function() { // websocket is closed.
+	  ws.onclose = function() {
+	      console.log("WebSocket closed");
 	  };
 	} else {
-	  alert("No websocket support");
-	  // the browser doesn't support WebSocket.
+	  alert("No WebSocket support");
 	}
 }
 </script>

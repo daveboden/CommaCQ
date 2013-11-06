@@ -103,13 +103,8 @@
             <artifactId>jetty-util</artifactId>
         </dependency>
         <dependency>
-            <groupId>org.eclipse.jetty</groupId>
-            <artifactId>jetty-websocket</artifactId>
-            <!-- Changes in Jetty 9 -->
-            <!--
             <groupId>org.eclipse.jetty.websocket</groupId>
             <artifactId>websocket-server</artifactId>
-            -->
         </dependency>
         <!-- Jetty dependencies - END -->
 

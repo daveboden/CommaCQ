@@ -29,7 +29,7 @@
 
         <slf4j.version>1.7.5</slf4j.version>
 
-        <jetty.version>8.1.12.v20130726</jetty.version>
+        <jetty.version>9.1.0.RC1</jetty.version>
     </properties>
 
     <dependencyManagement>
@@ -84,13 +84,8 @@
                 <version>${jetty.version}</version>
             </dependency>
             <dependency>
-                <groupId>org.eclipse.jetty</groupId>
-                <artifactId>jetty-websocket</artifactId>
-                <!-- Changes in Jetty 9 -->
-                <!--
-                    <groupId>org.eclipse.jetty.websocket</groupId>
-                    <artifactId>websocket-server</artifactId>
-                -->
+                <groupId>org.eclipse.jetty.websocket</groupId>
+                <artifactId>websocket-server</artifactId>
                 <version>${jetty.version}</version>
             </dependency>
             <!-- Jetty dependencies - END -->
