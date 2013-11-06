@@ -108,9 +108,12 @@
                 <configuration>
                     <mainClass>org.commacq.CommaCqServer</mainClass>
                     <arguments>
-                        <argument>classpath:/integration-1/setup/database.xml</argument>
+                        <argument>classpath:/shared/database.xml</argument>
                         <argument>classpath:/commacqserver/basic/broadcast.xml</argument>
-                        <argument>classpath:/integration-1/server-config/basic-broadcast.properties</argument>
+                        <argument>classpath:/integration-1/server-config/basic-broadcast-primary.properties</argument>
+                        <argument>classpath:/integration-1/server-config/update-primary.properties</argument>
+                        <argument>classpath:/shared/jms/jms.properties</argument>
+                        <argument>classpath:/sandbox.properties</argument>
                     </arguments>
                 </configuration>
             </plugin>

@@ -92,12 +92,12 @@ public class JaxbAttributeWriterStrategy implements CsvToBeanStrategy {
         return camelCaseStringBuilder.toString();
     }
     
-	private String[] splitCsv(String columnNamesCsv) {
-		CSVParser parser = new CSVParser(new StringReader(columnNamesCsv));
+	private String[] splitCsv(String csv) {
+		CSVParser parser = new CSVParser(new StringReader(csv));
 		try {
 			return parser.getLine();
 		} catch(IOException ex) {
-			throw new RuntimeException("Error parsing CSV column names: " + columnNamesCsv);
+			throw new RuntimeException("Error parsing CSV: " + csv, ex);
 		}
 	}
 
