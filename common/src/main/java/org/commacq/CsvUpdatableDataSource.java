@@ -34,4 +34,6 @@ public interface CsvUpdatableDataSource extends CsvDataSource, CsvLineCallback {
 	
 	void updateUntrusted(Collection<String> ids) throws CsvUpdateBlockException;
 	
+	void reload() throws CsvUpdateBlockException;
+	
 }

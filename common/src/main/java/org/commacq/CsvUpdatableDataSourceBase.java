@@ -85,5 +85,14 @@ public abstract class CsvUpdatableDataSourceBase implements CsvUpdatableDataSour
     public void updateUntrusted(Collection<String> ids) {
     	getCsvLines(ids, composite);
     }
+    
+    @Override
+    public void reload() throws CsvUpdateBlockException {
+    	String columnNamesCsv = getColumnNamesCsv();
+    	composite.startUpdateBlock(columnNamesCsv);
+    	composite.startBulkUpdate(columnNamesCsv);
+    	getAllCsvLines(composite);
+    	composite.finishUpdateBlock();
+    }
 
 }

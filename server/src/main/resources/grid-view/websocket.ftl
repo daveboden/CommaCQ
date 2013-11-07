@@ -53,7 +53,7 @@ require([
 
 function initWebSocket() {
 	if ("WebSocket" in window) {
-	  var ws = new WebSocket("ws://localhost:8088/socket/${entityId}");
+	  var ws = new WebSocket("ws://" + location.host + "/socket/${entityId}");
 	  ws.onopen = function() {
 	      console.log("WebSocket open");
 	  };

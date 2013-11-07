@@ -44,18 +44,12 @@ public class CsvDataSourceLayerCollection implements CsvDataSourceLayer {
 		}
 	}
 	
-	/* (non-Javadoc)
-	 * @see org.commacq.CsvDataSourceLayerI#getEntityIds()
-	 */
 	@Override
 	@ManagedAttribute
 	public SortedSet<String> getEntityIds() {
 		return entityIdsUnmodifiable;
 	}
 	
-	/* (non-Javadoc)
-	 * @see org.commacq.CsvDataSourceLayerI#getCsvEntry(java.lang.String, java.lang.String)
-	 */
 	@Override
 	@ManagedOperation
 	public String getCsvEntry(String entityId, String id) {
@@ -64,26 +58,18 @@ public class CsvDataSourceLayerCollection implements CsvDataSourceLayer {
 	    return callback.getCsvLineAndClear().getCsvLine();
 	}
 	
-	/* (non-Javadoc)
-	 * @see org.commacq.CsvDataSourceLayerI#pokeCsvEntry(java.lang.String, java.lang.String)
-	 */
 	@Override
 	@ManagedOperation
-	//TODO Move this into an update manager where the updates are synchronised
-	public String pokeCsvEntry(String entityId, String id) {
+	public String pokeCsvEntry(String entityId, String id) throws CsvUpdateBlockException {
 		CsvDataSource source = getCsvDataSource(entityId);
 		if(!(source instanceof CsvUpdatableDataSource)) {
 			throw new RuntimeException("Not an updatable data source: " + entityId);
 		}
 		
 		CsvUpdatableDataSource updatableDataSource = (CsvUpdatableDataSource)source;
-		try {
-			updatableDataSource.startUpdateBlock(source.getColumnNamesCsv());
-			updatableDataSource.updateUntrusted(id);
-			updatableDataSource.finishUpdateBlock();
-		} catch (CsvUpdateBlockException ex) {
-			return null;
-		}
+		updatableDataSource.startUpdateBlock(source.getColumnNamesCsv());
+		updatableDataSource.updateUntrusted(id);
+		updatableDataSource.finishUpdateBlock();
 		
 		return getCsvEntry(entityId, id);
 	}
@@ -103,6 +89,23 @@ public class CsvDataSourceLayerCollection implements CsvDataSourceLayer {
 	@Override
 	public Map<String, CsvDataSource> getMap() {
 		return csvDataSourceMapUnmodifiable;
+	}
+	
+	@Override
+	@ManagedOperation
+	public void reload(String entityId) throws CsvUpdateBlockException {
+		CsvDataSource csvDataSource = getMap().get(entityId);
+		if(csvDataSource instanceof CsvUpdatableDataSource) {
+			((CsvUpdatableDataSource)csvDataSource).reload();
+		}
+	}
+	
+	@Override
+	@ManagedOperation
+	public void reloadAll() throws CsvUpdateBlockException {
+		for(String entityId : entityIds) {
+			reload(entityId);
+		}
 	}
 	
 }

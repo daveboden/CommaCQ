@@ -11,6 +11,9 @@ import javax.annotation.concurrent.Immutable;
 
 import org.commacq.CsvDataSource;
 import org.commacq.CsvDataSourceLayer;
+import org.commacq.CsvUpdatableDataSource;
+import org.commacq.CsvUpdateBlockException;
+import org.springframework.jmx.export.annotation.ManagedOperation;
 
 /**
  * Joins layers together so that they can be addressed as a single block.
@@ -53,7 +56,7 @@ public class CsvDataSourceLayerUnion implements CsvDataSourceLayer {
 	}
 
 	@Override
-	public String pokeCsvEntry(String entityId, String id) {
+	public String pokeCsvEntry(String entityId, String id) throws CsvUpdateBlockException {
 		return getLayer(entityId).pokeCsvEntry(entityId, id); 
 	}
 
@@ -73,5 +76,22 @@ public class CsvDataSourceLayerUnion implements CsvDataSourceLayer {
 			throw new RuntimeException("Unknown entity id: " + entityId);
 		}
 		return layer;
+	}
+	
+	@Override
+	@ManagedOperation
+	public void reload(String entityId) throws CsvUpdateBlockException {
+		CsvDataSource csvDataSource = getMap().get(entityId);
+		if(csvDataSource instanceof CsvUpdatableDataSource) {
+			((CsvUpdatableDataSource)csvDataSource).reload();
+		}
+	}
+	
+	@Override
+	@ManagedOperation
+	public void reloadAll() throws CsvUpdateBlockException {
+		for(String entityId : entityIds) {
+			reload(entityId);
+		}
 	}
 }
