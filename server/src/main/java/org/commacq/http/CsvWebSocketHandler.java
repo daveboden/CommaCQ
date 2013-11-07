@@ -71,7 +71,7 @@ public class CsvWebSocketHandler extends WebSocketHandler {
 				    session.getRemote().sendString(message);
 				    return;
 				}
-				callback = new CsvCallbackWebSocket(session);
+				callback = new CsvLineCallbackWebSocket(session);
 				source.getAllCsvLinesAndSubscribe(callback);
 			} catch (IOException ex) {
 				log.error("Could not send message to opened connection", ex);
@@ -92,7 +92,7 @@ public class CsvWebSocketHandler extends WebSocketHandler {
 	
 	@Slf4j
 	@RequiredArgsConstructor
-	private static class CsvCallbackWebSocket implements CsvLineCallback {
+	private static class CsvLineCallbackWebSocket implements CsvLineCallback {
 		private final Session session;
 		
 		private int rowCount = 0; 
@@ -131,7 +131,7 @@ public class CsvWebSocketHandler extends WebSocketHandler {
 				session.getRemote().sendPartialString("", true);
 			} catch (IOException ex) {
 				throw new CsvUpdateBlockException(ex);
-			}						
+			}
 		}
 
 		@Override
@@ -142,7 +142,7 @@ public class CsvWebSocketHandler extends WebSocketHandler {
 				rowCount++;
 			} catch (IOException ex) {
 				throw new CsvUpdateBlockException(ex);
-			}		
+			}
 		}
 
 		@Override
@@ -161,6 +161,11 @@ public class CsvWebSocketHandler extends WebSocketHandler {
 		public void cancel() {
 			log.error("Unable to handle cancellation; not yet implemented");
 			rowCount = 0;
+		}
+		
+		@Override
+		public String toString() {
+			return "CsvLineCallbackWebSocket: " + session.getRemoteAddress();
 		}
 		
 	}

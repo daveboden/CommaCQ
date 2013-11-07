@@ -57,7 +57,14 @@ public class CsvDataSourceCache implements CsvDataSource {
     @Override
     public void getAllCsvLinesAndSubscribe(CsvLineCallback callback) {
     	subscriptionCallback.addCallback(callback);
-    	getAllCsvLines(callback);
+    	try {
+    		callback.startUpdateBlock(getColumnNamesCsv());
+    		csvCache.visitAll(callback);
+    		callback.finishUpdateBlock();
+    	} catch(CsvUpdateBlockException ex) {
+    		log.warn("Error while communicating with callback. Removing subscriber: {}", callback);
+    		subscriptionCallback.removeCallback(callback);
+    	}
     }
     
     @Override

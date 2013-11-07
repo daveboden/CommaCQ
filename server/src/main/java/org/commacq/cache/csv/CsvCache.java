@@ -77,13 +77,9 @@ public final class CsvCache {
 	    return linesIdMap.get(id);
 	}
 	
-	public void visitAll(CsvLineCallback callback) {
+	public void visitAll(CsvLineCallback callback) throws CsvUpdateBlockException {
 		for(CsvLine csvLine : linesIdMap.values()) {
-			try {
-				callback.processUpdate(columnNamesCsv, csvLine);
-			} catch (CsvUpdateBlockException ex) {
-				throw new RuntimeException(ex);
-			}
+			callback.processUpdate(columnNamesCsv, csvLine);
 		}
 	}
 	
