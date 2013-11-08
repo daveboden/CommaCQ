@@ -14,11 +14,12 @@ import javax.jms.TextMessage;
 
 import lombok.extern.slf4j.Slf4j;
 
-import org.apache.commons.csv.CSVParser;
 import org.commacq.CsvDataSourceLayer;
 import org.commacq.CsvTextBlockToCallback;
 import org.commacq.CsvUpdatableDataSource;
 import org.commacq.CsvUpdateBlockException;
+import org.supercsv.io.CsvListReader;
+import org.supercsv.prefs.CsvPreference;
 
 /**
  * A single listener processes updates, directing them to the relevant
@@ -108,36 +109,39 @@ public class UpdateInboundHandler implements MessageListener {
     }
     
     private void handlePayload(final String entityId, final String csvHeaderAndBody) {
-    	CSVParser parser = new CSVParser(new StringReader(csvHeaderAndBody));
-    	String[] header;
+    	CsvListReader parser = new CsvListReader(new StringReader(csvHeaderAndBody), CsvPreference.STANDARD_PREFERENCE);
     	try {
-			header = parser.getLine();
-		} catch (IOException ex) {
-			throw new RuntimeException("Couldn't parse CSV", ex);
-		}
-    	
-    	CsvUpdatableDataSource source = (CsvUpdatableDataSource)layer.getCsvDataSource(entityId);
-    	
-    	if(header.length == 1 && header[0].equals("id")) {
-    		log.info("Update for entity {} contains a list of ids", entityId);
-    		String[] line;
-    		try {
-    			source.startUpdateBlock(source.getColumnNamesCsv());;
-				while((line = parser.getLine()) != null) {
-					source.updateUntrusted(line[0]);
+	    	String[] header = parser.getHeader(true);
+	    	
+	    	CsvUpdatableDataSource source = (CsvUpdatableDataSource)layer.getCsvDataSource(entityId);
+	    	
+	    	if(header.length == 1 && header[0].equals("id")) {
+	    		log.info("Update for entity {} contains a list of ids", entityId);
+	    		List<String> line;
+	    		try {
+	    			source.startUpdateBlock(source.getColumnNamesCsv());;
+					while((line = parser.read()) != null) {
+						source.updateUntrusted(line.get(0));
+					}
+					source.finishUpdateBlock();
+				} catch(CsvUpdateBlockException ex) {
+					throw new RuntimeException(ex);
 				}
-				source.finishUpdateBlock();
-			} catch (IOException ex) {				
-				throw new RuntimeException("Couldn't parse CSV", ex);
-			} catch(CsvUpdateBlockException ex) {
-				throw new RuntimeException(ex);
+	    		return;
+	    	}
+	    	log.info("Update for entity {} contains ids and column headings", entityId);
+	    	
+	    	csvTextBlockToCallback.presentTextBlockToCsvLineCallback(csvHeaderAndBody, source, true);
+    	} catch (IOException ex) {				
+			throw new RuntimeException("Couldn't parse CSV", ex);
+    	} finally {
+			try {
+				parser.close();
+			} catch (IOException ex) {
+				log.warn("Error closing CSV parser", ex);
 			}
-    		return;
     	}
     	
-    	log.info("Update for entity {} contains ids and column headings", entityId);
-    	
-    	csvTextBlockToCallback.presentTextBlockToCsvLineCallback(csvHeaderAndBody, source, true);
     }
     
     

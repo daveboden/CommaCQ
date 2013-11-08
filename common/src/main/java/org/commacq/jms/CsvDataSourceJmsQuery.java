@@ -2,8 +2,8 @@ package org.commacq.jms;
 
 import java.io.IOException;
 import java.io.StringReader;
-import java.io.StringWriter;
 import java.util.Collection;
+import java.util.List;
 
 import javax.jms.ConnectionFactory;
 import javax.jms.JMSException;
@@ -12,8 +12,8 @@ import javax.jms.Queue;
 import javax.jms.Session;
 import javax.jms.TextMessage;
 
-import org.apache.commons.csv.CSVParser;
-import org.apache.commons.csv.CSVPrinter;
+import lombok.extern.slf4j.Slf4j;
+
 import org.commacq.CsvLine;
 import org.commacq.CsvLineCallback;
 import org.commacq.CsvLineCallbackListImpl;
@@ -22,7 +22,10 @@ import org.commacq.CsvUpdateBlockException;
 import org.springframework.jms.core.JmsTemplate;
 import org.springframework.jms.core.MessageCreator;
 import org.springframework.jms.core.SessionCallback;
+import org.supercsv.io.CsvListReader;
+import org.supercsv.prefs.CsvPreference;
 
+@Slf4j
 public class CsvDataSourceJmsQuery extends CsvUpdatableDataSourceBase {
 
 	private final String entityId;
@@ -166,42 +169,34 @@ public class CsvDataSourceJmsQuery extends CsvUpdatableDataSourceBase {
 	}
 	
 	private void processResult(CsvLineCallback callback, String text) {
-		CSVParser parser = new CSVParser(new StringReader(text));
-		
-		String[] header;
-		try {
-			header = parser.getLine();
-		} catch (IOException ex) {
-			throw new RuntimeException("Error processing CSV line", ex);
-		}
-		StringWriter writer = new StringWriter();
-		CSVPrinter printer = new CSVPrinter(writer);
-		printer.println(header);
-		String columnNamesCsv = writer.toString();
+		CsvListReader parser = new CsvListReader(new StringReader(text), CsvPreference.STANDARD_PREFERENCE);
 		
 		try {
+		
+			parser.getHeader(true);
+			String columnNamesCsv = parser.getUntokenizedRow();
+		
 			callback.startUpdateBlock(columnNamesCsv);
 			
-			//Clear writer
-			writer.getBuffer().setLength(0);
+			List<String> body;
 			
-			String[] body;
-			try {
-				while((body = parser.getLine()) != null) {
-					printer.println(body);
-					String line = writer.toString();
-					//Clear writer
-					writer.getBuffer().setLength(0);
-					CsvLine csvLine = new CsvLine(body[0], line);
-					callback.processUpdate(columnNamesCsv, csvLine);
-				}
-			} catch (IOException ex) {
-				throw new RuntimeException("Error getting CSV line", ex);
+			while((body = parser.read()) != null) {
+				String line = parser.getUntokenizedRow();
+				CsvLine csvLine = new CsvLine(body.get(0), line);
+				callback.processUpdate(columnNamesCsv, csvLine);
 			}
 			
 			callback.finishUpdateBlock();
 		} catch(CsvUpdateBlockException ex) {
 			throw new RuntimeException(ex);
+		} catch(IOException ex) {
+			throw new RuntimeException("Error parsing CSV", ex);
+		} finally {
+			try {
+				parser.close();
+			} catch (IOException ex) {
+				log.warn("Error closing CSV parser", ex);
+			}
 		}
 	}
 	

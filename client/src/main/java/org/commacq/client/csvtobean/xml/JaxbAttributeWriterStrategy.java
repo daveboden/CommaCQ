@@ -24,14 +24,18 @@ import javax.xml.stream.events.EndElement;
 import javax.xml.stream.events.StartElement;
 import javax.xml.stream.events.XMLEvent;
 
-import org.apache.commons.csv.CSVParser;
+import lombok.extern.slf4j.Slf4j;
+
 import org.apache.commons.lang3.StringUtils;
 import org.commacq.CsvLine;
 import org.commacq.client.CsvToBeanStrategy;
+import org.supercsv.io.CsvListReader;
+import org.supercsv.prefs.CsvPreference;
 
 /**
  * Unmarshals CSV to beans that have Jaxb annotations and are expecting a single XML element with attributes. 
  */
+@Slf4j
 @NotThreadSafe //Meant to be used by a single thread responsible for performing the initial load of bean cache data and performing the updates.
 public class JaxbAttributeWriterStrategy implements CsvToBeanStrategy {
     
@@ -92,12 +96,18 @@ public class JaxbAttributeWriterStrategy implements CsvToBeanStrategy {
         return camelCaseStringBuilder.toString();
     }
     
-	private String[] splitCsv(String csv) {
-		CSVParser parser = new CSVParser(new StringReader(csv));
+	private List<String> splitCsv(String columnNamesCsv) {
+		CsvListReader parser = new CsvListReader(new StringReader(columnNamesCsv), CsvPreference.STANDARD_PREFERENCE);
 		try {
-			return parser.getLine();
+			return parser.read();
 		} catch(IOException ex) {
-			throw new RuntimeException("Error parsing CSV: " + csv, ex);
+			throw new RuntimeException("Error parsing CSV column names: " + columnNamesCsv);
+		} finally {
+			try {
+				parser.close();
+			} catch (IOException ex) {
+				log.warn("Error closing CSV parser", ex);
+			}
 		}
 	}
 
@@ -110,7 +120,7 @@ public class JaxbAttributeWriterStrategy implements CsvToBeanStrategy {
 	@SuppressWarnings("unchecked")
 	@Override
 	public <BeanType> Map<String, BeanType> getBeans(Class<BeanType> beanType, String columnNamesCsv, Collection<CsvLine> csvLines) {
-		String[] columnNames = splitCsv(columnNamesCsv);
+		List<String> columnNames = splitCsv(columnNamesCsv);
 		
 		Map<String, BeanType> beansMap = new HashMap<>(csvLines.size());
 		for(CsvLine csvLine : csvLines) {
@@ -118,7 +128,7 @@ public class JaxbAttributeWriterStrategy implements CsvToBeanStrategy {
 	        AttributeEventReader attributeEventReader = getAttributeEventReader(beanType);
 	        Unmarshaller unmarshaller = unmarshallerMap.get(beanType);
 	        
-	        String[] rowValues = splitCsv(csvLine.getCsvLine());
+	        List<String> rowValues = splitCsv(csvLine.getCsvLine());
 
             attributeEventReader.setData(columnNames, rowValues);
 
@@ -144,8 +154,8 @@ public class JaxbAttributeWriterStrategy implements CsvToBeanStrategy {
         private final QName tag;
         private final XMLEventFactory xmlEventFactory = XMLEventFactory.newInstance();
 
-        String[] header;
-        String[] row;
+        List<String> header;
+        List<String> row;
         // Decides whether we send the tag event (event 0) or the end tag event (event 1)
         // We only ever deliver 2 events before this object is reset with the next
         // bean of data.
@@ -163,15 +173,15 @@ public class JaxbAttributeWriterStrategy implements CsvToBeanStrategy {
             this.endElement = xmlEventFactory.createEndElement(tag, Collections.emptyIterator());
         }
 
-        public void setData(String[] header, String[] row) {
+        public void setData(List<String> header, List<String> row) {
             this.header = header;
             this.row = row;
             this.currentEventIndex = 0;
 
             attributes.clear();
 
-            for (int i = 0; i < header.length; i++) {
-                String value = row[i];
+            for (int i = 0; i < header.size(); i++) {
+                String value = row.get(i);
                 // TODO tokenise the CSV row before unescaping it so that we can tell
                 // the difference between a truly blank string (null) and a quoted
                 // blank string ("") which should evaluate to empty string.
@@ -187,7 +197,7 @@ public class JaxbAttributeWriterStrategy implements CsvToBeanStrategy {
                         value = "false";
                     }
 
-                    attributes.add(xmlEventFactory.createAttribute(header[i], value));
+                    attributes.add(xmlEventFactory.createAttribute(header.get(i), value));
                 }
             }
 
