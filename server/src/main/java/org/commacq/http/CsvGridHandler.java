@@ -11,7 +11,6 @@ import lombok.extern.slf4j.Slf4j;
 
 import org.commacq.CsvDataSource;
 import org.commacq.CsvDataSourceLayer;
-import org.eclipse.jetty.http.HttpStatus;
 import org.eclipse.jetty.server.Request;
 import org.eclipse.jetty.server.handler.AbstractHandler;
 
@@ -50,18 +49,7 @@ public class CsvGridHandler extends AbstractHandler {
   		CsvDataSource source = layer.getCsvDataSource(entityId);
 		
 		if(source == null) {
-			String message;
-			if(entityId == null) {
-				message = String.format("Valid types are: %s", layer.getEntityIds());
-			} else {
-				message = String.format("Unknown entity: %s - valid types are: %s",
-						  entityId, layer.getEntityIds());
-
-				//Warn. It's more serious that someone has requested an invalid entity than no entity.
-				log.warn(message);
-			}
-			response.sendError(HttpStatus.NOT_FOUND_404,
-					message);
+			HttpUtils.respondWithErrorMessage(layer, entityId, response, log);
 			
 			return;
 		}
