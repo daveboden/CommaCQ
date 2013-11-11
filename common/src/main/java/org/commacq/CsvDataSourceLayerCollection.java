@@ -95,8 +95,13 @@ public class CsvDataSourceLayerCollection implements CsvDataSourceLayer {
 	@ManagedOperation
 	public void reload(String entityId) throws CsvUpdateBlockException {
 		CsvDataSource csvDataSource = getMap().get(entityId);
+		if(csvDataSource == null) {
+			throw new IllegalArgumentException("entityId " + entityId + " not recognised");
+		}
 		if(csvDataSource instanceof CsvUpdatableDataSource) {
 			((CsvUpdatableDataSource)csvDataSource).reload();
+		} else {
+			throw new IllegalArgumentException("entityId " + entityId + " not updatable");
 		}
 	}
 	
