@@ -8,4 +8,7 @@ public interface MessageFields {
 	String idWithinGroup = "idWithinGroup";
 	String bulkUpdate = "bulkUpdate";
 	String columnNamesOnly = "columnNamesOnly";
+	String command = "command";
+	
+	String command_listEntityIds = "listEntityIds";
 }

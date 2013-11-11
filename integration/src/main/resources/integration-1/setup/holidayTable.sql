@@ -1,0 +1,1 @@
+create table HOLIDAY (currency char(3), holidayDate date)

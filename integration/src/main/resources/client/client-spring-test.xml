@@ -49,5 +49,6 @@ http://commacq.org/client http://commacq.org/client/comma-cq-1.0.xsd
     <bean id="managerFactory" class="org.commacq.client.factory.ManagerFactoryDefault"/>
     
     <cq:manager entityName="customer" beanType="org.commacq.testclient.Customer"/>
+    <cq:manager entityName="holiday" beanType="org.commacq.testclient.Holiday"/>
 
 </beans>

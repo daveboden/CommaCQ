@@ -18,10 +18,7 @@ http://activemq.apache.org/schema/core http://activemq.apache.org/schema/core/ac
     -->
     <jdbc:embedded-database id="integrationDataSource1" type="H2">
         <jdbc:script location="classpath:integration-1/setup/customerTable.sql" />
+        <jdbc:script location="classpath:integration-1/setup/holidayTable.sql" />
     </jdbc:embedded-database>
-    
-<!--     <bean class="org.commacq.db.InsertManyRows">
-        <constructor-arg ref="integrationDataSource1"/>
-    </bean> -->
 
 </beans>

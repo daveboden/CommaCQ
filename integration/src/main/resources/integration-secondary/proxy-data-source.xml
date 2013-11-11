@@ -26,19 +26,7 @@ http://www.springframework.org/schema/context http://www.springframework.org/sch
           c:timeoutInSeconds="2"
           c:broadcastTopicPattern="${jms.proxy.broadcast.topic.pattern}"
     />
+    <!-- TODO - incorrectly named; these aren't caches -->
+    <bean id="csvDataSourceCaches" factory-bean="csvProxyDataSourceFactory" factory-method="createLayer"/>
     
-    <!-- For now, hardcode customer. Next step is to make a proxy layer then cache that. -->
-    
-    <bean id="customerCache" factory-bean="csvProxyDataSourceFactory" factory-method="createCsvDataSource">
-    	<constructor-arg value="customer"/>
-    </bean>
-    
-    <bean id="csvDataSourceCaches" class="org.commacq.CsvDataSourceLayerCollection">
-    	<constructor-arg>
-    		<list>
-    			<ref bean="customerCache"/>
-    		</list>
-    	</constructor-arg>
-    </bean>
-
 </beans>

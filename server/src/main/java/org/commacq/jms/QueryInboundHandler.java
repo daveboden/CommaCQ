@@ -46,6 +46,21 @@ public class QueryInboundHandler implements SessionAwareMessageListener<Message>
 	@Override
 	public void onMessage(Message message, Session session) throws JMSException {
 		log.debug("Received query message: {}", message);
+		
+		String command = message.getStringProperty(MessageFields.command);
+		if(MessageFields.command_listEntityIds.equals(command)) {
+			log.info("Received a query for the list of entityIds");
+			MessageProducer messageProducer = session.createProducer(message.getJMSReplyTo());
+			TextMessage outputMessage = session.createTextMessage();
+			StringBuilder stringBuilder = new StringBuilder();
+			for(String entityId : layer.getEntityIds()) {
+				stringBuilder.append(entityId).append("\r\n");
+			}
+			outputMessage.setText(stringBuilder.toString());
+			messageProducer.send(outputMessage);
+			return;
+		}
+		
 		String entityId;
 		try {
 			entityId = message.getStringProperty(MessageFields.entityId);
