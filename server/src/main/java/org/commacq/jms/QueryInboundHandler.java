@@ -21,6 +21,12 @@ import org.springframework.jms.listener.SessionAwareMessageListener;
  * and delivered to the client.
  * 
  * Incoming messages always have a reply queue set (normally a temporary queue).
+ * 
+ * QueryInboundHandler exposes a layer.
+ * Clients can demand individual entities by name, or can ask the handler for all the entity identifiers that
+ * the layer contains and then get them all. To request the list of entityIds, the command is "listEntityIds".
+ * The request message from the client contains an entityId property to specify which entity is required.
+ * It supports a "columnNamesOnly" attribute if the client just wants to get hold of the header information.
  */
 @Slf4j
 public class QueryInboundHandler implements SessionAwareMessageListener<Message> {
