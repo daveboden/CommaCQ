@@ -22,11 +22,11 @@ public interface CsvLineCallback {
 	 * 
 	 * During a bulk update, even the column structure can change.
 	 */
-	void startBulkUpdate(String columnNamesCsv) throws CsvUpdateBlockException;
+	void startBulkUpdate(String entityId, String columnNamesCsv) throws CsvUpdateBlockException;
 	
-	void startBulkUpdateForGroup(String group, String idWithinGroup) throws CsvUpdateBlockException;
+	void startBulkUpdateForGroup(String entityId, String group, String idWithinGroup) throws CsvUpdateBlockException;
 	
-	void startUpdateBlock(String columnNamesCsv) throws CsvUpdateBlockException;
+	void startUpdateBlock(String entityId, String columnNamesCsv) throws CsvUpdateBlockException;
 	
 	/**
 	 * Allows subscribers to behave transactionally. finishUpdateBlock() is called after
@@ -35,8 +35,8 @@ public interface CsvLineCallback {
 	 */
 	void finishUpdateBlock() throws CsvUpdateBlockException;
 	
-	void processUpdate(String columnNamesCsv, CsvLine csvLine) throws CsvUpdateBlockException;
-	void processRemove(String id) throws CsvUpdateBlockException;
+	void processUpdate(String entityId, String columnNamesCsv, CsvLine csvLine) throws CsvUpdateBlockException;
+	void processRemove(String entityId, String id) throws CsvUpdateBlockException;
 	
 	/**
 	 * Provides a way of abandoning an update block part-way through.

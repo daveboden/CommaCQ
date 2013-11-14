@@ -18,4 +18,13 @@ public interface CsvDataSourceLayer {
 	void reload(String entityId) throws CsvUpdateBlockException;
 	void reloadAll() throws CsvUpdateBlockException;
 	
+    /**
+     * Each Layer maintains a list of observers used
+     * for real-time updates.
+     */
+	void getAllCsvLinesAndSubscribe(String entityId, CsvLineCallback callback);
+    void getAllCsvLinesAndSubscribe(CsvLineCallback callback);
+    void subscribe(CsvLineCallback callback);
+    void unsubscribe(CsvLineCallback callback);
+	
 }

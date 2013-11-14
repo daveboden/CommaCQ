@@ -22,6 +22,7 @@ import org.commacq.CsvDataSource;
 import org.commacq.CsvDataSourceFactory;
 import org.commacq.CsvDataSourceLayer;
 import org.commacq.CsvDataSourceLayerCollection;
+import org.commacq.CsvUpdatableLayer;
 import org.springframework.jms.core.JmsTemplate;
 import org.springframework.jms.core.MessageCreator;
 import org.springframework.jms.core.SessionCallback;
@@ -31,25 +32,12 @@ import org.springframework.jms.core.SessionCallback;
  * Creates a CsvDataSourceJmsQuery wired up to the update listener.
  */
 @RequiredArgsConstructor
-public class CsvDataSourceBroadcastFactory implements CsvDataSourceFactory {
+public class CsvDataSourceBroadcastFactory {
 	
 	private final ConnectionFactory connectionFactory;
 	private final String queryQueue;
 	private final String broadcastTopicPattern;
 	private final int timeoutInSeconds;
-
-	@Override
-	public CsvDataSourceJmsQuery createCsvDataSource(final String entityId) throws JMSException {
-		final CsvDataSourceJmsQuery jmsQuery = new CsvDataSourceJmsQuery(entityId, connectionFactory, queryQueue);
-		
-		String broadcastTopic = String.format(broadcastTopicPattern, entityId);
-		
-		JmsBroadcastClient broadcastClient = new JmsBroadcastClient(entityId, jmsQuery, connectionFactory, broadcastTopic);
-		broadcastClient.init();
-		broadcastClient.start();
-		
-		return jmsQuery;
-	}
 	
 	/**
 	 * Creates a proxy layer by requesting all entity ids from the upstream server
@@ -102,10 +90,26 @@ public class CsvDataSourceBroadcastFactory implements CsvDataSourceFactory {
 		
 		List<CsvDataSource> sources = new ArrayList<CsvDataSource>();
 		for(String entityId : entityIds) {
-			CsvDataSourceJmsQuery source = createCsvDataSource(entityId);
-			sources.add(source);
+			final CsvDataSourceJmsQuery jmsQuery = new CsvDataSourceJmsQuery(entityId, connectionFactory, queryQueue);
+			sources.add(jmsQuery);			
 		}
-		CsvDataSourceLayer outputLayer = new CsvDataSourceLayerCollection(sources);
+		
+		CsvUpdatableLayer outputLayer = new CsvDataSourceLayerCollection(sources);
+		
+		for(String entityId : entityIds) {
+			createBroadcastListener(entityId, outputLayer);
+		}
+		
 		return outputLayer;
+	}
+	
+	private void createBroadcastListener(final String entityId, final CsvUpdatableLayer layer) throws JMSException {
+		String broadcastTopic = String.format(broadcastTopicPattern, entityId);
+		
+		JmsBroadcastClient broadcastClient = new JmsBroadcastClient(entityId, layer, connectionFactory, broadcastTopic);
+		broadcastClient.init();
+		broadcastClient.start();
+		
+		return ;
 	}
 }

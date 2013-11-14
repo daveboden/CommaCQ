@@ -14,10 +14,10 @@ import javax.jms.TextMessage;
 
 import lombok.extern.slf4j.Slf4j;
 
+import org.commacq.CsvDataSource;
 import org.commacq.CsvLine;
 import org.commacq.CsvLineCallback;
 import org.commacq.CsvLineCallbackListImpl;
-import org.commacq.CsvUpdatableDataSourceBase;
 import org.commacq.CsvUpdateBlockException;
 import org.springframework.jms.core.JmsTemplate;
 import org.springframework.jms.core.MessageCreator;
@@ -26,7 +26,7 @@ import org.supercsv.io.CsvListReader;
 import org.supercsv.prefs.CsvPreference;
 
 @Slf4j
-public class CsvDataSourceJmsQuery extends CsvUpdatableDataSourceBase {
+public class CsvDataSourceJmsQuery implements CsvDataSource {
 
 	private final String entityId;
 	private final ConnectionFactory connectionFactory;
@@ -176,14 +176,14 @@ public class CsvDataSourceJmsQuery extends CsvUpdatableDataSourceBase {
 			parser.getHeader(true);
 			String columnNamesCsv = parser.getUntokenizedRow();
 		
-			callback.startUpdateBlock(columnNamesCsv);
+			callback.startUpdateBlock(entityId, columnNamesCsv);
 			
 			List<String> body;
 			
 			while((body = parser.read()) != null) {
 				String line = parser.getUntokenizedRow();
 				CsvLine csvLine = new CsvLine(body.get(0), line);
-				callback.processUpdate(columnNamesCsv, csvLine);
+				callback.processUpdate(entityId, columnNamesCsv, csvLine);
 			}
 			
 			callback.finishUpdateBlock();

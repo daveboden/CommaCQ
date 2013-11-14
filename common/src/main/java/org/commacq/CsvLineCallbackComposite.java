@@ -40,10 +40,10 @@ public class CsvLineCallbackComposite implements CsvLineCallback {
 	 * No subscribers can be added or removed half way through a block.
 	 */
 	@Override
-	public void startUpdateBlock(String columnNamesCsv) throws CsvUpdateBlockException {
+	public void startUpdateBlock(String entityId, String csvColumnNames) throws CsvUpdateBlockException {
 		lock.lock();
 		for(CsvLineCallback callback : callbacks) {
-			callback.startUpdateBlock(columnNamesCsv);
+			callback.startUpdateBlock(entityId, csvColumnNames);
 		}
 	}
 	
@@ -72,30 +72,30 @@ public class CsvLineCallbackComposite implements CsvLineCallback {
 	}
 	
 	@Override
-	public void processRemove(String id) throws CsvUpdateBlockException {
+	public void processRemove(String entityId, String id) throws CsvUpdateBlockException {
 		for(CsvLineCallback callback : callbacks) {
-			callback.processRemove(id);
+			callback.processRemove(entityId, id);
 		}
 	}
 	
 	@Override
-	public void processUpdate(String columnNamesCsv, CsvLine csvLine) throws CsvUpdateBlockException {
+	public void processUpdate(String entityId, String columnNamesCsv, CsvLine csvLine) throws CsvUpdateBlockException {
 		for(CsvLineCallback callback : callbacks) {
-			callback.processUpdate(columnNamesCsv, csvLine);
+			callback.processUpdate(entityId, columnNamesCsv, csvLine);
 		}			
 	}
 	
 	@Override
-	public void startBulkUpdate(String columnNamesCsv) throws CsvUpdateBlockException {
+	public void startBulkUpdate(String entityId, String columnNamesCsv) throws CsvUpdateBlockException {
 		for(CsvLineCallback callback : callbacks) {
-			callback.startBulkUpdate(columnNamesCsv);
+			callback.startBulkUpdate(entityId, columnNamesCsv);
 		}
 	}
 	
 	@Override
-	public void startBulkUpdateForGroup(String group, String idWithinGroup) throws CsvUpdateBlockException {
+	public void startBulkUpdateForGroup(String entityId, String group, String idWithinGroup) throws CsvUpdateBlockException {
 		for(CsvLineCallback callback : callbacks) {
-			callback.startBulkUpdateForGroup(group, idWithinGroup);
+			callback.startBulkUpdateForGroup(entityId, group, idWithinGroup);
 		}
 	}
 	

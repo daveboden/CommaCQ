@@ -12,7 +12,7 @@ import org.springframework.core.io.Resource;
  * Maintains a list of observers. Re-scans the file and calls the
  * observers back only if a specific reload() method is called.
  */
-public class CsvDataSourceResource extends CsvUpdatableDataSourceBase {
+public class CsvDataSourceResource implements CsvDataSource {
 
 	private final String entityId;
 	private final Resource resource;
@@ -51,7 +51,7 @@ public class CsvDataSourceResource extends CsvUpdatableDataSourceBase {
 			throw new RuntimeException(ex);
 		}
 		
-		csvTextBlockToCallback.presentTextBlockToCsvLineCallback(initialLoadText, callback, true);
+		csvTextBlockToCallback.presentTextBlockToCsvLineCallback(entityId, initialLoadText, callback, true);
 	}
 	
 	@Override

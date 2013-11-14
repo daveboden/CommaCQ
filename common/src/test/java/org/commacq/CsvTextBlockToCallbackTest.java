@@ -33,25 +33,27 @@ id,name,alias
 		
 		String file1 = IOUtils.toString(getClass().getResourceAsStream("/org/commacq/csvTextBlockToCallback1.csv"));
 		
-		csvTextBlockToCallback.presentTextBlockToCsvLineCallback(file1, callback, false);
+		final String entityId = "testEntity";
+
+		csvTextBlockToCallback.presentTextBlockToCsvLineCallback(entityId, file1, callback, false);
 		
-		verify(callback).processUpdate("id,name,alias", new CsvLine("1", "1,ABC,ABC1"));
-		verify(callback).processUpdate("id,name,alias", new CsvLine("2", "2,DEF,DEF2"));
-		verify(callback).processRemove("3");
-		verify(callback).processRemove("4");
-		verify(callback).processUpdate("id,name,alias", new CsvLine("5", "5,GHI,GHI9"));
+		verify(callback).processUpdate(entityId, "id,name,alias", new CsvLine("1", "1,ABC,ABC1"));
+		verify(callback).processUpdate(entityId, "id,name,alias", new CsvLine("2", "2,DEF,DEF2"));
+		verify(callback).processRemove(entityId, "3");
+		verify(callback).processRemove(entityId, "4");
+		verify(callback).processUpdate(entityId, "id,name,alias", new CsvLine("5", "5,GHI,GHI9"));
 		verifyNoMoreInteractions(callback);
 		
 		reset(callback);
 		
-		csvTextBlockToCallback.presentTextBlockToCsvLineCallback(file1, callback, true);
+		csvTextBlockToCallback.presentTextBlockToCsvLineCallback(entityId, file1, callback, true);
 		
-		verify(callback).startUpdateBlock("id,name,alias");
-		verify(callback).processUpdate("id,name,alias", new CsvLine("1", "1,ABC,ABC1"));
-		verify(callback).processUpdate("id,name,alias", new CsvLine("2", "2,DEF,DEF2"));
-		verify(callback).processRemove("3");
-		verify(callback).processRemove("4");
-		verify(callback).processUpdate("id,name,alias", new CsvLine("5", "5,GHI,GHI9"));
+		verify(callback).startUpdateBlock(entityId, "id,name,alias");
+		verify(callback).processUpdate(entityId, "id,name,alias", new CsvLine("1", "1,ABC,ABC1"));
+		verify(callback).processUpdate(entityId, "id,name,alias", new CsvLine("2", "2,DEF,DEF2"));
+		verify(callback).processRemove(entityId, "3");
+		verify(callback).processRemove(entityId, "4");
+		verify(callback).processUpdate(entityId, "id,name,alias", new CsvLine("5", "5,GHI,GHI9"));
 		verify(callback).finishUpdateBlock();
 		verifyNoMoreInteractions(callback);
 	}

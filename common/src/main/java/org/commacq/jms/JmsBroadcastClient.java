@@ -8,8 +8,9 @@ import javax.jms.TextMessage;
 
 import lombok.extern.slf4j.Slf4j;
 
+import org.apache.commons.lang3.Validate;
 import org.commacq.CsvTextBlockToCallback;
-import org.commacq.CsvUpdatableDataSource;
+import org.commacq.CsvUpdatableLayer;
 import org.springframework.jms.listener.SimpleMessageListenerContainer;
 
 
@@ -29,14 +30,14 @@ public class JmsBroadcastClient {
 	private final ConnectionFactory connectionFactory;
 	private final String broadcastTopic;
 	private final CsvTextBlockToCallback csvTextBlockToCallback = new CsvTextBlockToCallback();
-	private final CsvUpdatableDataSource csvUpdatableDataSource;
+	private final CsvUpdatableLayer csvUpdatableLayer;
 	
 	SimpleMessageListenerContainer broadcastUpdateListener;
 	
-	public JmsBroadcastClient(final String entityId, final CsvUpdatableDataSource csvUpdatableDataSource,
+	public JmsBroadcastClient(final String entityId, final CsvUpdatableLayer csvUpdatableLayer,
 			                  final ConnectionFactory connectionFactory, final String broadcastTopic) {
 		this.entityId = entityId;
-		this.csvUpdatableDataSource = csvUpdatableDataSource;
+		this.csvUpdatableLayer = csvUpdatableLayer;
 		this.connectionFactory = connectionFactory;
 		this.broadcastTopic = broadcastTopic;
 	}
@@ -58,9 +59,11 @@ public class JmsBroadcastClient {
 			public void onMessage(Message message) {
 				log.info("Received message on topic {}", broadcastTopic);
 				try {
+					String entityId = message.getStringProperty(MessageFields.entityId);
+					Validate.notNull(entityId, "entityId must be present on incoming messages");
 					String text = ((TextMessage)message).getText();
 					
-			    	csvTextBlockToCallback.presentTextBlockToCsvLineCallback(text, csvUpdatableDataSource, true);
+			    	csvTextBlockToCallback.presentTextBlockToCsvLineCallback(entityId, text, csvUpdatableLayer, true);
 				} catch (JMSException ex) {
 					throw new RuntimeException(ex);
 				}

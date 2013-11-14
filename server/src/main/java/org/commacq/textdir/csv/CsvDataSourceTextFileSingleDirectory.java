@@ -8,7 +8,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringEscapeUtils;
 import org.commacq.CsvLine;
 import org.commacq.CsvLineCallback;
-import org.commacq.CsvUpdatableDataSourceBase;
+import org.commacq.CsvUpdatableLayerBase;
 import org.commacq.CsvUpdateBlockException;
 import org.commacq.textdir.TextFileMapper;
 import org.commacq.textdir.TextFileSingleDirectory;
@@ -25,7 +25,7 @@ import org.commacq.textdir.TextFileSingleDirectory;
  * id2,Whatever the contents of id2.txt are
  */
 @Slf4j
-public class CsvDataSourceTextFileSingleDirectory extends CsvUpdatableDataSourceBase {
+public class CsvDataSourceTextFileSingleDirectory extends CsvUpdatableLayerBase {
 	
 	private static final String TEXT_ATTRIBUTE = "text";
 	private static final String CSV_COLUMN_HEADINGS = "id," + TEXT_ATTRIBUTE;

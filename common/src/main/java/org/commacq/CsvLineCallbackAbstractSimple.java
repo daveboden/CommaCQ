@@ -10,12 +10,12 @@ package org.commacq;
 public abstract class CsvLineCallbackAbstractSimple implements CsvLineCallback {
 
 	@Override
-	public final void startBulkUpdate(String columnNamesCsv) throws CsvUpdateBlockException {
+	public final void startBulkUpdate(String entityId, String columnNamesCsv) throws CsvUpdateBlockException {
 		//No behaviour defined.
 	}
 	
 	@Override
-	public void startUpdateBlock(String columnNamesCsv) throws CsvUpdateBlockException {
+	public void startUpdateBlock(String entityId, String csvColumnNames) throws CsvUpdateBlockException {
 		//No behaviour defined.		
 	}
 	
@@ -25,7 +25,7 @@ public abstract class CsvLineCallbackAbstractSimple implements CsvLineCallback {
 	}
 	
 	@Override
-	public final void startBulkUpdateForGroup(String group, String idWithinGroup) throws CsvUpdateBlockException {
+	public final void startBulkUpdateForGroup(String entityId, String group, String idWithinGroup) throws CsvUpdateBlockException {
 		//No behaviour defined.
 	}
 	

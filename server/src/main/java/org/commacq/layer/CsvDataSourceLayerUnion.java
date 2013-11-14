@@ -11,7 +11,7 @@ import javax.annotation.concurrent.Immutable;
 
 import org.commacq.CsvDataSource;
 import org.commacq.CsvDataSourceLayer;
-import org.commacq.CsvUpdatableDataSource;
+import org.commacq.CsvUpdatableLayer;
 import org.commacq.CsvUpdateBlockException;
 import org.springframework.jmx.export.annotation.ManagedOperation;
 
@@ -82,8 +82,8 @@ public class CsvDataSourceLayerUnion implements CsvDataSourceLayer {
 	@ManagedOperation
 	public void reload(String entityId) throws CsvUpdateBlockException {
 		CsvDataSource csvDataSource = getMap().get(entityId);
-		if(csvDataSource instanceof CsvUpdatableDataSource) {
-			((CsvUpdatableDataSource)csvDataSource).reload();
+		if(csvDataSource instanceof CsvUpdatableLayer) {
+			((CsvUpdatableLayer)csvDataSource).reload();
 		}
 	}
 	

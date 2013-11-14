@@ -16,7 +16,7 @@ import lombok.extern.slf4j.Slf4j;
 
 import org.commacq.CsvDataSourceLayer;
 import org.commacq.CsvTextBlockToCallback;
-import org.commacq.CsvUpdatableDataSource;
+import org.commacq.CsvUpdatableLayer;
 import org.commacq.CsvUpdateBlockException;
 import org.supercsv.io.CsvListReader;
 import org.supercsv.prefs.CsvPreference;
@@ -113,7 +113,7 @@ public class UpdateInboundHandler implements MessageListener {
     	try {
 	    	String[] header = parser.getHeader(true);
 	    	
-	    	CsvUpdatableDataSource source = (CsvUpdatableDataSource)layer.getCsvDataSource(entityId);
+	    	CsvUpdatableLayer source = (CsvUpdatableLayer)layer.getCsvDataSource(entityId);
 	    	
 	    	if(header.length == 1 && header[0].equals("id")) {
 	    		log.info("Update for entity {} contains a list of ids", entityId);

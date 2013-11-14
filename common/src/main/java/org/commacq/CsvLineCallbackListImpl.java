@@ -33,13 +33,13 @@ public class CsvLineCallbackListImpl extends CsvLineCallbackAbstractSimple {
 	}
 	
 	@Override
-	public void processUpdate(String columnNamesCsv, CsvLine csvLine) throws CsvUpdateBlockException {
+	public void processUpdate(String entityId, String columnNamesCsv, CsvLine csvLine) throws CsvUpdateBlockException {
 		this.columnNamesCsv = columnNamesCsv; //Set to the latest value
 		updateList.add(csvLine);
 	}
 	
 	@Override
-	public void processRemove(String id) throws CsvUpdateBlockException {
+	public void processRemove(String entityId, String id) throws CsvUpdateBlockException {
 		removeList.add(id);
 	}
 	

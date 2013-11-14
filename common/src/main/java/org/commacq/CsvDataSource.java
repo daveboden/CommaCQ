@@ -26,12 +26,5 @@ public interface CsvDataSource {
     void getCsvLines(Collection<String> ids, CsvLineCallback callback);
     void getCsvLine(String id, CsvLineCallback callback);
     void getCsvLinesForGroup(String group, String idWithinGroup, CsvLineCallback callback);
-    
-    /**
-     * Each CsvDataSource maintains a list of observers used
-     * for real-time updates.
-     */
-    void getAllCsvLinesAndSubscribe(CsvLineCallback callback);
-    void subscribe(CsvLineCallback callback);
-    void unsubscribe(CsvLineCallback callback);
+
 }

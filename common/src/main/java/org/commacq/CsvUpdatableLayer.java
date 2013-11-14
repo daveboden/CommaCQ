@@ -10,7 +10,7 @@ import lombok.RequiredArgsConstructor;
  * 
  * @See CsvSubscriptionHelper
  */
-public interface CsvUpdatableDataSource extends CsvDataSource, CsvLineCallback {
+public interface CsvUpdatableLayer extends CsvDataSourceLayer, CsvLineCallback {
 	
 	@RequiredArgsConstructor
 	public enum UpdateMode {
@@ -30,10 +30,10 @@ public interface CsvUpdatableDataSource extends CsvDataSource, CsvLineCallback {
 	 * 
 	 * @param id
 	 */
-	void updateUntrusted(String id) throws CsvUpdateBlockException;
+	void updateUntrusted(String entityId, String id) throws CsvUpdateBlockException;
 	
-	void updateUntrusted(Collection<String> ids) throws CsvUpdateBlockException;
+	void updateUntrusted(String entityId, Collection<String> ids) throws CsvUpdateBlockException;
 	
-	void reload() throws CsvUpdateBlockException;
+	void reload(String entityId) throws CsvUpdateBlockException;
 	
 }

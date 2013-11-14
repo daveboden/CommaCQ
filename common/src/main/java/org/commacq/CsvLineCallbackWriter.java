@@ -15,12 +15,12 @@ public class CsvLineCallbackWriter implements CsvLineCallback {
 	}
 	
 	@Override
-	public void processUpdate(String columnNamesCsv, CsvLine csvLine) throws CsvUpdateBlockException {
+	public void processUpdate(String entityId, String columnNamesCsv, CsvLine csvLine) throws CsvUpdateBlockException {
 		printWriter.println(csvLine.getCsvLine());
 	}
 	
 	@Override
-	public void processRemove(String id) throws CsvUpdateBlockException {
+	public void processRemove(String entityId, String id) throws CsvUpdateBlockException {
 		printWriter.println(id);
 	}
 	
@@ -28,7 +28,7 @@ public class CsvLineCallbackWriter implements CsvLineCallback {
 	 * Add csv header
 	 */
 	@Override
-	public void startUpdateBlock(String columnNamesCsv) throws CsvUpdateBlockException {
+	public void startUpdateBlock(String entityId, String columnNamesCsv) throws CsvUpdateBlockException {
 		printWriter.println(columnNamesCsv);
 	}
 	
@@ -38,12 +38,12 @@ public class CsvLineCallbackWriter implements CsvLineCallback {
 	}
 	
 	@Override
-	public final void startBulkUpdate(String columnNamesCsv) throws CsvUpdateBlockException {
+	public final void startBulkUpdate(String entityId, String columnNamesCsv) throws CsvUpdateBlockException {
 		//No behaviour defined.
 	}
 	
 	@Override
-	public final void startBulkUpdateForGroup(String group, String idWithinGroup) throws CsvUpdateBlockException {
+	public final void startBulkUpdateForGroup(String entityId, String group, String idWithinGroup) throws CsvUpdateBlockException {
 		//No behaviour defined.
 	}
 	

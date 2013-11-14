@@ -7,7 +7,7 @@ import javax.jms.Queue;
 import javax.jms.Session;
 import javax.jms.TextMessage;
 
-import org.commacq.CsvUpdatableDataSource;
+import org.commacq.CsvUpdatableLayer;
 import org.springframework.jms.core.JmsTemplate;
 import org.springframework.jms.core.MessageCreator;
 import org.springframework.jms.core.SessionCallback;
@@ -26,11 +26,11 @@ import org.springframework.jms.listener.SimpleMessageListenerContainer;
 public class JmsCqClient<BeanType> {
 	
 	private final String entityId;
-	private final CsvUpdatableDataSource csvUpdatableDataSource;
+	private final CsvUpdatableLayer csvUpdatableDataSource;
 	
 	SimpleMessageListenerContainer broadcastUpdateListener;
 	
-	public JmsCqClient(final String entityId, final CsvUpdatableDataSource csvUpdatableDataSource, ConnectionFactory connectionFactory, String fetchAllQueue, int timeoutInSeconds) throws JMSException {
+	public JmsCqClient(final String entityId, final CsvUpdatableLayer csvUpdatableDataSource, ConnectionFactory connectionFactory, String fetchAllQueue, int timeoutInSeconds) throws JMSException {
 		this.entityId = entityId;
 		this.csvUpdatableDataSource = csvUpdatableDataSource;
 		

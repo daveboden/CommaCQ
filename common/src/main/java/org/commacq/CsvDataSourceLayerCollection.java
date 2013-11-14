@@ -18,7 +18,7 @@ import org.springframework.jmx.export.annotation.ManagedResource;
  * data source in a layer.
  */
 @ManagedResource
-public class CsvDataSourceLayerCollection implements CsvDataSourceLayer {
+public class CsvDataSourceLayerCollection extends CsvUpdatableLayerBase {
 	
 	private ThreadLocal<CsvLineCallbackSingleImpl> csvLineCallbackSingleImplLocal = new ThreadLocal<CsvLineCallbackSingleImpl>() {
 		protected CsvLineCallbackSingleImpl initialValue() {
@@ -62,13 +62,13 @@ public class CsvDataSourceLayerCollection implements CsvDataSourceLayer {
 	@ManagedOperation
 	public String pokeCsvEntry(String entityId, String id) throws CsvUpdateBlockException {
 		CsvDataSource source = getCsvDataSource(entityId);
-		if(!(source instanceof CsvUpdatableDataSource)) {
+		if(!(source instanceof CsvUpdatableLayer)) {
 			throw new RuntimeException("Not an updatable data source: " + entityId);
 		}
 		
-		CsvUpdatableDataSource updatableDataSource = (CsvUpdatableDataSource)source;
-		updatableDataSource.startUpdateBlock(source.getColumnNamesCsv());
-		updatableDataSource.updateUntrusted(id);
+		CsvUpdatableLayer updatableDataSource = (CsvUpdatableLayer)source;
+		updatableDataSource.startUpdateBlock(entityId, source.getColumnNamesCsv());
+		updatableDataSource.updateUntrusted(entityId, id);
 		updatableDataSource.finishUpdateBlock();
 		
 		return getCsvEntry(entityId, id);
@@ -98,8 +98,8 @@ public class CsvDataSourceLayerCollection implements CsvDataSourceLayer {
 		if(csvDataSource == null) {
 			throw new IllegalArgumentException("entityId " + entityId + " not recognised");
 		}
-		if(csvDataSource instanceof CsvUpdatableDataSource) {
-			((CsvUpdatableDataSource)csvDataSource).reload();
+		if(csvDataSource instanceof CsvUpdatableLayer) {
+			((CsvUpdatableLayer)csvDataSource).reload(entityId);
 		} else {
 			throw new IllegalArgumentException("entityId " + entityId + " not updatable");
 		}
@@ -112,5 +112,5 @@ public class CsvDataSourceLayerCollection implements CsvDataSourceLayer {
 			reload(entityId);
 		}
 	}
-	
+    
 }

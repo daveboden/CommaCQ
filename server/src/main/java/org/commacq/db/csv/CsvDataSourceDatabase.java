@@ -12,7 +12,7 @@ import lombok.extern.slf4j.Slf4j;
 
 import org.commacq.CsvLine;
 import org.commacq.CsvLineCallback;
-import org.commacq.CsvUpdatableDataSourceBase;
+import org.commacq.CsvUpdatableLayerBase;
 import org.commacq.CsvUpdateBlockException;
 import org.commacq.db.DataSourceAccess;
 import org.commacq.db.EntityConfig;
@@ -33,7 +33,7 @@ import org.springframework.jdbc.core.ResultSetExtractor;
  * there are differences, an error is logged.
  */
 @Slf4j
-public class CsvDataSourceDatabase extends CsvUpdatableDataSourceBase {
+public class CsvDataSourceDatabase extends CsvUpdatableLayerBase {
 
     private final EntityConfig entityConfig;
     private final DataSourceAccess dataSourceAccess;
