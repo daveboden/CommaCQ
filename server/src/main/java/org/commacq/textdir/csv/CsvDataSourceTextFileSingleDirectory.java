@@ -6,9 +6,9 @@ import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 
 import org.apache.commons.lang3.StringEscapeUtils;
+import org.commacq.CsvDataSource;
 import org.commacq.CsvLine;
 import org.commacq.CsvLineCallback;
-import org.commacq.CsvUpdatableLayerBase;
 import org.commacq.CsvUpdateBlockException;
 import org.commacq.textdir.TextFileMapper;
 import org.commacq.textdir.TextFileSingleDirectory;
@@ -25,7 +25,7 @@ import org.commacq.textdir.TextFileSingleDirectory;
  * id2,Whatever the contents of id2.txt are
  */
 @Slf4j
-public class CsvDataSourceTextFileSingleDirectory extends CsvUpdatableLayerBase {
+public class CsvDataSourceTextFileSingleDirectory implements CsvDataSource {
 	
 	private static final String TEXT_ATTRIBUTE = "text";
 	private static final String CSV_COLUMN_HEADINGS = "id," + TEXT_ATTRIBUTE;
@@ -43,15 +43,15 @@ public class CsvDataSourceTextFileSingleDirectory extends CsvUpdatableLayerBase 
 	public void getAllCsvLines(CsvLineCallback callback) {
 		List<CsvLine> csvLines = textFileSingleDirectory.getAll(mapper);
 		try {
-			callback.startUpdateBlock(CSV_COLUMN_HEADINGS);
+			callback.startUpdateBlock(entityId, CSV_COLUMN_HEADINGS);
 			for(CsvLine csvLine : csvLines) {
 				try {
-					callback.processUpdate(CSV_COLUMN_HEADINGS, csvLine);
+					callback.processUpdate(entityId, CSV_COLUMN_HEADINGS, csvLine);
 				} catch (CsvUpdateBlockException ex) {
 					throw new RuntimeException(ex);
 				}
 			}
-			callback.finishUpdateBlock();
+			callback.finish();
 		} catch (CsvUpdateBlockException e) {
 			log.error("Failed to deliver rows");
 		}
@@ -69,9 +69,9 @@ public class CsvDataSourceTextFileSingleDirectory extends CsvUpdatableLayerBase 
 		CsvLine csvLine = textFileSingleDirectory.getRow(id, mapper);
 		try {
 			if(csvLine != null) {
-					callback.processUpdate(CSV_COLUMN_HEADINGS, csvLine);
+					callback.processUpdate(entityId, CSV_COLUMN_HEADINGS, csvLine);
 			} else {
-				callback.processRemove(id);
+				callback.processRemove(entityId, id);
 			}
 		} catch (CsvUpdateBlockException ex) {
 			throw new RuntimeException(ex);

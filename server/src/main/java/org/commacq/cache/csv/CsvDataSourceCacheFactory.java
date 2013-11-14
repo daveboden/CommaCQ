@@ -1,26 +1,19 @@
 package org.commacq.cache.csv;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Map.Entry;
 
-import org.commacq.CsvDataSource;
 import org.commacq.CsvDataSourceLayer;
-import org.commacq.CsvDataSourceLayerCollection;
+import org.commacq.layer.LayerFactory;
 
-/**
- * Takes a collection of CsvDataSources and prepares a Cache implementation
- * that wraps them.
- */
-public class CsvDataSourceCacheFactory {
+public class CsvDataSourceCacheFactory implements LayerFactory {
     
-	public CsvDataSourceLayer create(CsvDataSourceLayer layer) {
-		List<CsvDataSource> caches = new ArrayList<CsvDataSource>(layer.getMap().size());
-		for(Entry<String, CsvDataSource> sourceEntry : layer.getMap().entrySet()) {
-			CsvDataSourceCache cache = new CsvDataSourceCache(sourceEntry.getValue());
-			caches.add(cache);
-		}
-		return new CsvDataSourceLayerCollection(caches);
+	public CsvDataSourceLayer createLayer(CsvDataSourceLayer sourceLayer) {
+		return new CacheLayer(sourceLayer);
 	}
-    
+	
+	@Override
+	public CsvDataSourceLayer createLayer(CsvDataSourceLayer sourceLayer, List<String> entityIds) {
+		return new CacheLayer(sourceLayer, entityIds);
+	}
+	
 }

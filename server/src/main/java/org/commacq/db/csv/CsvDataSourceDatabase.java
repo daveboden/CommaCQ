@@ -10,9 +10,9 @@ import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
+import org.commacq.CsvDataSource;
 import org.commacq.CsvLine;
 import org.commacq.CsvLineCallback;
-import org.commacq.CsvUpdatableLayerBase;
 import org.commacq.CsvUpdateBlockException;
 import org.commacq.db.DataSourceAccess;
 import org.commacq.db.EntityConfig;
@@ -33,7 +33,7 @@ import org.springframework.jdbc.core.ResultSetExtractor;
  * there are differences, an error is logged.
  */
 @Slf4j
-public class CsvDataSourceDatabase extends CsvUpdatableLayerBase {
+public class CsvDataSourceDatabase implements CsvDataSource {
 
     private final EntityConfig entityConfig;
     private final DataSourceAccess dataSourceAccess;
@@ -124,10 +124,12 @@ public class CsvDataSourceDatabase extends CsvUpdatableLayerBase {
     			copyOfIds = new ArrayList<>(ids);
     		}
     		
+    		String entityId = entityConfig.getEntityId();
+    		
     		try {
 	    		while(result.next()) {    			
 	    			CsvLine csvLine = csvParser.toCsvLine(result, entityConfig.getGroups());
-						callback.processUpdate(columnNamesCsv, csvLine);
+						callback.processUpdate(entityId, columnNamesCsv, csvLine);
 	    			if(ids != null) {
 	    				copyOfIds.remove(csvLine.getId());
 	    			}
@@ -135,7 +137,7 @@ public class CsvDataSourceDatabase extends CsvUpdatableLayerBase {
 	    		
 	    		if(ids != null) {
 					for(String remainingId : copyOfIds) {
-						callback.processRemove(remainingId);
+						callback.processRemove(entityId, remainingId);
 					}
 	    		}
     		} catch (CsvUpdateBlockException ex) {

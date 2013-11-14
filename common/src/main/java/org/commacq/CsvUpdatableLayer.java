@@ -36,4 +36,7 @@ public interface CsvUpdatableLayer extends CsvDataSourceLayer, CsvLineCallback {
 	
 	void reload(String entityId) throws CsvUpdateBlockException;
 	
+	String pokeCsvEntry(String entityId, String id) throws CsvUpdateBlockException;
+	void reloadAll() throws CsvUpdateBlockException;
+	
 }

@@ -29,21 +29,27 @@ import org.commacq.CsvUpdateBlockException;
 @ThreadSafe
 public final class CsvCache {
 
+	private final String entityId;
 	private final SortedMap<String, CsvLine> linesIdMap = new TreeMap<>();
 	private final List<String> groups;
 	private final Map<String, Map<String, CsvLine>> groupsMap = new HashMap<String, Map<String,CsvLine>>();
 	private final String columnNamesCsv;
 	
-	public CsvCache(final String columnNamesCsv) {
-	    this(columnNamesCsv, null);
+	public CsvCache(final String entityId, final String columnNamesCsv) {
+	    this(entityId, columnNamesCsv, null);
 	}
 	
-	public CsvCache(final String columnNamesCsv, final List<String> groups) {
+	public CsvCache(final String entityId, String columnNamesCsv, final List<String> groups) {
+		this.entityId = entityId;
 		Validate.notEmpty(columnNamesCsv);
 		Validate.isTrue(columnNamesCsv.startsWith("id,"), "id must be the first specified column: %s", columnNamesCsv);
 		
 		this.columnNamesCsv = columnNamesCsv;
 		this.groups = groups;
+	}
+	
+	public String getEntityId() {
+		return entityId;
 	}
 	
 	public String getColumnNamesCsv() {
@@ -79,7 +85,7 @@ public final class CsvCache {
 	
 	public void visitAll(CsvLineCallback callback) throws CsvUpdateBlockException {
 		for(CsvLine csvLine : linesIdMap.values()) {
-			callback.processUpdate(columnNamesCsv, csvLine);
+			callback.processUpdate(entityId, columnNamesCsv, csvLine);
 		}
 	}
 	
@@ -88,7 +94,7 @@ public final class CsvCache {
 			CsvLine csvLine = linesIdMap.get(id);
 			if(csvLine != null) {
 				try {
-					callback.processUpdate(columnNamesCsv, csvLine);
+					callback.processUpdate(entityId, columnNamesCsv, csvLine);
 				} catch (CsvUpdateBlockException ex) {
 					throw new RuntimeException(ex);
 				}
@@ -100,7 +106,7 @@ public final class CsvCache {
 		Map<String, CsvLine> groupContents = groupsMap.get(group);
 		for(CsvLine csvLine : groupContents.values()) {
 			try {
-				callback.processUpdate(idWithinGroup, csvLine);
+				callback.processUpdate(entityId, idWithinGroup, csvLine);
 			} catch (CsvUpdateBlockException ex) {
 				throw new RuntimeException(ex);
 			}

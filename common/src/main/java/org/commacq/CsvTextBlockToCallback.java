@@ -58,7 +58,7 @@ public class CsvTextBlockToCallback {
 				}
 			
 				if(callStartAndFinish) {
-					callback.finishUpdateBlock();
+					callback.finish();
 				}
 			} catch(CsvUpdateBlockException ex) {
 				log.error("Error processing callback", ex);

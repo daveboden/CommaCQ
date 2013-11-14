@@ -54,7 +54,7 @@ id,name,alias
 		verify(callback).processRemove(entityId, "3");
 		verify(callback).processRemove(entityId, "4");
 		verify(callback).processUpdate(entityId, "id,name,alias", new CsvLine("5", "5,GHI,GHI9"));
-		verify(callback).finishUpdateBlock();
+		verify(callback).finish();
 		verifyNoMoreInteractions(callback);
 	}
 

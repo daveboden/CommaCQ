@@ -186,7 +186,7 @@ public class CsvDataSourceJmsQuery implements CsvDataSource {
 				callback.processUpdate(entityId, columnNamesCsv, csvLine);
 			}
 			
-			callback.finishUpdateBlock();
+			callback.finish();
 		} catch(CsvUpdateBlockException ex) {
 			throw new RuntimeException(ex);
 		} catch(IOException ex) {

@@ -14,7 +14,7 @@ public class JmsOutboundHandlerFactory {
 		Map<String, JmsOutboundHandler> handlers = new HashMap<String, JmsOutboundHandler>();
 		for(CsvDataSource source : layer.getMap().values()) {
 			String broadcastTopic = String.format(broadcastTopicPattern, source.getEntityId());
-			handlers.put(source.getEntityId(), new JmsOutboundHandler(connectionFactory, source, broadcastTopic));
+			handlers.put(source.getEntityId(), new JmsOutboundHandler(connectionFactory, layer, source.getEntityId(), broadcastTopic));
 		}
 		return handlers;
 	}

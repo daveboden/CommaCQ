@@ -87,7 +87,7 @@ public class JaxbAttributeWriterStrategyTest {
 	private <BeanType> Map<String, BeanType> getBeans(Class<BeanType> beanType, CsvToBeanStrategy strategy, String csvHeaderAndBody) {
 		CsvTextBlockToCallback csvTextBlockToCallback = new CsvTextBlockToCallback();
 		CsvLineCallbackListImpl callbackListImpl = new CsvLineCallbackListImpl();
-		csvTextBlockToCallback.presentTextBlockToCsvLineCallback(csvHeaderAndBody, callbackListImpl, true);
+		csvTextBlockToCallback.presentTextBlockToCsvLineCallback("testEntity", csvHeaderAndBody, callbackListImpl, true);
 		return strategy.getBeans(beanType, callbackListImpl.getColumnNamesCsv(), callbackListImpl.getUpdateList());
 	}
 	

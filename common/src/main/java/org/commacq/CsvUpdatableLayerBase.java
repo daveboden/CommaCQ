@@ -1,6 +1,7 @@
 package org.commacq;
 
 import java.util.Collection;
+import java.util.List;
 
 /**
  * Handles the case where the CsvDataSource is at the source end of a chain
@@ -27,8 +28,28 @@ public abstract class CsvUpdatableLayerBase implements CsvUpdatableLayer, CsvLin
     }
     
     @Override
+    public final void getAllCsvLinesAndSubscribe(CsvLineCallback callback, List<String> entityIds) {
+    	composite.addCallback(callback, entityIds);
+    	//TODO how do we protect against updates going to the new subscriber before all the results
+    	//have been fetched?
+    	for(String entityId : entityIds) {
+    		getCsvDataSource(entityId).getAllCsvLines(callback);
+    	}
+    }
+    
+    @Override
     public final void subscribe(CsvLineCallback callback) {
     	composite.addCallback(callback);
+    }
+    
+    @Override
+    public final void subscribe(CsvLineCallback callback, List<String> entityIds) {
+    	composite.addCallback(callback, entityIds);
+    }
+    
+    @Override
+    public final void subscribe(CsvLineCallback callback, String entityId) {
+    	composite.addCallback(callback, entityId);
     }
     
     @Override
@@ -56,8 +77,13 @@ public abstract class CsvUpdatableLayerBase implements CsvUpdatableLayer, CsvLin
 	}
 
 	@Override
-	public void finishUpdateBlock() throws CsvUpdateBlockException {
-		composite.finishUpdateBlock();
+	public void start() throws CsvUpdateBlockException {
+		composite.start();
+	}	
+	
+	@Override
+	public void finish() throws CsvUpdateBlockException {
+		composite.finish();
 	}
 	
 	@Override
@@ -94,7 +120,7 @@ public abstract class CsvUpdatableLayerBase implements CsvUpdatableLayer, CsvLin
     	composite.startUpdateBlock(entityId, columnNamesCsv);
     	composite.startBulkUpdate(entityId, columnNamesCsv);
     	getCsvDataSource(entityId).getAllCsvLines(composite);
-    	composite.finishUpdateBlock();
+    	composite.finish();
     }
 
 }

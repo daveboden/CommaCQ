@@ -28,15 +28,17 @@ public interface CsvLineCallback {
 	
 	void startUpdateBlock(String entityId, String columnNamesCsv) throws CsvUpdateBlockException;
 	
-	/**
-	 * Allows subscribers to behave transactionally. finishUpdateBlock() is called after
-	 * every block of updates.
-	 * @throws CsvUpdateBlockException
-	 */
-	void finishUpdateBlock() throws CsvUpdateBlockException;
-	
 	void processUpdate(String entityId, String columnNamesCsv, CsvLine csvLine) throws CsvUpdateBlockException;
 	void processRemove(String entityId, String id) throws CsvUpdateBlockException;
+	
+	void start() throws CsvUpdateBlockException;
+	
+	/**
+	 * Allows subscribers to behave transactionally. finish() is called after
+	 * every block of updates, possibly across multiple entities.
+	 * @throws CsvUpdateBlockException
+	 */
+	void finish() throws CsvUpdateBlockException;
 	
 	/**
 	 * Provides a way of abandoning an update block part-way through.

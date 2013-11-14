@@ -119,11 +119,11 @@ public class UpdateInboundHandler implements MessageListener {
 	    		log.info("Update for entity {} contains a list of ids", entityId);
 	    		List<String> line;
 	    		try {
-	    			source.startUpdateBlock(source.getColumnNamesCsv());;
+	    			source.startUpdateBlock(entityId, source.getCsvDataSource(entityId).getColumnNamesCsv());
 					while((line = parser.read()) != null) {
-						source.updateUntrusted(line.get(0));
+						source.updateUntrusted(entityId, line.get(0));
 					}
-					source.finishUpdateBlock();
+					source.finish();
 				} catch(CsvUpdateBlockException ex) {
 					throw new RuntimeException(ex);
 				}
@@ -131,7 +131,7 @@ public class UpdateInboundHandler implements MessageListener {
 	    	}
 	    	log.info("Update for entity {} contains ids and column headings", entityId);
 	    	
-	    	csvTextBlockToCallback.presentTextBlockToCsvLineCallback(csvHeaderAndBody, source, true);
+	    	csvTextBlockToCallback.presentTextBlockToCsvLineCallback(entityId, csvHeaderAndBody, source, true);
     	} catch (IOException ex) {				
 			throw new RuntimeException("Couldn't parse CSV", ex);
     	} finally {

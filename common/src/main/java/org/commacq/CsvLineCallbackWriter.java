@@ -33,7 +33,12 @@ public class CsvLineCallbackWriter implements CsvLineCallback {
 	}
 	
 	@Override
-	public final void finishUpdateBlock() throws CsvUpdateBlockException {
+	public void start() throws CsvUpdateBlockException {		
+		//No behaviour defined.
+	}
+	
+	@Override
+	public final void finish() throws CsvUpdateBlockException {
 		//No behaviour defined.
 	}
 	

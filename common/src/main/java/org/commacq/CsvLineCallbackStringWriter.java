@@ -46,7 +46,11 @@ public class CsvLineCallbackStringWriter implements CsvLineCallback {
 	}
 	
 	@Override
-	public void finishUpdateBlock() throws CsvUpdateBlockException {	
+	public void start() throws CsvUpdateBlockException {		
+	}
+	
+	@Override
+	public void finish() throws CsvUpdateBlockException {	
 	}
 	
 	@Override

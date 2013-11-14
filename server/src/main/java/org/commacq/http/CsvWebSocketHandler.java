@@ -58,7 +58,7 @@ public class CsvWebSocketHandler extends WebSocketHandler {
 		@Override
 		public void onWebSocketClose(int statusCode, String reason) {
 			log.info("Closing WebSocket and unsubscribing");
-			layer.getCsvDataSource(entityId).unsubscribe(callback);
+			layer.unsubscribe(callback);
 		}
 
 		@Override
@@ -72,7 +72,7 @@ public class CsvWebSocketHandler extends WebSocketHandler {
 				    return;
 				}
 				callback = new CsvLineCallbackWebSocket(session);
-				source.getAllCsvLinesAndSubscribe(callback);
+				layer.getAllCsvLinesAndSubscribe(callback, entityId);
 			} catch (IOException ex) {
 				log.error("Could not send message to opened connection", ex);
 			}
@@ -81,7 +81,7 @@ public class CsvWebSocketHandler extends WebSocketHandler {
 		@Override
 		public void onWebSocketError(Throwable cause) {
 			log.info("Closing WebSocket due to error");
-			layer.getCsvDataSource(entityId).unsubscribe(callback);
+			layer.unsubscribe(callback);
 		}
 
 		@Override
@@ -99,16 +99,16 @@ public class CsvWebSocketHandler extends WebSocketHandler {
 
 		//TODO Work out how to notify the client that a bulk update is underway.
 		@Override
-		public void startBulkUpdate(String columnNamesCsv) throws CsvUpdateBlockException {
+		public void startBulkUpdate(String entityId, String columnNamesCsv) throws CsvUpdateBlockException {
 			log.error("Bulk updates not yet supported");
 		}
 
 		@Override
-		public void startBulkUpdateForGroup(String group, String idWithinGroup) throws CsvUpdateBlockException {
+		public void startBulkUpdateForGroup(String entityId, String group, String idWithinGroup) throws CsvUpdateBlockException {
 		}
 
 		@Override
-		public void startUpdateBlock(String columnNamesCsv) throws CsvUpdateBlockException {
+		public void startUpdateBlock(String entityId, String columnNamesCsv) throws CsvUpdateBlockException {
 			if(rowCount != 0) {
 				throw new RuntimeException(
 						"startUpdateBlock should never be called before a previous " +
@@ -124,7 +124,11 @@ public class CsvWebSocketHandler extends WebSocketHandler {
 		}
 
 		@Override
-		public void finishUpdateBlock() throws CsvUpdateBlockException {
+		public void start() throws CsvUpdateBlockException {	
+		}
+		
+		@Override
+		public void finish() throws CsvUpdateBlockException {
 			try {
 				log.info("Pushed {} entities to client", rowCount);
 				rowCount = 0;
@@ -135,7 +139,7 @@ public class CsvWebSocketHandler extends WebSocketHandler {
 		}
 
 		@Override
-		public void processUpdate(String columnNamesCsv, CsvLine csvLine) throws CsvUpdateBlockException {
+		public void processUpdate(String entityId, String columnNamesCsv, CsvLine csvLine) throws CsvUpdateBlockException {
 			try {
 				session.getRemote().sendPartialString(csvLine.getCsvLine(), false);
 				session.getRemote().sendPartialString("\n", false);
@@ -146,7 +150,7 @@ public class CsvWebSocketHandler extends WebSocketHandler {
 		}
 
 		@Override
-		public void processRemove(String id) throws CsvUpdateBlockException {
+		public void processRemove(String entityId, String id) throws CsvUpdateBlockException {
 			try {
 				session.getRemote().sendPartialString(id, false);
 				session.getRemote().sendPartialString("\n", false);

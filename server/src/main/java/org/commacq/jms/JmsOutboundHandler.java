@@ -11,7 +11,7 @@ import javax.jms.TextMessage;
 
 import lombok.extern.slf4j.Slf4j;
 
-import org.commacq.CsvDataSource;
+import org.commacq.CsvDataSourceLayer;
 import org.commacq.CsvLine;
 import org.commacq.CsvLineCallback;
 import org.commacq.CsvUpdateBlockException;
@@ -25,23 +25,25 @@ import org.springframework.jms.core.MessageCreator;
 public class JmsOutboundHandler implements CsvLineCallback {
 
     private final JmsTemplate jmsTemplate;
-    private final CsvDataSource csvDataSource;
+    private final CsvDataSourceLayer layer;
     private final String broadcastTopic;
+    private final String entityId;
     
     private final StringWriter currentText = new StringWriter();
     private final PrintWriter currentWriter = new PrintWriter(currentText);
     private boolean bulkUpdate = false;
 
-    public JmsOutboundHandler(ConnectionFactory connectionFactory, CsvDataSource csvDataSource, String broadcastTopic) {
+    public JmsOutboundHandler(ConnectionFactory connectionFactory, CsvDataSourceLayer layer, String entityId, String broadcastTopic) {
         jmsTemplate = new JmsTemplate(connectionFactory);
         jmsTemplate.setPubSubDomain(true);
         
-        this.csvDataSource = csvDataSource;
+        this.layer = layer;
+        this.entityId = entityId;
         
         this.broadcastTopic = broadcastTopic;
         
         //use of "this" should be the last line in the constructor
-        csvDataSource.subscribe(this);
+        layer.subscribe(this, entityId);
     }
     
     @Override
@@ -50,12 +52,12 @@ public class JmsOutboundHandler implements CsvLineCallback {
     }
     
     @Override
-    public void finishUpdateBlock(String entityId) throws CsvUpdateBlockException {    	
+    public void finish() throws CsvUpdateBlockException {    	
         jmsTemplate.send(broadcastTopic, new MessageCreator() {
             @Override
             public Message createMessage(Session session) throws JMSException {
                 TextMessage textMessage = session.createTextMessage();
-                textMessage.setStringProperty(MessageFields.entityId, csvDataSource.getEntityId());
+                textMessage.setStringProperty(MessageFields.entityId, entityId);
                 textMessage.setBooleanProperty(MessageFields.bulkUpdate, bulkUpdate);
                 
                 String payload = currentText.toString();
@@ -69,6 +71,10 @@ public class JmsOutboundHandler implements CsvLineCallback {
         });
     	
     	resetTheBuffer();
+    }
+    
+    @Override
+    public void start() throws CsvUpdateBlockException {	
     }
     
     @Override

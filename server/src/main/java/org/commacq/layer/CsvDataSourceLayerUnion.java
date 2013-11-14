@@ -3,6 +3,7 @@ package org.commacq.layer;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.SortedSet;
 import java.util.TreeSet;
@@ -11,9 +12,7 @@ import javax.annotation.concurrent.Immutable;
 
 import org.commacq.CsvDataSource;
 import org.commacq.CsvDataSourceLayer;
-import org.commacq.CsvUpdatableLayer;
-import org.commacq.CsvUpdateBlockException;
-import org.springframework.jmx.export.annotation.ManagedOperation;
+import org.commacq.CsvLineCallback;
 
 /**
  * Joins layers together so that they can be addressed as a single block.
@@ -24,11 +23,11 @@ import org.springframework.jmx.export.annotation.ManagedOperation;
 @Immutable
 public class CsvDataSourceLayerUnion implements CsvDataSourceLayer {
 	
-	private final SortedSet<String> entityIds;
-	private final Map<String, CsvDataSourceLayer> mapping;
+	protected final SortedSet<String> entityIds;
+	protected final Map<String, ? extends CsvDataSourceLayer> mapping;
 	private final Map<String, CsvDataSource> sourceMapping;
 	
-	public CsvDataSourceLayerUnion(Collection<CsvDataSourceLayer> collection) {
+	public CsvDataSourceLayerUnion(Collection<? extends CsvDataSourceLayer> collection) {
 		SortedSet<String> entityIds = new TreeSet<String>();
 		Map<String, CsvDataSourceLayer> mapping = new HashMap<String, CsvDataSourceLayer>();
 		Map<String, CsvDataSource> sourceMapping = new HashMap<String, CsvDataSource>();
@@ -54,12 +53,7 @@ public class CsvDataSourceLayerUnion implements CsvDataSourceLayer {
 	public String getCsvEntry(String entityId, String id) {
 		return getLayer(entityId).getCsvEntry(entityId, id);
 	}
-
-	@Override
-	public String pokeCsvEntry(String entityId, String id) throws CsvUpdateBlockException {
-		return getLayer(entityId).pokeCsvEntry(entityId, id); 
-	}
-
+	
 	@Override
 	public CsvDataSource getCsvDataSource(String entityId) {
 		return getLayer(entityId).getCsvDataSource(entityId);
@@ -70,7 +64,7 @@ public class CsvDataSourceLayerUnion implements CsvDataSourceLayer {
 		return sourceMapping;
 	}
 	
-	private CsvDataSourceLayer getLayer(String entityId) {
+	protected CsvDataSourceLayer getLayer(String entityId) {
 		CsvDataSourceLayer layer = mapping.get(entityId);
 		if(layer == null) {
 			throw new RuntimeException("Unknown entity id: " + entityId);
@@ -79,19 +73,51 @@ public class CsvDataSourceLayerUnion implements CsvDataSourceLayer {
 	}
 	
 	@Override
-	@ManagedOperation
-	public void reload(String entityId) throws CsvUpdateBlockException {
-		CsvDataSource csvDataSource = getMap().get(entityId);
-		if(csvDataSource instanceof CsvUpdatableLayer) {
-			((CsvUpdatableLayer)csvDataSource).reload();
+	public void subscribe(CsvLineCallback callback) {
+		for(CsvDataSourceLayer layer : mapping.values()) {
+			layer.subscribe(callback);
 		}
 	}
 	
 	@Override
-	@ManagedOperation
-	public void reloadAll() throws CsvUpdateBlockException {
-		for(String entityId : entityIds) {
-			reload(entityId);
+	public void subscribe(CsvLineCallback callback, List<String> entityIds) {
+		for(CsvDataSourceLayer layer : mapping.values()) {
+			layer.subscribe(callback, entityIds);
 		}
+	}
+	
+	@Override
+	public void subscribe(CsvLineCallback callback, String entityId) {
+		for(CsvDataSourceLayer layer : mapping.values()) {
+			layer.subscribe(callback, entityId);
+		}
+	}
+	
+	@Override
+	public void getAllCsvLinesAndSubscribe(CsvLineCallback callback) {
+		for(CsvDataSourceLayer layer : mapping.values()) {
+			layer.getAllCsvLinesAndSubscribe(callback);
+		}
+	}
+	
+	@Override
+	public void getAllCsvLinesAndSubscribe(CsvLineCallback callback, List<String> entityIds) {
+		for(CsvDataSourceLayer layer : mapping.values()) {
+			layer.getAllCsvLinesAndSubscribe(callback, entityIds);
+		}
+	}
+	
+	@Override
+	public void getAllCsvLinesAndSubscribe(CsvLineCallback callback, String entityId) {
+		for(CsvDataSourceLayer layer : mapping.values()) {
+			layer.getAllCsvLinesAndSubscribe(callback, entityId);
+		}
+	}
+	
+	@Override
+	public void unsubscribe(CsvLineCallback callback) {
+		for(CsvDataSourceLayer layer : mapping.values()) {
+			layer.unsubscribe(callback);
+		}		
 	}
 }

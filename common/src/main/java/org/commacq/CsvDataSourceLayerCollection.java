@@ -69,23 +69,16 @@ public class CsvDataSourceLayerCollection extends CsvUpdatableLayerBase {
 		CsvUpdatableLayer updatableDataSource = (CsvUpdatableLayer)source;
 		updatableDataSource.startUpdateBlock(entityId, source.getColumnNamesCsv());
 		updatableDataSource.updateUntrusted(entityId, id);
-		updatableDataSource.finishUpdateBlock();
+		updatableDataSource.finish();
 		
 		return getCsvEntry(entityId, id);
 	}
 	
-	
-	/* (non-Javadoc)
-	 * @see org.commacq.CsvDataSourceLayerI#getCsvDataSource(java.lang.String)
-	 */
 	@Override
 	public CsvDataSource getCsvDataSource(String entityId) {
 		return csvDataSourceMap.get(entityId);
 	}
 	
-	/* (non-Javadoc)
-	 * @see org.commacq.CsvDataSourceLayerI#getMap()
-	 */
 	@Override
 	public Map<String, CsvDataSource> getMap() {
 		return csvDataSourceMapUnmodifiable;
