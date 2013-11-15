@@ -56,6 +56,11 @@ public class CacheLayer extends AbstractSubscribeLayer {
 	public SortedSet<String> getEntityIds() {
     	return entityIds;
 	}
+    
+    @Override
+    public String getColumnNamesCsv(String entityId) {
+    	return caches.get(entityId).getColumnNamesCsv();
+    }
 
 	@ManagedOperation
 	public String getCsvEntry(String entityId, String id) {

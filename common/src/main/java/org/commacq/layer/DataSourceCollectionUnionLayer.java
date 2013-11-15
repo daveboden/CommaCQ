@@ -50,6 +50,11 @@ public class DataSourceCollectionUnionLayer extends AbstractUpdatableLayer {
 	}
 	
 	@Override
+	public String getColumnNamesCsv(String entityId) {
+		return sourceMapping.get(entityId).getColumnNamesCsv();
+	}
+	
+	@Override
 	public CsvDataSource getCsvDataSource(String entityId) {
 		return sourceMapping.get(entityId);
 	}

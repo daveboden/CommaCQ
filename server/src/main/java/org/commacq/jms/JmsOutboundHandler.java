@@ -14,7 +14,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.commacq.CsvLine;
 import org.commacq.CsvLineCallback;
 import org.commacq.CsvUpdateBlockException;
-import org.commacq.layer.Layer;
+import org.commacq.layer.SubscribeLayer;
 import org.springframework.jms.core.JmsTemplate;
 import org.springframework.jms.core.MessageCreator;
 
@@ -25,7 +25,7 @@ import org.springframework.jms.core.MessageCreator;
 public class JmsOutboundHandler implements CsvLineCallback {
 
     private final JmsTemplate jmsTemplate;
-    private final Layer layer;
+    private final SubscribeLayer layer;
     private final String broadcastTopic;
     private final String entityId;
     
@@ -33,7 +33,7 @@ public class JmsOutboundHandler implements CsvLineCallback {
     private final PrintWriter currentWriter = new PrintWriter(currentText);
     private boolean bulkUpdate = false;
 
-    public JmsOutboundHandler(ConnectionFactory connectionFactory, Layer layer, String entityId, String broadcastTopic) {
+    public JmsOutboundHandler(ConnectionFactory connectionFactory, SubscribeLayer layer, String entityId, String broadcastTopic) {
         jmsTemplate = new JmsTemplate(connectionFactory);
         jmsTemplate.setPubSubDomain(true);
         
@@ -43,7 +43,7 @@ public class JmsOutboundHandler implements CsvLineCallback {
         this.broadcastTopic = broadcastTopic;
         
         //use of "this" should be the last line in the constructor
-        layer.subscribe(this, entityId);
+        layer.subscribe(entityId, this);
     }
     
     @Override

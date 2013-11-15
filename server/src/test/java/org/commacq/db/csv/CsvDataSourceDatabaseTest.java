@@ -11,6 +11,7 @@ import static org.springframework.jdbc.datasource.embedded.EmbeddedDatabaseType.
 
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import org.commacq.CsvLine;
@@ -18,6 +19,7 @@ import org.commacq.CsvLineCallback;
 import org.commacq.CsvUpdateBlockException;
 import org.commacq.db.DataSourceAccess;
 import org.commacq.db.EntityConfig;
+import org.commacq.layer.DataSourceCollectionLayer;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -35,6 +37,7 @@ public class CsvDataSourceDatabaseTest {
 	
 	private EmbeddedDatabase dataSource;
 	private CsvDataSourceDatabase csvDataSourceDatabase;
+	private DataSourceCollectionLayer layer;
 	
 	@Before
 	public void setupDataSource() {
@@ -43,7 +46,8 @@ public class CsvDataSourceDatabaseTest {
 		
 		DataSourceAccess dataSourceAccess = new DataSourceAccess(dataSource);
 		EntityConfig entityConfig = new EntityConfig("test", "select \"id\", \"name\" from TestTable");
-		csvDataSourceDatabase = new CsvDataSourceDatabase(dataSourceAccess, entityConfig); 
+		csvDataSourceDatabase = new CsvDataSourceDatabase(dataSourceAccess, entityConfig);
+		layer = new DataSourceCollectionLayer(Collections.singleton(csvDataSourceDatabase));
 	}
 	
 	@After
@@ -63,64 +67,64 @@ public class CsvDataSourceDatabaseTest {
 	
 	@Test
 	public void testAllCsvLinesAndSubscribe() throws CsvUpdateBlockException {
-		csvDataSourceDatabase.getAllCsvLinesAndSubscribe(callback);
-		verify(callback, times(2)).processUpdate(anyString(), any(CsvLine.class));
+		layer.getAllCsvLinesAndSubscribe("test", callback);
+		verify(callback, times(2)).processUpdate(anyString(), anyString(), any(CsvLine.class));
 		verifyNoMoreInteractions(callback);
 	}
 		
 	@Test
 	public void testUpdates() throws CsvUpdateBlockException {
-		csvDataSourceDatabase.subscribe(callback);
+		layer.subscribe("test", callback);
 		
-		csvDataSourceDatabase.processUpdate("id,name", new CsvLine("1", "1,ZZZ"));
-		verify(callback).processUpdate("id,name", new CsvLine("1", "1,ZZZ"));
+		layer.processUpdate("test", "id,name", new CsvLine("1", "1,ZZZ"));
+		verify(callback).processUpdate("test", "id,name", new CsvLine("1", "1,ZZZ"));
 		verifyNoMoreInteractions(callback);
 		reset(callback);
 
-		csvDataSourceDatabase.updateUntrusted("1");
+		layer.updateUntrusted("test", "1");
 		//YYY update should be ignored, because the underlying data is still ABC.
-		verify(callback).processUpdate("id,name", new CsvLine("1", "1,ABC"));
+		verify(callback).processUpdate("test", "id,name", new CsvLine("1", "1,ABC"));
 		verifyNoMoreInteractions(callback);
 		reset(callback);
 		
-		csvDataSourceDatabase.startBulkUpdate("id,name");
-		verify(callback).startBulkUpdate(anyString());
-		verify(callback, times(2)).processUpdate(anyString(), any(CsvLine.class));
+		layer.reload("test");
+		verify(callback).startBulkUpdate("test", anyString());
+		verify(callback, times(2)).processUpdate(anyString(), anyString(), any(CsvLine.class));
 		verifyNoMoreInteractions(callback);
 		reset(callback);
 		
 		List<String> bothLines = new ArrayList<>();
 		bothLines.add("1");
 		bothLines.add("2");
-		csvDataSourceDatabase.updateUntrusted(bothLines);
-		verify(callback, times(2)).processUpdate(anyString(), any(CsvLine.class));
+		layer.updateUntrusted("test", bothLines);
+		verify(callback, times(2)).processUpdate(anyString(), anyString(), any(CsvLine.class));
 		verifyNoMoreInteractions(callback);
 		reset(callback);
 		
 		//Remove line by setting CsvLine to null
-		csvDataSourceDatabase.processRemove("1");
-		verify(callback).processRemove("1");
+		layer.processRemove("test", "1");
+		verify(callback).processRemove("test", "1");
 		verifyNoMoreInteractions(callback);
 		reset(callback);
 
-		csvDataSourceDatabase.updateUntrusted("1");
+		layer.updateUntrusted("test", "1");
 		//We haven't really removed the underlying data, so remove should not be called
 		//in reconcile mode. An error should be logged.
-		verify(callback, times(0)).processRemove("1");
-		verify(callback).processUpdate("id,name", new CsvLine("1", "1,ABC"));
+		verify(callback, times(0)).processRemove("test", "1");
+		verify(callback).processUpdate("test", "id,name", new CsvLine("1", "1,ABC"));
 		verifyNoMoreInteractions(callback);
 		reset(callback);
 	}
 	
 	@Test
 	public void testUpdateForEntryThatHasBeenRemovedFromDatabase() throws SQLException, CsvUpdateBlockException {
-		csvDataSourceDatabase.subscribe(callback);
+		layer.subscribe("test", callback);
 		
 		dataSource.getConnection().prepareStatement("delete from TestTable where \"id\"='1'").executeUpdate();
 		//Specify a line update for a line which no longer exists in the data source - use reconcile mode.
 		//The line should be removed. An error should be logged.
-		csvDataSourceDatabase.updateUntrusted("1");
-		verify(callback).processRemove("1");
+		layer.updateUntrusted("test", "1");
+		verify(callback).processRemove("test", "1");
 		verifyNoMoreInteractions(callback);
 		reset(callback);
 	}

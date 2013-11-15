@@ -8,7 +8,6 @@ import static org.springframework.jdbc.datasource.embedded.EmbeddedDatabaseType.
 import java.sql.SQLException;
 import java.util.Collections;
 
-import org.commacq.CsvDataSource;
 import org.commacq.CsvLine;
 import org.commacq.CsvLineCallback;
 import org.commacq.CsvUpdateBlockException;
@@ -16,7 +15,6 @@ import org.commacq.db.DataSourceAccess;
 import org.commacq.db.EntityConfig;
 import org.commacq.db.csv.CsvDataSourceDatabase;
 import org.commacq.layer.DataSourceCollectionLayer;
-import org.commacq.layer.Layer;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -37,6 +35,7 @@ public class CsvDataSourceCacheTest {
 	
 	private EmbeddedDatabase dataSource;
 	private CsvDataSourceDatabase csvDataSourceDatabase;
+	private DataSourceCollectionLayer databaseLayer;
 	private CacheLayer cacheLayer;
 	
 	@Before
@@ -47,7 +46,7 @@ public class CsvDataSourceCacheTest {
 		DataSourceAccess dataSourceAccess = new DataSourceAccess(dataSource);
 		EntityConfig entityConfig = new EntityConfig("test", "select \"id\", \"name\" from TestTable");
 		csvDataSourceDatabase = new CsvDataSourceDatabase(dataSourceAccess, entityConfig);
-		Layer databaseLayer = new DataSourceCollectionLayer(Collections.singleton(csvDataSourceDatabase));
+		databaseLayer = new DataSourceCollectionLayer(Collections.singleton(csvDataSourceDatabase));
 		cacheLayer = new CacheLayer(databaseLayer);
 	}
 	
@@ -59,7 +58,7 @@ public class CsvDataSourceCacheTest {
 	@Test
 	public void testSimpleRead() throws SQLException, CsvUpdateBlockException {
 		
-		cacheLayer.getCsvDataSource("test").getCsvLine("1", callback);
+		cacheLayer.getCsvLine("test", "1", callback);
 		verify(callback).processUpdate("test", "id,name", new CsvLine("1", "1,ABC"));
 		verifyNoMoreInteractions(callback);
 		
@@ -70,21 +69,17 @@ public class CsvDataSourceCacheTest {
 		dataSource.getConnection().prepareStatement("delete from TestTable where \"id\"='1'").executeUpdate();
 
 		//Line is still returned by cache. Database change has not been propagated to cache.
-		CsvDataSource csvDataSourceDatabase = cacheLayer.getCsvDataSource("test");
-		csvDataSourceDatabase.getCsvLine("1", callback);
+		cacheLayer.getCsvLine("test", "1", callback);
 		verify(callback).processUpdate("test", "id,name", new CsvLine("1", "1,ABC"));
 		verifyNoMoreInteractions(callback);
 		reset(callback);
 		
-		//Propagate the database change to the cache.
-		cacheLayer.startUpdateBlock("test", "id,name");
-		csvDataSourceDatabase.startBulkUpdate("test", "id,name");
-		csvDataSourceDatabase.finishUpdateBlock();
+		databaseLayer.reload("test");
 		
 		//Value is not present in the cache after refresh from the database
 		//has propagated to the cache.
-		csvDataSourceCache.getCsvLine("1", callback);
-		verify(callback).processRemove("1");
+		cacheLayer.getCsvLine("test", "1", callback);
+		verify(callback).processRemove("test", "1");
 		verifyNoMoreInteractions(callback);
 		
 	}

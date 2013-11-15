@@ -8,6 +8,7 @@ import org.commacq.CsvLineCallback;
 public interface Layer {
 
 	SortedSet<String> getEntityIds();
+	String getColumnNamesCsv(String entityId);
 	
 	void getAllCsvLines(CsvLineCallback callback);
 	void getAllCsvLines(Collection<String> entityIds, CsvLineCallback callback);

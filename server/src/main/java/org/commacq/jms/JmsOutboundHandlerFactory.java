@@ -5,16 +5,15 @@ import java.util.Map;
 
 import javax.jms.ConnectionFactory;
 
-import org.commacq.CsvDataSource;
-import org.commacq.layer.Layer;
+import org.commacq.layer.SubscribeLayer;
 
 public class JmsOutboundHandlerFactory {
 	
-	public Map<String, JmsOutboundHandler> create(ConnectionFactory connectionFactory, Layer layer, String broadcastTopicPattern) {
+	public Map<String, JmsOutboundHandler> create(ConnectionFactory connectionFactory, SubscribeLayer layer, String broadcastTopicPattern) {
 		Map<String, JmsOutboundHandler> handlers = new HashMap<String, JmsOutboundHandler>();
-		for(CsvDataSource source : layer.getMap().values()) {
-			String broadcastTopic = String.format(broadcastTopicPattern, source.getEntityId());
-			handlers.put(source.getEntityId(), new JmsOutboundHandler(connectionFactory, layer, source.getEntityId(), broadcastTopic));
+		for(String entityId : layer.getEntityIds()) {
+			String broadcastTopic = String.format(broadcastTopicPattern, entityId);
+			handlers.put(entityId, new JmsOutboundHandler(connectionFactory, layer, entityId, broadcastTopic));
 		}
 		return handlers;
 	}

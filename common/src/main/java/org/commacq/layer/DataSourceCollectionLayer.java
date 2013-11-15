@@ -54,6 +54,11 @@ public class DataSourceCollectionLayer extends AbstractUpdatableLayer {
 		return entityIdsUnmodifiable;
 	}
 	
+	@Override
+	public String getColumnNamesCsv(String entityId) {
+		return getCsvDataSource(entityId).getColumnNamesCsv();
+	}
+	
 	@ManagedOperation
 	public String getCsvEntry(String entityId, String id) {
 		CsvLineCallbackSingleImpl callback = csvLineCallbackSingleImplLocal.get();  

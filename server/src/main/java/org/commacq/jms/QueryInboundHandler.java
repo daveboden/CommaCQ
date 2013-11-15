@@ -9,7 +9,6 @@ import javax.jms.TextMessage;
 
 import lombok.extern.slf4j.Slf4j;
 
-import org.commacq.CsvDataSource;
 import org.commacq.CsvLineCallbackStringWriter;
 import org.commacq.layer.Layer;
 import org.springframework.jms.listener.SessionAwareMessageListener;
@@ -77,9 +76,7 @@ public class QueryInboundHandler implements SessionAwareMessageListener<Message>
 		
 		log.info("Received a query for entity {}", entityId);
 		
-		CsvDataSource source = layer.getCsvDataSource(entityId);
-		
-		if(source == null) {
+		if(!layer.getEntityIds().contains(entityId)) {
 			log.warn("Entity does not exist on this server: {}", entityId);
 			TextMessage outputMessage = session.createTextMessage();
 			outputMessage.setJMSCorrelationID(message.getJMSCorrelationID());
@@ -91,10 +88,10 @@ public class QueryInboundHandler implements SessionAwareMessageListener<Message>
 		
 		String text;
 		if(message.getBooleanProperty(MessageFields.columnNamesOnly)) {
-			text = source.getColumnNamesCsv();
+			text = layer.getColumnNamesCsv(entityId);
 		} else {			
 			CsvLineCallbackStringWriter writer = writerThreadLocal.get();
-			source.getAllCsvLines(writer);
+			layer.getAllCsvLines(entityId, writer);
 			text = writer.toString();
 		}
 		

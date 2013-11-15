@@ -9,7 +9,6 @@ import javax.servlet.http.HttpServletResponse;
 
 import lombok.extern.slf4j.Slf4j;
 
-import org.commacq.CsvDataSource;
 import org.commacq.layer.Layer;
 import org.eclipse.jetty.server.Request;
 import org.eclipse.jetty.server.handler.AbstractHandler;
@@ -46,9 +45,7 @@ public class CsvGridHandler extends AbstractHandler {
 		
   		String entityId = HttpUtils.getEntityStringFromTarget(target);
 		
-  		CsvDataSource source = layer.getCsvDataSource(entityId);
-		
-		if(source == null) {
+		if(!layer.getEntityIds().contains(entityId)) {
 			HttpUtils.respondWithErrorMessage(layer, entityId, response, log);
 			
 			return;
