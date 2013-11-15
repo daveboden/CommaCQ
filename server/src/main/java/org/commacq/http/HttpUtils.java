@@ -4,7 +4,7 @@ import java.io.IOException;
 
 import javax.servlet.http.HttpServletResponse;
 
-import org.commacq.CsvDataSourceLayer;
+import org.commacq.layer.Layer;
 import org.eclipse.jetty.http.HttpStatus;
 import org.slf4j.Logger;
 
@@ -25,7 +25,7 @@ class HttpUtils {
 		return target.substring(finalSlash + 1);
 	}
 	
-	static void respondWithErrorMessage(CsvDataSourceLayer layer, String entityId, HttpServletResponse response, Logger log) throws IOException {
+	static void respondWithErrorMessage(Layer layer, String entityId, HttpServletResponse response, Logger log) throws IOException {
 
 		StringBuilder messageBuilder = new StringBuilder();
 		for(String currentEntityId : layer.getEntityIds()) {

@@ -1,7 +1,9 @@
-package org.commacq;
+package org.commacq.layer;
 
 import java.util.Collection;
-import java.util.List;
+
+import org.commacq.CsvLine;
+import org.commacq.CsvUpdateBlockException;
 
 /**
  * Handles the case where the CsvDataSource is at the source end of a chain
@@ -13,62 +15,19 @@ import java.util.List;
  * then it should implement CsvUpdatableDataSource directly and define the behaviour. It can still
  * make use of the CsvSubscriptionHelper in that case.
  */
-public abstract class CsvUpdatableLayerBase implements CsvUpdatableLayer, CsvLineCallback {
+public abstract class AbstractUpdatableLayer extends AbstractSubscribeLayer implements UpdatableLayer {
 
-	private final CsvLineCallbackComposite composite = new CsvLineCallbackComposite();
-
-    @Override
-    public final void getAllCsvLinesAndSubscribe(CsvLineCallback callback) {
-    	composite.addCallback(callback);
-    	//TODO how do we protect against updates going to the new subscriber before all the results
-    	//have been fetched?
-    	for(String entityId : getEntityIds()) {
-    		getCsvDataSource(entityId).getAllCsvLines(callback);
-    	}
-    }
-    
-    @Override
-    public final void getAllCsvLinesAndSubscribe(CsvLineCallback callback, List<String> entityIds) {
-    	composite.addCallback(callback, entityIds);
-    	//TODO how do we protect against updates going to the new subscriber before all the results
-    	//have been fetched?
-    	for(String entityId : entityIds) {
-    		getCsvDataSource(entityId).getAllCsvLines(callback);
-    	}
-    }
-    
-    @Override
-    public final void subscribe(CsvLineCallback callback) {
-    	composite.addCallback(callback);
-    }
-    
-    @Override
-    public final void subscribe(CsvLineCallback callback, List<String> entityIds) {
-    	composite.addCallback(callback, entityIds);
-    }
-    
-    @Override
-    public final void subscribe(CsvLineCallback callback, String entityId) {
-    	composite.addCallback(callback, entityId);
-    }
-    
-    @Override
-    public final void unsubscribe(CsvLineCallback callback) {
-    	composite.removeCallback(callback);
-    }
-    
+	/**
+	 * Used with a trusted update
+	 */
     @Override
 	public void startBulkUpdate(String entityId, String columnNamesCsv) throws CsvUpdateBlockException {
 		composite.startBulkUpdate(entityId, columnNamesCsv);
-		getCsvDataSource(entityId).getAllCsvLines(composite);
 	}
 
 	@Override
 	public void startBulkUpdateForGroup(String entityId, String group, String idWithinGroup) throws CsvUpdateBlockException {
-		//By definition an "untrusted" update. The only information that the update contains is the
-		//identifier within the group that needs to be reloaded.
 		composite.startBulkUpdateForGroup(entityId, group, idWithinGroup);
-		getCsvDataSource(entityId).getCsvLinesForGroup(group, idWithinGroup, composite);
 	}
 
 	@Override
@@ -106,21 +65,19 @@ public abstract class CsvUpdatableLayerBase implements CsvUpdatableLayer, CsvLin
 	 */
     @Override
     public void updateUntrusted(String entityId, String id) {
-    	getCsvDataSource(entityId).getCsvLine(id, composite);
+    	getCsvLine(entityId, id, composite);
     }
     
     @Override
     public void updateUntrusted(String entityId, Collection<String> ids) {
-    	getCsvDataSource(entityId).getCsvLines(ids, composite);
+    	getCsvLines(entityId, ids, composite);
     }
     
     @Override
     public void reload(String entityId) throws CsvUpdateBlockException {
     	String columnNamesCsv = getCsvDataSource(entityId).getColumnNamesCsv();
-    	composite.startUpdateBlock(entityId, columnNamesCsv);
     	composite.startBulkUpdate(entityId, columnNamesCsv);
     	getCsvDataSource(entityId).getAllCsvLines(composite);
-    	composite.finish();
     }
 
 }

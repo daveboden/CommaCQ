@@ -10,7 +10,7 @@ import javax.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
 
 import org.commacq.CsvDataSource;
-import org.commacq.CsvDataSourceLayer;
+import org.commacq.layer.Layer;
 import org.eclipse.jetty.server.Request;
 import org.eclipse.jetty.server.handler.AbstractHandler;
 
@@ -25,10 +25,10 @@ import freemarker.template.TemplateException;
 @Slf4j
 public class CsvGridHandler extends AbstractHandler {
 
-	private CsvDataSourceLayer layer;
+	private Layer layer;
 	private final Template gridViewTemplate;
 
-	public CsvGridHandler(CsvDataSourceLayer layer) {
+	public CsvGridHandler(Layer layer) {
 	    Configuration cfg = new Configuration();
 	    cfg.setClassForTemplateLoading(getClass(), "/");
 	    try {

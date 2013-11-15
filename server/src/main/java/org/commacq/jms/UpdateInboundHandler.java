@@ -14,10 +14,10 @@ import javax.jms.TextMessage;
 
 import lombok.extern.slf4j.Slf4j;
 
-import org.commacq.CsvDataSourceLayer;
 import org.commacq.CsvTextBlockToCallback;
-import org.commacq.CsvUpdatableLayer;
 import org.commacq.CsvUpdateBlockException;
+import org.commacq.layer.UpdatableLayer;
+import org.commacq.layer.Layer;
 import org.supercsv.io.CsvListReader;
 import org.supercsv.prefs.CsvPreference;
 
@@ -35,10 +35,10 @@ import org.supercsv.prefs.CsvPreference;
 @Slf4j
 public class UpdateInboundHandler implements MessageListener {
 	
-	private final CsvDataSourceLayer layer;
+	private final Layer layer;
 	private final CsvTextBlockToCallback csvTextBlockToCallback = new CsvTextBlockToCallback();
 
-    public UpdateInboundHandler(CsvDataSourceLayer layer) {
+    public UpdateInboundHandler(Layer layer) {
         this.layer = layer;
     }
 
@@ -113,7 +113,7 @@ public class UpdateInboundHandler implements MessageListener {
     	try {
 	    	String[] header = parser.getHeader(true);
 	    	
-	    	CsvUpdatableLayer source = (CsvUpdatableLayer)layer.getCsvDataSource(entityId);
+	    	UpdatableLayer source = (UpdatableLayer)layer.getCsvDataSource(entityId);
 	    	
 	    	if(header.length == 1 && header[0].equals("id")) {
 	    		log.info("Update for entity {} contains a list of ids", entityId);

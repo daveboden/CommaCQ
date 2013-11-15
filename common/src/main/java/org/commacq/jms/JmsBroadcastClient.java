@@ -10,7 +10,7 @@ import lombok.extern.slf4j.Slf4j;
 
 import org.apache.commons.lang3.Validate;
 import org.commacq.CsvTextBlockToCallback;
-import org.commacq.CsvUpdatableLayer;
+import org.commacq.layer.UpdatableLayer;
 import org.springframework.jms.listener.SimpleMessageListenerContainer;
 
 
@@ -30,11 +30,11 @@ public class JmsBroadcastClient {
 	private final ConnectionFactory connectionFactory;
 	private final String broadcastTopic;
 	private final CsvTextBlockToCallback csvTextBlockToCallback = new CsvTextBlockToCallback();
-	private final CsvUpdatableLayer csvUpdatableLayer;
+	private final UpdatableLayer csvUpdatableLayer;
 	
 	SimpleMessageListenerContainer broadcastUpdateListener;
 	
-	public JmsBroadcastClient(final String entityId, final CsvUpdatableLayer csvUpdatableLayer,
+	public JmsBroadcastClient(final String entityId, final UpdatableLayer csvUpdatableLayer,
 			                  final ConnectionFactory connectionFactory, final String broadcastTopic) {
 		this.entityId = entityId;
 		this.csvUpdatableLayer = csvUpdatableLayer;

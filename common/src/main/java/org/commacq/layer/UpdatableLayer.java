@@ -1,8 +1,13 @@
-package org.commacq;
+package org.commacq.layer;
 
 import java.util.Collection;
+import java.util.Map;
 
 import lombok.RequiredArgsConstructor;
+
+import org.commacq.CsvDataSource;
+import org.commacq.CsvLineCallback;
+import org.commacq.CsvUpdateBlockException;
 
 /**
  * A CSV Data Source that can handle external updates
@@ -10,7 +15,7 @@ import lombok.RequiredArgsConstructor;
  * 
  * @See CsvSubscriptionHelper
  */
-public interface CsvUpdatableLayer extends CsvDataSourceLayer, CsvLineCallback {
+public interface UpdatableLayer extends Layer, CsvLineCallback {
 	
 	@RequiredArgsConstructor
 	public enum UpdateMode {
@@ -30,6 +35,7 @@ public interface CsvUpdatableLayer extends CsvDataSourceLayer, CsvLineCallback {
 	 * 
 	 * @param id
 	 */
+	
 	void updateUntrusted(String entityId, String id) throws CsvUpdateBlockException;
 	
 	void updateUntrusted(String entityId, Collection<String> ids) throws CsvUpdateBlockException;
@@ -38,5 +44,14 @@ public interface CsvUpdatableLayer extends CsvDataSourceLayer, CsvLineCallback {
 	
 	String pokeCsvEntry(String entityId, String id) throws CsvUpdateBlockException;
 	void reloadAll() throws CsvUpdateBlockException;
+	
+	
+	/**
+	 * Updatable layers have access to their underlying data sources
+	 * @param entityId
+	 * @return
+	 */
+	CsvDataSource getCsvDataSource(String entityId);
+	Map<String, ? extends CsvDataSource> getMap();
 	
 }

@@ -1,8 +1,8 @@
 package org.commacq;
 
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -25,13 +25,13 @@ public class CsvLineCallbackComposite implements CsvLineCallback {
 	 * callback is interested in.
 	 * null means all entities.
 	 */
-	private final Map<CsvLineCallback, List<String>> callbacks = new HashMap<>();
+	private final Map<CsvLineCallback, Collection<String>> callbacks = new HashMap<>();
 	
 	public void addCallback(CsvLineCallback callback) {
-		addCallback(callback, (List<String>)null);
+		addCallback((Collection<String>)null, callback);
 	}
 	
-	public void addCallback(CsvLineCallback callback, List<String> entityIds) {
+	public void addCallback(Collection<String> entityIds, CsvLineCallback callback) {
 		lock.lock();
 		try {
 			callbacks.put(callback, entityIds);
@@ -40,7 +40,7 @@ public class CsvLineCallbackComposite implements CsvLineCallback {
 		}
 	}
 	
-	public void addCallback(CsvLineCallback callback, String entityId) {
+	public void addCallback(String entityId, CsvLineCallback callback) {
 		lock.lock();
 		try {
 			callbacks.put(callback, Collections.singletonList(entityId));
@@ -64,8 +64,8 @@ public class CsvLineCallbackComposite implements CsvLineCallback {
 	 */
 	@Override
 	public void startUpdateBlock(String entityId, String csvColumnNames) throws CsvUpdateBlockException {
-		for(Entry<CsvLineCallback, List<String>> entry : callbacks.entrySet()) {
-			List<String> entityIds = entry.getValue();
+		for(Entry<CsvLineCallback, Collection<String>> entry : callbacks.entrySet()) {
+			Collection<String> entityIds = entry.getValue();
 			if(entityIds == null || entityIds.contains(entityId)) {
 				CsvLineCallback callback = entry.getKey();
 				calledInThisTransaction.add(callback);
@@ -106,8 +106,8 @@ public class CsvLineCallbackComposite implements CsvLineCallback {
 	
 	@Override
 	public void processRemove(String entityId, String id) throws CsvUpdateBlockException {
-		for(Entry<CsvLineCallback, List<String>> entry : callbacks.entrySet()) {
-			List<String> entityIds = entry.getValue();
+		for(Entry<CsvLineCallback, Collection<String>> entry : callbacks.entrySet()) {
+			Collection<String> entityIds = entry.getValue();
 			if(entityIds == null || entityIds.contains(entityId)) {
 				CsvLineCallback callback = entry.getKey();
 				callback.processRemove(entityId, id);
@@ -117,8 +117,8 @@ public class CsvLineCallbackComposite implements CsvLineCallback {
 	
 	@Override
 	public void processUpdate(String entityId, String columnNamesCsv, CsvLine csvLine) throws CsvUpdateBlockException {
-		for(Entry<CsvLineCallback, List<String>> entry : callbacks.entrySet()) {
-			List<String> entityIds = entry.getValue();
+		for(Entry<CsvLineCallback, Collection<String>> entry : callbacks.entrySet()) {
+			Collection<String> entityIds = entry.getValue();
 			if(entityIds == null || entityIds.contains(entityId)) {
 				CsvLineCallback callback = entry.getKey();
 				callback.processUpdate(entityId, columnNamesCsv, csvLine);
@@ -128,8 +128,8 @@ public class CsvLineCallbackComposite implements CsvLineCallback {
 	
 	@Override
 	public void startBulkUpdate(String entityId, String columnNamesCsv) throws CsvUpdateBlockException {
-		for(Entry<CsvLineCallback, List<String>> entry : callbacks.entrySet()) {
-			List<String> entityIds = entry.getValue();
+		for(Entry<CsvLineCallback, Collection<String>> entry : callbacks.entrySet()) {
+			Collection<String> entityIds = entry.getValue();
 			if(entityIds == null || entityIds.contains(entityId)) {
 				CsvLineCallback callback = entry.getKey();
 				callback.startBulkUpdate(entityId, columnNamesCsv);
@@ -139,8 +139,8 @@ public class CsvLineCallbackComposite implements CsvLineCallback {
 	
 	@Override
 	public void startBulkUpdateForGroup(String entityId, String group, String idWithinGroup) throws CsvUpdateBlockException {
-		for(Entry<CsvLineCallback, List<String>> entry : callbacks.entrySet()) {
-			List<String> entityIds = entry.getValue();
+		for(Entry<CsvLineCallback, Collection<String>> entry : callbacks.entrySet()) {
+			Collection<String> entityIds = entry.getValue();
 			if(entityIds == null || entityIds.contains(entityId)) {
 				CsvLineCallback callback = entry.getKey();
 				callback.startBulkUpdateForGroup(entityId, group, idWithinGroup);

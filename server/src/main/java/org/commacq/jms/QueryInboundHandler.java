@@ -10,8 +10,8 @@ import javax.jms.TextMessage;
 import lombok.extern.slf4j.Slf4j;
 
 import org.commacq.CsvDataSource;
-import org.commacq.CsvDataSourceLayer;
 import org.commacq.CsvLineCallbackStringWriter;
+import org.commacq.layer.Layer;
 import org.springframework.jms.listener.SessionAwareMessageListener;
 
 /**
@@ -31,9 +31,9 @@ import org.springframework.jms.listener.SessionAwareMessageListener;
 @Slf4j
 public class QueryInboundHandler implements SessionAwareMessageListener<Message> {
 	
-	private final CsvDataSourceLayer layer;
+	private final Layer layer;
 	
-	public QueryInboundHandler(CsvDataSourceLayer layer) {
+	public QueryInboundHandler(Layer layer) {
 		this.layer = layer;
 	}
 	

@@ -20,9 +20,9 @@ import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
 import org.commacq.CsvDataSource;
 import org.commacq.CsvDataSourceFactory;
-import org.commacq.CsvDataSourceLayer;
-import org.commacq.CsvDataSourceLayerCollection;
-import org.commacq.CsvUpdatableLayer;
+import org.commacq.layer.UpdatableLayer;
+import org.commacq.layer.DataSourceCollectionLayer;
+import org.commacq.layer.Layer;
 import org.springframework.jms.core.JmsTemplate;
 import org.springframework.jms.core.MessageCreator;
 import org.springframework.jms.core.SessionCallback;
@@ -47,7 +47,7 @@ public class CsvDataSourceBroadcastFactory {
 	 * @return
 	 * @throws JMSException
 	 */
-	CsvDataSourceLayer createLayer() throws JMSException {
+	Layer createLayer() throws JMSException {
 		JmsTemplate template = new JmsTemplate(connectionFactory);
 		template.setReceiveTimeout(timeoutInSeconds * 1000);
 		
@@ -94,7 +94,7 @@ public class CsvDataSourceBroadcastFactory {
 			sources.add(jmsQuery);			
 		}
 		
-		CsvUpdatableLayer outputLayer = new CsvDataSourceLayerCollection(sources);
+		UpdatableLayer outputLayer = new DataSourceCollectionLayer(sources);
 		
 		for(String entityId : entityIds) {
 			createBroadcastListener(entityId, outputLayer);
@@ -103,7 +103,7 @@ public class CsvDataSourceBroadcastFactory {
 		return outputLayer;
 	}
 	
-	private void createBroadcastListener(final String entityId, final CsvUpdatableLayer layer) throws JMSException {
+	private void createBroadcastListener(final String entityId, final UpdatableLayer layer) throws JMSException {
 		String broadcastTopic = String.format(broadcastTopicPattern, entityId);
 		
 		JmsBroadcastClient broadcastClient = new JmsBroadcastClient(entityId, layer, connectionFactory, broadcastTopic);

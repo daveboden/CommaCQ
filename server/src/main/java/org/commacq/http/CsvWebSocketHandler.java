@@ -6,10 +6,10 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 import org.commacq.CsvDataSource;
-import org.commacq.CsvDataSourceLayer;
 import org.commacq.CsvLine;
 import org.commacq.CsvLineCallback;
 import org.commacq.CsvUpdateBlockException;
+import org.commacq.layer.Layer;
 import org.eclipse.jetty.websocket.api.Session;
 import org.eclipse.jetty.websocket.api.WebSocketListener;
 import org.eclipse.jetty.websocket.server.WebSocketHandler;
@@ -22,7 +22,7 @@ import org.eclipse.jetty.websocket.servlet.WebSocketServletFactory;
 @RequiredArgsConstructor
 public class CsvWebSocketHandler extends WebSocketHandler {
 	
-	private final CsvDataSourceLayer layer;
+	private final Layer layer;
 
 	@Override
 	public void configure(WebSocketServletFactory webSocketServletFactory) {
@@ -40,12 +40,12 @@ public class CsvWebSocketHandler extends WebSocketHandler {
 	
 	@Slf4j
 	private static class CsvWebSocket implements WebSocketListener {
-		private final CsvDataSourceLayer layer;
+		private final Layer layer;
 		private final String entityId;
 		
 		private CsvLineCallback callback;
 		
-		public CsvWebSocket(CsvDataSourceLayer layer, String entityId) {
+		public CsvWebSocket(Layer layer, String entityId) {
 			this.layer = layer;
 			this.entityId = entityId;
 		}

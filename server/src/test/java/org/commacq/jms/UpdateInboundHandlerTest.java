@@ -12,9 +12,9 @@ import javax.jms.JMSException;
 import javax.jms.MapMessage;
 import javax.jms.TextMessage;
 
-import org.commacq.CsvDataSourceLayer;
-import org.commacq.CsvUpdatableLayer;
 import org.commacq.CsvUpdateBlockException;
+import org.commacq.layer.UpdatableLayer;
+import org.commacq.layer.Layer;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -25,8 +25,8 @@ import org.mockito.runners.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class UpdateInboundHandlerTest {
 
-    @Mock private CsvDataSourceLayer layer;
-    @Mock private CsvUpdatableLayer source;
+    @Mock private Layer layer;
+    @Mock private UpdatableLayer source;
     
     private UpdateInboundHandler handler;
     

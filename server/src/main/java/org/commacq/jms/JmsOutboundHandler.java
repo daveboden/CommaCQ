@@ -11,10 +11,10 @@ import javax.jms.TextMessage;
 
 import lombok.extern.slf4j.Slf4j;
 
-import org.commacq.CsvDataSourceLayer;
 import org.commacq.CsvLine;
 import org.commacq.CsvLineCallback;
 import org.commacq.CsvUpdateBlockException;
+import org.commacq.layer.Layer;
 import org.springframework.jms.core.JmsTemplate;
 import org.springframework.jms.core.MessageCreator;
 
@@ -25,7 +25,7 @@ import org.springframework.jms.core.MessageCreator;
 public class JmsOutboundHandler implements CsvLineCallback {
 
     private final JmsTemplate jmsTemplate;
-    private final CsvDataSourceLayer layer;
+    private final Layer layer;
     private final String broadcastTopic;
     private final String entityId;
     
@@ -33,7 +33,7 @@ public class JmsOutboundHandler implements CsvLineCallback {
     private final PrintWriter currentWriter = new PrintWriter(currentText);
     private boolean bulkUpdate = false;
 
-    public JmsOutboundHandler(ConnectionFactory connectionFactory, CsvDataSourceLayer layer, String entityId, String broadcastTopic) {
+    public JmsOutboundHandler(ConnectionFactory connectionFactory, Layer layer, String entityId, String broadcastTopic) {
         jmsTemplate = new JmsTemplate(connectionFactory);
         jmsTemplate.setPubSubDomain(true);
         

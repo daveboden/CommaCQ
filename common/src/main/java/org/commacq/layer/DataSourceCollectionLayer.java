@@ -1,4 +1,4 @@
-package org.commacq;
+package org.commacq.layer;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -7,6 +7,10 @@ import java.util.Map;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
+import org.commacq.CsvDataSource;
+import org.commacq.CsvLineCallback;
+import org.commacq.CsvLineCallbackSingleImpl;
+import org.commacq.CsvUpdateBlockException;
 import org.springframework.jmx.export.annotation.ManagedAttribute;
 import org.springframework.jmx.export.annotation.ManagedOperation;
 import org.springframework.jmx.export.annotation.ManagedResource;
@@ -18,7 +22,7 @@ import org.springframework.jmx.export.annotation.ManagedResource;
  * data source in a layer.
  */
 @ManagedResource
-public class CsvDataSourceLayerCollection extends CsvUpdatableLayerBase {
+public class DataSourceCollectionLayer extends AbstractUpdatableLayer {
 	
 	private ThreadLocal<CsvLineCallbackSingleImpl> csvLineCallbackSingleImplLocal = new ThreadLocal<CsvLineCallbackSingleImpl>() {
 		protected CsvLineCallbackSingleImpl initialValue() {
@@ -34,7 +38,7 @@ public class CsvDataSourceLayerCollection extends CsvUpdatableLayerBase {
 	//Unmodifiable wrapper to give to clients
 	private final Map<String, CsvDataSource> csvDataSourceMapUnmodifiable = Collections.unmodifiableMap(csvDataSourceMap);	
 	
-	public CsvDataSourceLayerCollection(Collection<? extends CsvDataSource> csvDataSources) {
+	public DataSourceCollectionLayer(Collection<? extends CsvDataSource> csvDataSources) {
 		for(CsvDataSource source : csvDataSources) {
 			boolean newEntry = entityIds.add(source.getEntityId());
 			if(!newEntry) {
@@ -50,7 +54,6 @@ public class CsvDataSourceLayerCollection extends CsvUpdatableLayerBase {
 		return entityIdsUnmodifiable;
 	}
 	
-	@Override
 	@ManagedOperation
 	public String getCsvEntry(String entityId, String id) {
 		CsvLineCallbackSingleImpl callback = csvLineCallbackSingleImplLocal.get();  
@@ -62,11 +65,11 @@ public class CsvDataSourceLayerCollection extends CsvUpdatableLayerBase {
 	@ManagedOperation
 	public String pokeCsvEntry(String entityId, String id) throws CsvUpdateBlockException {
 		CsvDataSource source = getCsvDataSource(entityId);
-		if(!(source instanceof CsvUpdatableLayer)) {
+		if(!(source instanceof UpdatableLayer)) {
 			throw new RuntimeException("Not an updatable data source: " + entityId);
 		}
 		
-		CsvUpdatableLayer updatableDataSource = (CsvUpdatableLayer)source;
+		UpdatableLayer updatableDataSource = (UpdatableLayer)source;
 		updatableDataSource.startUpdateBlock(entityId, source.getColumnNamesCsv());
 		updatableDataSource.updateUntrusted(entityId, id);
 		updatableDataSource.finish();
@@ -91,8 +94,8 @@ public class CsvDataSourceLayerCollection extends CsvUpdatableLayerBase {
 		if(csvDataSource == null) {
 			throw new IllegalArgumentException("entityId " + entityId + " not recognised");
 		}
-		if(csvDataSource instanceof CsvUpdatableLayer) {
-			((CsvUpdatableLayer)csvDataSource).reload(entityId);
+		if(csvDataSource instanceof UpdatableLayer) {
+			((UpdatableLayer)csvDataSource).reload(entityId);
 		} else {
 			throw new IllegalArgumentException("entityId " + entityId + " not updatable");
 		}
@@ -104,6 +107,40 @@ public class CsvDataSourceLayerCollection extends CsvUpdatableLayerBase {
 		for(String entityId : entityIds) {
 			reload(entityId);
 		}
+	}
+
+	@Override
+	public void getAllCsvLines(CsvLineCallback callback) {
+		for(String entityId : entityIds) {
+			getCsvDataSource(entityId).getAllCsvLines(callback);
+		}
+	}
+
+	@Override
+	public void getAllCsvLines(Collection<String> entityIds, CsvLineCallback callback) {
+		for(String entityId : entityIds) {
+			getCsvDataSource(entityId).getAllCsvLines(callback);
+		}
+	}
+
+	@Override
+	public void getAllCsvLines(String entityId, CsvLineCallback callback) {
+		getCsvDataSource(entityId).getAllCsvLines(callback);
+	}
+
+	@Override
+	public void getCsvLines(String entityId, Collection<String> ids, CsvLineCallback callback) {
+		getCsvDataSource(entityId).getCsvLines(ids, callback);
+	}
+
+	@Override
+	public void getCsvLine(String entityId, String id, CsvLineCallback callback) {
+		getCsvDataSource(entityId).getCsvLine(id, callback);
+	}
+
+	@Override
+	public void getCsvLinesForGroup(String entityId, String group, String idWithinGroup, CsvLineCallback callback) {
+		getCsvDataSource(entityId).getCsvLinesForGroup(group, idWithinGroup, callback);
 	}
     
 }

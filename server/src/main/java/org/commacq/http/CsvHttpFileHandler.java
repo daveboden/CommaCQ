@@ -9,17 +9,17 @@ import javax.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
 
 import org.commacq.CsvDataSource;
-import org.commacq.CsvDataSourceLayer;
 import org.commacq.CsvLineCallbackWriter;
+import org.commacq.layer.Layer;
 import org.eclipse.jetty.server.Request;
 import org.eclipse.jetty.server.handler.AbstractHandler;
 
 @Slf4j
 public class CsvHttpFileHandler extends AbstractHandler {
 
-	private CsvDataSourceLayer layer;
+	private Layer layer;
 
-	public CsvHttpFileHandler(CsvDataSourceLayer layer) {
+	public CsvHttpFileHandler(Layer layer) {
 		this.layer = layer;
 	}
 

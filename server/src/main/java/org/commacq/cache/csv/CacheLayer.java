@@ -1,45 +1,37 @@
 package org.commacq.cache.csv;
 
+import java.util.Collection;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.SortedSet;
+import java.util.TreeSet;
 
 import lombok.extern.slf4j.Slf4j;
 
-import org.commacq.CsvDataSource;
-import org.commacq.CsvDataSourceLayer;
 import org.commacq.CsvLine;
 import org.commacq.CsvLineCallback;
 import org.commacq.CsvLineCallbackComposite;
 import org.commacq.CsvUpdateBlockException;
+import org.commacq.layer.AbstractSubscribeLayer;
+import org.commacq.layer.SubscribeLayer;
+import org.springframework.jmx.export.annotation.ManagedOperation;
 
 /**
  * Takes a collection of CsvDataSources and prepares a Cache implementation
  * that wraps them.
  */
 @Slf4j
-public class CacheLayer implements CsvDataSourceLayer {
+public class CacheLayer extends AbstractSubscribeLayer {
 	
     private final Object csvCacheMonitor = new Object(); //Switching the csvCache reference synchronises on this monitor
     private final CsvLineCallbackComposite composite = new CsvLineCallbackComposite();
     private final Map<String, CsvDataSourceCache> caches;
+    private final SortedSet<String> entityIds;
     
-	public CacheLayer(CsvDataSourceLayer sourceLayer) {
-		caches = new HashMap<>(sourceLayer.getMap().size());
-		for(Entry<String, ? extends CsvDataSource> sourceEntry : sourceLayer.getMap().entrySet()) {
-			CsvDataSourceCache cache = new CsvDataSourceCache();
-			caches.put(sourceEntry.getKey(), cache);
-		}
-		
-		CsvCacheFactoryInitialLoad initialLoad = new CsvCacheFactoryInitialLoad();
-		sourceLayer.getAllCsvLinesAndSubscribe(initialLoad);
-	}
-	
-	public CacheLayer(CsvDataSourceLayer sourceLayer, List<String> entityIds) {
-		caches = new HashMap<>(entityIds.size());
-		for(String entityId : entityIds) {
+	public CacheLayer(SubscribeLayer sourceLayer) {
+		caches = new HashMap<>(sourceLayer.getEntityIds().size());
+		this.entityIds = sourceLayer.getEntityIds();
+		for(String entityId : sourceLayer.getEntityIds()) {
 			CsvDataSourceCache cache = new CsvDataSourceCache();
 			caches.put(entityId, cache);
 		}
@@ -48,92 +40,97 @@ public class CacheLayer implements CsvDataSourceLayer {
 		sourceLayer.getAllCsvLinesAndSubscribe(initialLoad);
 	}
 	
+	public CacheLayer(SubscribeLayer sourceLayer, Collection<String> entityIds) {
+		caches = new HashMap<>(entityIds.size());
+		this.entityIds = new TreeSet<String>(entityIds);
+		for(String entityId : entityIds) {
+			CsvDataSourceCache cache = new CsvDataSourceCache();
+			caches.put(entityId, cache);
+		}
+		
+		CsvCacheFactoryInitialLoad initialLoad = new CsvCacheFactoryInitialLoad();
+		sourceLayer.getAllCsvLinesAndSubscribe(entityIds, initialLoad);
+	}
+	
     @Override
 	public SortedSet<String> getEntityIds() {
-		// TODO Auto-generated method stub
-		return null;
+    	return entityIds;
 	}
 
-	@Override
+	@ManagedOperation
 	public String getCsvEntry(String entityId, String id) {
-		// TODO Auto-generated method stub
-		return null;
+		return caches.get(entityId).csvCache.getLine(id).getCsvLine();
 	}
 
 	@Override
-	public CsvDataSource getCsvDataSource(String entityId) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public Map<String, ? extends CsvDataSource> getMap() {
-		return caches;
-	}
-	
-
-    @Override
-    public void getAllCsvLinesAndSubscribe(CsvLineCallback callback) {
-    	composite.addCallback(callback);
-    	try {
-    		callback.start();
-	    	for(CsvDataSourceCache cache : caches.values()) {
-	    		callback.startUpdateBlock(cache.getEntityId(), cache.getColumnNamesCsv());
-	    		cache.csvCache.visitAll(callback);
-	    	}
-	    	callback.finish();
-    	} catch(CsvUpdateBlockException ex) {
-    		log.warn("Error while communicating with callback. Removing subscriber: {}", callback);
-    		composite.removeCallback(callback);
-    		callback.cancel();
-    	}
-    }
-
-	@Override
-	public void getAllCsvLinesAndSubscribe(CsvLineCallback callback, List<String> entityIds) {
-    	composite.addCallback(callback, entityIds);
-    	try {
-    		callback.start();
-	    	for(String entityId : entityIds) {
-	    		callback.startUpdateBlock(entityId, caches.get(entityId).getColumnNamesCsv());
-	    		caches.get(entityId).csvCache.visitAll(callback);
-	    	}
-	    	callback.finish();
-    	} catch(CsvUpdateBlockException ex) {
-    		log.warn("Error while communicating with callback. Removing subscriber: {}", callback);
-    		composite.removeCallback(callback);
-    		callback.cancel();
+	public void getAllCsvLines(CsvLineCallback callback) {
+    	for(CsvDataSourceCache cache : caches.values()) {
+    		try {
+				callback.startUpdateBlock(cache.getEntityId(), cache.getColumnNamesCsv());
+				cache.getAllCsvLines(callback);
+			} catch (CsvUpdateBlockException ex) {
+				throw new RuntimeException(ex);
+			}
     	}
 	}
 
-
 	@Override
-	public void subscribe(CsvLineCallback callback, List<String> entityIds) {
-		composite.addCallback(callback, entityIds);
-	}
-	
-	@Override
-	public void subscribe(CsvLineCallback callback, String entityId) {
-		composite.addCallback(callback, entityId);
-	}
-
-
-
-
-	@Override
-	public void subscribe(CsvLineCallback callback) {
-		composite.addCallback(callback);
+	public void getAllCsvLines(Collection<String> entityIds, CsvLineCallback callback) {
+    	for(String entityId : entityIds) {
+    		try {
+    			CsvDataSourceCache cache = caches.get(entityId);
+				callback.startUpdateBlock(entityId, cache.getColumnNamesCsv());
+				cache.getAllCsvLines(callback);
+			} catch (CsvUpdateBlockException ex) {
+				throw new RuntimeException(ex);
+			}
+    	}		
 	}
 
-
-
-
 	@Override
-	public void unsubscribe(CsvLineCallback callback) {
-		composite.removeCallback(callback);
+	public void getAllCsvLines(String entityId, CsvLineCallback callback) {
+		try {
+			CsvDataSourceCache cache = caches.get(entityId);
+			callback.startUpdateBlock(entityId, cache.getColumnNamesCsv());
+			cache.getAllCsvLines(callback);
+		} catch (CsvUpdateBlockException ex) {
+			throw new RuntimeException(ex);
+		}
 	}
 
+	@Override
+	public void getCsvLines(String entityId, Collection<String> ids, CsvLineCallback callback) {
+		try {
+			CsvDataSourceCache cache = caches.get(entityId);
+			callback.startUpdateBlock(entityId, cache.getColumnNamesCsv());
+			cache.getCsvLines(ids, callback);
+		} catch (CsvUpdateBlockException ex) {
+			throw new RuntimeException(ex);
+		}		
+	}
 
+	@Override
+	public void getCsvLine(String entityId, String id, CsvLineCallback callback) {
+		try {
+			CsvDataSourceCache cache = caches.get(entityId);
+			callback.startUpdateBlock(entityId, cache.getColumnNamesCsv());
+			cache.getCsvLine(id, callback);
+		} catch (CsvUpdateBlockException ex) {
+			throw new RuntimeException(ex);
+		}
+	}
+
+	@Override
+	public void getCsvLinesForGroup(String entityId, String group, String idWithinGroup, CsvLineCallback callback) {
+		try {
+			CsvDataSourceCache cache = caches.get(entityId);
+			callback.startUpdateBlock(entityId, cache.getColumnNamesCsv());
+			cache.getCsvLinesForGroup(group, idWithinGroup, callback);
+		} catch (CsvUpdateBlockException ex) {
+			throw new RuntimeException(ex);
+		}
+		
+	}
 
 
 	/**
