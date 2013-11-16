@@ -34,7 +34,7 @@ public class CsvHttpFileHandler extends AbstractHandler {
 		
 		final String entityId = HttpUtils.getEntityStringFromTarget(target);
 		
-		if(!layer.getEntityIds().contains(entityId)) {
+		if(entityId == null || !layer.getEntityIds().contains(entityId)) {
 			HttpUtils.respondWithErrorMessage(layer, entityId, response, log);
 			return;
 		}
