@@ -15,7 +15,7 @@ import java.util.Collections;
 import java.util.List;
 
 import org.commacq.CsvLine;
-import org.commacq.CsvLineCallback;
+import org.commacq.BlockCallback;
 import org.commacq.CsvUpdateBlockException;
 import org.commacq.db.DataSourceAccess;
 import org.commacq.db.EntityConfig;
@@ -33,7 +33,7 @@ import org.springframework.jdbc.datasource.embedded.EmbeddedDatabaseBuilder;
 public class CsvDataSourceDatabaseTest {
 	
 	@Mock
-	private CsvLineCallback callback;
+	private BlockCallback callback;
 	
 	private EmbeddedDatabase dataSource;
 	private CsvDataSourceDatabase csvDataSourceDatabase;
@@ -88,8 +88,10 @@ public class CsvDataSourceDatabaseTest {
 		reset(callback);
 		
 		layer.reload("test");
-		verify(callback).startBulkUpdate("test", anyString());
+		verify(callback).start(Collections.singleton("test"));
+		verify(callback).startBulkUpdate("test", "id,name");
 		verify(callback, times(2)).processUpdate(anyString(), anyString(), any(CsvLine.class));
+		verify(callback).finish();
 		verifyNoMoreInteractions(callback);
 		reset(callback);
 		
@@ -102,15 +104,15 @@ public class CsvDataSourceDatabaseTest {
 		reset(callback);
 		
 		//Remove line by setting CsvLine to null
-		layer.processRemove("test", "1");
-		verify(callback).processRemove("test", "1");
+		layer.processRemove("test", "id,name", "1");
+		verify(callback).processRemove("test", "id,name", "1");
 		verifyNoMoreInteractions(callback);
 		reset(callback);
 
 		layer.updateUntrusted("test", "1");
 		//We haven't really removed the underlying data, so remove should not be called
 		//in reconcile mode. An error should be logged.
-		verify(callback, times(0)).processRemove("test", "1");
+		verify(callback, times(0)).processRemove("test", "id,name", "1");
 		verify(callback).processUpdate("test", "id,name", new CsvLine("1", "1,ABC"));
 		verifyNoMoreInteractions(callback);
 		reset(callback);
@@ -124,7 +126,7 @@ public class CsvDataSourceDatabaseTest {
 		//Specify a line update for a line which no longer exists in the data source - use reconcile mode.
 		//The line should be removed. An error should be logged.
 		layer.updateUntrusted("test", "1");
-		verify(callback).processRemove("test", "1");
+		verify(callback).processRemove("test", "id,name", "1");
 		verifyNoMoreInteractions(callback);
 		reset(callback);
 	}

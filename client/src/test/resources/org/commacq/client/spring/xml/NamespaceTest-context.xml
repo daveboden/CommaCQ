@@ -3,9 +3,11 @@
        xmlns:context="http://www.springframework.org/schema/context"
        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
        xmlns:c="http://www.springframework.org/schema/c"
+       xmlns:util="http://www.springframework.org/schema/util"
        xmlns:cq="http://commacq.org/client"
        xsi:schemaLocation="
 http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util.xsd
 http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd
 http://commacq.org/client http://commacq.org/client/comma-cq-1.0.xsd
 ">
@@ -19,6 +21,16 @@ http://commacq.org/client http://commacq.org/client/comma-cq-1.0.xsd
         c:extension=".csv"
 	/>
 	
+	<bean id="resourceLayer" class="org.commacq.layer.DataSourceCollectionLayer"
+        c:factory-ref="csvDataSourceResourceFactory"
+        c:entityIds-ref="resourceList"
+	/>
+	
+    <!-- TODO - Do not hardcode this list; have the manager definitions populate the list -->
+    <util:list id="resourceList" value-type="java.lang.String">
+        <value>customer</value>
+    </util:list>
+	
 	<bean id="csvToBeanStrategy" class="org.commacq.client.CsvToBeanStrategySpringConstructor"/>
 	
 	<bean id="csvToBeanConverterFactory" class="org.commacq.client.CsvToBeanConverterFactory"
@@ -29,7 +41,7 @@ http://commacq.org/client http://commacq.org/client/comma-cq-1.0.xsd
 
 	<!-- beanCacheFactory is a special bean id, referenced by the Manager bean definition parser -->
     <bean id="beanCacheFactory" class="org.commacq.client.BeanCacheFactoryCsvDataSourceFactory"
-          c:csvDataSourceFactory-ref="csvDataSourceResourceFactory"
+          c:layer-ref="resourceLayer"
           c:csvToBeanConverterFactory-ref="csvToBeanConverterFactory"
     />
 

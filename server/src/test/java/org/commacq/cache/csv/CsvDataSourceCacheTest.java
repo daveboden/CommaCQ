@@ -9,7 +9,7 @@ import java.sql.SQLException;
 import java.util.Collections;
 
 import org.commacq.CsvLine;
-import org.commacq.CsvLineCallback;
+import org.commacq.BlockCallback;
 import org.commacq.CsvUpdateBlockException;
 import org.commacq.db.DataSourceAccess;
 import org.commacq.db.EntityConfig;
@@ -31,7 +31,7 @@ import org.springframework.jdbc.datasource.embedded.EmbeddedDatabaseBuilder;
 public class CsvDataSourceCacheTest {
 		
 	@Mock
-	private CsvLineCallback callback;
+	private BlockCallback callback;
 	
 	private EmbeddedDatabase dataSource;
 	private CsvDataSourceDatabase csvDataSourceDatabase;
@@ -79,7 +79,7 @@ public class CsvDataSourceCacheTest {
 		//Value is not present in the cache after refresh from the database
 		//has propagated to the cache.
 		cacheLayer.getCsvLine("test", "1", callback);
-		verify(callback).processRemove("test", "1");
+		verify(callback).processRemove("test", "id,name", "1");
 		verifyNoMoreInteractions(callback);
 		
 	}

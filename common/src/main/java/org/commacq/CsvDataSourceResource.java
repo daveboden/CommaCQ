@@ -29,7 +29,7 @@ public class CsvDataSourceResource implements CsvDataSource {
 	}
 	
 	@Override
-	public void getAllCsvLines(CsvLineCallback callback) {
+	public void getAllCsvLines(LineCallback callback) {
 		presentAllLinesToCallback(callback);
 	}
 	
@@ -43,7 +43,7 @@ public class CsvDataSourceResource implements CsvDataSource {
 		}
 	}
 	
-	private void presentAllLinesToCallback(CsvLineCallback callback) {
+	private void presentAllLinesToCallback(LineCallback callback) {
 		String initialLoadText;
 		try {
 			initialLoadText = IOUtils.toString(resource.getInputStream());
@@ -51,21 +51,21 @@ public class CsvDataSourceResource implements CsvDataSource {
 			throw new RuntimeException(ex);
 		}
 		
-		csvTextBlockToCallback.presentTextBlockToCsvLineCallback(entityId, initialLoadText, callback, true);
+		csvTextBlockToCallback.presentTextBlockToCsvLineCallback(entityId, initialLoadText, callback);
 	}
 	
 	@Override
-	public void getCsvLine(String id, CsvLineCallback callback) {
+	public void getCsvLine(String id, LineCallback callback) {
 		throw new UnsupportedOperationException("Only all lines currently supported");
 	}
 	
 	@Override
-	public void getCsvLines(Collection<String> ids, CsvLineCallback callback) {
+	public void getCsvLines(Collection<String> ids, LineCallback callback) {
 		throw new UnsupportedOperationException("Only all lines currently supported");
 	}
 	
 	@Override
-	public void getCsvLinesForGroup(String group, String idWithinGroup, CsvLineCallback callback) {
+	public void getCsvLinesForGroup(String group, String idWithinGroup, LineCallback callback) {
 		throw new UnsupportedOperationException("Only all lines currently supported");
 	}
 	

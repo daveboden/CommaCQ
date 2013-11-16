@@ -31,13 +31,8 @@ public abstract class AbstractUpdatableLayer extends AbstractSubscribeLayer impl
 	}
 
 	@Override
-	public void startUpdateBlock(String entityId, String columnNamesCsv) throws CsvUpdateBlockException {
-		composite.startUpdateBlock(entityId, columnNamesCsv);		
-	}
-
-	@Override
-	public void start() throws CsvUpdateBlockException {
-		composite.start();
+	public void start(Collection<String> entityIds) throws CsvUpdateBlockException {
+		composite.start(entityIds);
 	}	
 	
 	@Override
@@ -56,8 +51,8 @@ public abstract class AbstractUpdatableLayer extends AbstractSubscribeLayer impl
 	}
 
 	@Override
-	public void processRemove(String entityId, String id) throws CsvUpdateBlockException {
-		composite.processRemove(entityId, id);
+	public void processRemove(String entityId, String columnNamesCsv, String id) throws CsvUpdateBlockException {
+		composite.processRemove(entityId, columnNamesCsv, id);
 	}
     
 	/**

@@ -6,7 +6,7 @@ import java.util.Map;
 import lombok.RequiredArgsConstructor;
 
 import org.commacq.CsvDataSource;
-import org.commacq.CsvLineCallback;
+import org.commacq.BlockCallback;
 import org.commacq.CsvUpdateBlockException;
 
 /**
@@ -15,7 +15,7 @@ import org.commacq.CsvUpdateBlockException;
  * 
  * @See CsvSubscriptionHelper
  */
-public interface UpdatableLayer extends Layer, CsvLineCallback {
+public interface UpdatableLayer extends Layer, BlockCallback {
 	
 	@RequiredArgsConstructor
 	public enum UpdateMode {

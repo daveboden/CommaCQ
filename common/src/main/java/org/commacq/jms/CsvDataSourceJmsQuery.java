@@ -3,6 +3,7 @@ package org.commacq.jms;
 import java.io.IOException;
 import java.io.StringReader;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 import javax.jms.ConnectionFactory;
@@ -14,11 +15,12 @@ import javax.jms.TextMessage;
 
 import lombok.extern.slf4j.Slf4j;
 
+import org.commacq.BlockCallback;
 import org.commacq.CsvDataSource;
 import org.commacq.CsvLine;
-import org.commacq.CsvLineCallback;
 import org.commacq.CsvLineCallbackListImpl;
 import org.commacq.CsvUpdateBlockException;
+import org.commacq.LineCallback;
 import org.springframework.jms.core.JmsTemplate;
 import org.springframework.jms.core.MessageCreator;
 import org.springframework.jms.core.SessionCallback;
@@ -73,13 +75,13 @@ public class CsvDataSourceJmsQuery implements CsvDataSource {
 	}
 
 	@Override
-	public void getAllCsvLines(final CsvLineCallback callback) {
+	public void getAllCsvLines(final LineCallback callback) {
 		//TODO Replace these nulls
 		makeRequest(callback, null);
 	}
 
 	@Override
-	public void getCsvLines(final Collection<String> ids, final CsvLineCallback callback) {
+	public void getCsvLines(final Collection<String> ids, final LineCallback callback) {
 		makeRequest(callback, new MessageSetter() {
 			@Override
 			public void addProperties(TextMessage message) throws JMSException {
@@ -93,7 +95,7 @@ public class CsvDataSourceJmsQuery implements CsvDataSource {
 	}
 
 	@Override
-	public void getCsvLine(final String id, final CsvLineCallback callback) {
+	public void getCsvLine(final String id, final LineCallback callback) {
 		makeRequest(callback, new MessageSetter() {
 			@Override
 			public void addProperties(TextMessage message) throws JMSException {
@@ -103,7 +105,7 @@ public class CsvDataSourceJmsQuery implements CsvDataSource {
 	}
 
 	@Override
-	public void getCsvLinesForGroup(final String group, final String idWithinGroup, final CsvLineCallback callback) {
+	public void getCsvLinesForGroup(final String group, final String idWithinGroup, final LineCallback callback) {
 		makeRequest(callback, new MessageSetter() {
 			@Override
 			public void addProperties(TextMessage message) throws JMSException {
@@ -126,7 +128,7 @@ public class CsvDataSourceJmsQuery implements CsvDataSource {
 		return listCallback.getColumnNamesCsv();
 	}
 	
-	private void makeRequest(final CsvLineCallback callback, final MessageSetter messageSetter) {
+	private void makeRequest(final LineCallback callback, final MessageSetter messageSetter) {
 		jmsTemplate.send(queryQueue, new MessageCreator() {
 			@Override
 			public Message createMessage(Session session) throws JMSException {
@@ -168,15 +170,13 @@ public class CsvDataSourceJmsQuery implements CsvDataSource {
 		void addProperties(TextMessage message) throws JMSException;
 	}
 	
-	private void processResult(CsvLineCallback callback, String text) {
+	private void processResult(LineCallback callback, String text) {
 		CsvListReader parser = new CsvListReader(new StringReader(text), CsvPreference.STANDARD_PREFERENCE);
 		
 		try {
 		
 			parser.getHeader(true);
 			String columnNamesCsv = parser.getUntokenizedRow();
-		
-			callback.startUpdateBlock(entityId, columnNamesCsv);
 			
 			List<String> body;
 			
@@ -186,7 +186,6 @@ public class CsvDataSourceJmsQuery implements CsvDataSource {
 				callback.processUpdate(entityId, columnNamesCsv, csvLine);
 			}
 			
-			callback.finish();
 		} catch(CsvUpdateBlockException ex) {
 			throw new RuntimeException(ex);
 		} catch(IOException ex) {

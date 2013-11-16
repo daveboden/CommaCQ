@@ -1,15 +1,16 @@
 package org.commacq.client;
 
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import org.commacq.CsvDataSource;
 import org.commacq.CsvLine;
-import org.commacq.CsvLineCallback;
+import org.commacq.BlockCallback;
 import org.commacq.CsvUpdateBlockException;
+import org.commacq.layer.SubscribeLayer;
 
 /**
  * Converts a CsvDataSource into a source of beans.
@@ -18,16 +19,26 @@ import org.commacq.CsvUpdateBlockException;
  */
 public class BeanCache<BeanType> {
 
-	private final CsvDataSource csvDataSource;
+	private final SubscribeLayer layer;
+	private final String entityId;
 	private final CsvToBeanConverter<BeanType> csvToBeanConverter;
 	
 	final Map<String, BeanType> cache = new HashMap<String, BeanType>();
 	
-	public BeanCache(final CsvDataSource csvDataSource, final CsvToBeanConverter<BeanType> csvToBeanConverter) {
-		this.csvDataSource = csvDataSource;
+	public BeanCache(final SubscribeLayer layer, final String entityId, final CsvToBeanConverter<BeanType> csvToBeanConverter) {
+		this.layer = layer;
+		this.entityId = entityId;
 		this.csvToBeanConverter = csvToBeanConverter;
 		//Trigger the callback for every line from the CsvDataSource
-		csvDataSource.getAllCsvLinesAndSubscribe(beanCsvLineCallback);
+		
+		try {
+			beanCsvLineCallback.start(Collections.singleton(entityId));
+			layer.getAllCsvLinesAndSubscribe(entityId, beanCsvLineCallback);
+			beanCsvLineCallback.finish();
+		} catch (CsvUpdateBlockException ex) {
+			throw new RuntimeException(ex);
+		}
+		
 	}
 	
 	protected Set<CacheObserver<BeanType>> cacheObservers = new HashSet<>();
@@ -70,34 +81,34 @@ public class BeanCache<BeanType> {
 	}
 	
 	public String getEntityId() {
-		return csvDataSource.getEntityId();
+		return entityId;
 	}
 	
 	private BeanCsvLineCallback beanCsvLineCallback = new BeanCsvLineCallback();
 	
-	private class BeanCsvLineCallback implements CsvLineCallback {
+	private class BeanCsvLineCallback implements BlockCallback {
 		private boolean bulkUpdate;
 		private Map<String, BeanType> updated = new HashMap<String, BeanType>();
 		private Set<String> deleted = new HashSet<String>();
 		
 		@Override
-		public void processUpdate(String columnNamesCsv, CsvLine csvLine) throws CsvUpdateBlockException {
+		public void processUpdate(String entityId, String columnNamesCsv, CsvLine csvLine) throws CsvUpdateBlockException {
 			BeanType bean = csvToBeanConverter.getBean(columnNamesCsv, csvLine);
 			updated.put(csvLine.getId(), bean);
 		}
 		
 		@Override
-		public void processRemove(String id) throws CsvUpdateBlockException {
+		public void processRemove(String entityId, String columnNamesCsv, String id) throws CsvUpdateBlockException {
 			deleted.add(id);
 		}
 		
 		@Override
-		public void startBulkUpdate(String columnNamesCsv) throws CsvUpdateBlockException {
+		public void startBulkUpdate(String entityId, String columnNamesCsv) throws CsvUpdateBlockException {
 			cache.clear();
 		}
 		
 		@Override
-		public void startUpdateBlock(String columnNamesCsv) throws CsvUpdateBlockException {
+		public void start(Collection<String> entityId) throws CsvUpdateBlockException {
 			if(!updated.isEmpty()) {
 				throw new RuntimeException("Map of updated beans should have been cleared down after the last update block");
 			}
@@ -110,7 +121,7 @@ public class BeanCache<BeanType> {
 		}
 		
 		@Override
-		public void finishUpdateBlock() throws CsvUpdateBlockException {
+		public void finish() throws CsvUpdateBlockException {
 			//TODO make this update transactional
 			cache.putAll(updated);
 			for(String id : deleted) {
@@ -129,7 +140,7 @@ public class BeanCache<BeanType> {
 		}
 		
 		@Override
-		public void startBulkUpdateForGroup(String group, String idWithinGroup) throws CsvUpdateBlockException {
+		public void startBulkUpdateForGroup(String entityId, String group, String idWithinGroup) throws CsvUpdateBlockException {
 			//TODO clear down all items from the cache that are marked as in the group
 			//TODO clear group index
 		}

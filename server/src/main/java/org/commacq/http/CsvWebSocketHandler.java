@@ -1,13 +1,15 @@
 package org.commacq.http;
 
 import java.io.IOException;
+import java.util.Collection;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 import org.commacq.CsvLine;
-import org.commacq.CsvLineCallback;
+import org.commacq.BlockCallback;
 import org.commacq.CsvUpdateBlockException;
+import org.commacq.layer.Layer;
 import org.commacq.layer.SubscribeLayer;
 import org.eclipse.jetty.websocket.api.Session;
 import org.eclipse.jetty.websocket.api.WebSocketListener;
@@ -42,7 +44,7 @@ public class CsvWebSocketHandler extends WebSocketHandler {
 		private final SubscribeLayer layer;
 		private final String entityId;
 		
-		private CsvLineCallback callback;
+		private BlockCallback callback;
 		
 		public CsvWebSocket(SubscribeLayer layer, String entityId) {
 			this.layer = layer;
@@ -69,7 +71,7 @@ public class CsvWebSocketHandler extends WebSocketHandler {
 				    session.getRemote().sendString(message);
 				    return;
 				}
-				callback = new CsvLineCallbackWebSocket(session);
+				callback = new CsvLineCallbackWebSocket(session, layer, entityId);
 				layer.getAllCsvLinesAndSubscribe(entityId, callback);
 			} catch (IOException ex) {
 				log.error("Could not send message to opened connection", ex);
@@ -90,10 +92,12 @@ public class CsvWebSocketHandler extends WebSocketHandler {
 	
 	@Slf4j
 	@RequiredArgsConstructor
-	private static class CsvLineCallbackWebSocket implements CsvLineCallback {
+	private static class CsvLineCallbackWebSocket implements BlockCallback {
 		private final Session session;
+		private final Layer layer;
+		private final String entityId;
 		
-		private int rowCount = 0; 
+		private int rowCount = 0;
 
 		//TODO Work out how to notify the client that a bulk update is underway.
 		@Override
@@ -104,25 +108,21 @@ public class CsvWebSocketHandler extends WebSocketHandler {
 		@Override
 		public void startBulkUpdateForGroup(String entityId, String group, String idWithinGroup) throws CsvUpdateBlockException {
 		}
-
+		
 		@Override
-		public void startUpdateBlock(String entityId, String columnNamesCsv) throws CsvUpdateBlockException {
+		public void start(Collection<String> entityIds) throws CsvUpdateBlockException {	
 			if(rowCount != 0) {
 				throw new RuntimeException(
 						"startUpdateBlock should never be called before a previous " +
-						"update has been finished or cancelled."
-				);
+								"update has been finished or cancelled."
+						);
 			}
 			try {
-				session.getRemote().sendPartialString(columnNamesCsv, false);
+				session.getRemote().sendPartialString(layer.getColumnNamesCsv(entityId), false);
 				session.getRemote().sendPartialString("\n", false);
 			} catch (IOException ex) {
 				throw new CsvUpdateBlockException(ex);
 			}
-		}
-
-		@Override
-		public void start() throws CsvUpdateBlockException {	
 		}
 		
 		@Override
@@ -148,7 +148,7 @@ public class CsvWebSocketHandler extends WebSocketHandler {
 		}
 
 		@Override
-		public void processRemove(String entityId, String id) throws CsvUpdateBlockException {
+		public void processRemove(String entityId, String columnNamesCsv, String id) throws CsvUpdateBlockException {
 			try {
 				session.getRemote().sendPartialString(id, false);
 				session.getRemote().sendPartialString("\n", false);

@@ -1,5 +1,7 @@
 package org.commacq.jms;
 
+import java.util.Collections;
+
 import javax.jms.ConnectionFactory;
 import javax.jms.JMSException;
 import javax.jms.Message;
@@ -10,6 +12,7 @@ import lombok.extern.slf4j.Slf4j;
 
 import org.apache.commons.lang3.Validate;
 import org.commacq.CsvTextBlockToCallback;
+import org.commacq.CsvUpdateBlockException;
 import org.commacq.layer.UpdatableLayer;
 import org.springframework.jms.listener.SimpleMessageListenerContainer;
 
@@ -63,8 +66,12 @@ public class JmsBroadcastClient {
 					Validate.notNull(entityId, "entityId must be present on incoming messages");
 					String text = ((TextMessage)message).getText();
 					
-			    	csvTextBlockToCallback.presentTextBlockToCsvLineCallback(entityId, text, csvUpdatableLayer, true);
+					csvUpdatableLayer.start(Collections.singleton(entityId));
+			    	csvTextBlockToCallback.presentTextBlockToCsvLineCallback(entityId, text, csvUpdatableLayer);
+			    	csvUpdatableLayer.finish();
 				} catch (JMSException ex) {
+					throw new RuntimeException(ex);
+				} catch (CsvUpdateBlockException ex) {
 					throw new RuntimeException(ex);
 				}
 			}

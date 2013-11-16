@@ -49,7 +49,7 @@ public class CsvHttpFileHandler extends AbstractHandler {
 		//TODO - Keep track of the total content length of the cache at any one time
 		//so that we can indicate to the user how many percent of the way through
 		//the file download they are.
-		CsvLineCallbackWriter writer = new CsvLineCallbackWriter(response.getWriter());
+		CsvLineCallbackWriter writer = new CsvLineCallbackWriter(response.getWriter(), layer.getColumnNamesCsv(entityId));
 		
 		layer.getAllCsvLines(entityId, writer);
 		

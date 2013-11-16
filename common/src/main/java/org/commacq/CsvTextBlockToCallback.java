@@ -25,7 +25,7 @@ public class CsvTextBlockToCallback {
 		}
 	}
 	
-	public void presentTextBlockToCsvLineCallback(String entityId, String text, CsvLineCallback callback, boolean callStartAndFinish) {
+	public void presentTextBlockToCsvLineCallback(String entityId, String text, LineCallback callback) {
 
 		CsvListReader parser = new CsvListReader(new StringReader(text), CsvPreference.STANDARD_PREFERENCE);
 		try {
@@ -35,11 +35,7 @@ public class CsvTextBlockToCallback {
 	        final String firstColumnHeader = header[0];
 	        Validate.notEmpty(firstColumnHeader, "The CSV header row must contain at least one column");
 			
-			try {
-				if(callStartAndFinish) {
-					callback.startUpdateBlock(entityId, columnNamesCsv);
-				}
-				
+			try {				
 				List<String> csv;
 				while((csv = parser.read()) != null) {
 					String csvLine = parser.getUntokenizedRow();
@@ -48,17 +44,12 @@ public class CsvTextBlockToCallback {
 						if(csv.size() > 1) {
 							callback.processUpdate(entityId, columnNamesCsv, new CsvLine(csv.get(0), csvLine));				
 						} else {
-							callback.processRemove(entityId, csv.get(0));
+							callback.processRemove(entityId, columnNamesCsv, csv.get(0));
 						}
 					} else {
-						callback.startBulkUpdateForGroup(entityId, firstColumnHeader, csv.get(0));
 						//TODO the CsvDataSource should query all members of the group and push them to their subscribers.
 						throw new RuntimeException("Update by group not yet supported");
 					}
-				}
-			
-				if(callStartAndFinish) {
-					callback.finish();
 				}
 			} catch(CsvUpdateBlockException ex) {
 				log.error("Error processing callback", ex);

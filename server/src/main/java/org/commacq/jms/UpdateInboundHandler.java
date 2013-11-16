@@ -112,13 +112,11 @@ public class UpdateInboundHandler implements MessageListener {
     	try {
 	    	String[] header = parser.getHeader(true);
 	    	
-	    	layer.getCsvDataSource(entityId);
-	    	
 	    	if(header.length == 1 && header[0].equals("id")) {
 	    		log.info("Update for entity {} contains a list of ids", entityId);
 	    		List<String> line;
 	    		try {
-	    			layer.startUpdateBlock(entityId, layer.getCsvDataSource(entityId).getColumnNamesCsv());
+	    			layer.start(Collections.singleton(entityId));
 					while((line = parser.read()) != null) {
 						layer.updateUntrusted(entityId, line.get(0));
 					}
@@ -130,9 +128,13 @@ public class UpdateInboundHandler implements MessageListener {
 	    	}
 	    	log.info("Update for entity {} contains ids and column headings", entityId);
 	    	
-	    	csvTextBlockToCallback.presentTextBlockToCsvLineCallback(entityId, csvHeaderAndBody, layer, true);
+	    	layer.start(Collections.singleton(entityId));
+	    	csvTextBlockToCallback.presentTextBlockToCsvLineCallback(entityId, csvHeaderAndBody, layer);
+	    	layer.finish();
     	} catch (IOException ex) {				
 			throw new RuntimeException("Couldn't parse CSV", ex);
+    	} catch (CsvUpdateBlockException ex) {				
+    		throw new RuntimeException("Couldn't parse CSV", ex);
     	} finally {
 			try {
 				parser.close();

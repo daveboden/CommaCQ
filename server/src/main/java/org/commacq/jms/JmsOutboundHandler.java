@@ -2,6 +2,7 @@ package org.commacq.jms;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.Collection;
 
 import javax.jms.ConnectionFactory;
 import javax.jms.JMSException;
@@ -12,7 +13,7 @@ import javax.jms.TextMessage;
 import lombok.extern.slf4j.Slf4j;
 
 import org.commacq.CsvLine;
-import org.commacq.CsvLineCallback;
+import org.commacq.BlockCallback;
 import org.commacq.CsvUpdateBlockException;
 import org.commacq.layer.SubscribeLayer;
 import org.springframework.jms.core.JmsTemplate;
@@ -22,7 +23,7 @@ import org.springframework.jms.core.MessageCreator;
  * Maintains the outbound broadcast topics and organises the sending of broadcast updates.
  */
 @Slf4j
-public class JmsOutboundHandler implements CsvLineCallback {
+public class JmsOutboundHandler implements BlockCallback {
 
     private final JmsTemplate jmsTemplate;
     private final SubscribeLayer layer;
@@ -44,11 +45,6 @@ public class JmsOutboundHandler implements CsvLineCallback {
         
         //use of "this" should be the last line in the constructor
         layer.subscribe(entityId, this);
-    }
-    
-    @Override
-    public void startUpdateBlock(String entityId, String columnNamesCsv) throws CsvUpdateBlockException {
-    	currentWriter.println(columnNamesCsv);
     }
     
     @Override
@@ -74,7 +70,8 @@ public class JmsOutboundHandler implements CsvLineCallback {
     }
     
     @Override
-    public void start() throws CsvUpdateBlockException {	
+    public void start(Collection<String> entityIds) throws CsvUpdateBlockException {
+    	currentWriter.println(layer.getColumnNamesCsv(entityId));
     }
     
     @Override
@@ -94,7 +91,7 @@ public class JmsOutboundHandler implements CsvLineCallback {
     }
     
     @Override
-    public void processRemove(String entityId, String id) throws CsvUpdateBlockException {
+    public void processRemove(String entityId, String columnNamesCsv, String id) throws CsvUpdateBlockException {
     	currentWriter.println(id);
     }
     

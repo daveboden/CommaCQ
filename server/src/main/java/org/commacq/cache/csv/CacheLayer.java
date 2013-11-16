@@ -8,10 +8,10 @@ import java.util.TreeSet;
 
 import lombok.extern.slf4j.Slf4j;
 
+import org.commacq.BlockCallback;
 import org.commacq.CsvLine;
-import org.commacq.CsvLineCallback;
-import org.commacq.CsvLineCallbackComposite;
 import org.commacq.CsvUpdateBlockException;
+import org.commacq.LineCallback;
 import org.commacq.layer.AbstractSubscribeLayer;
 import org.commacq.layer.SubscribeLayer;
 import org.springframework.jmx.export.annotation.ManagedOperation;
@@ -24,7 +24,6 @@ import org.springframework.jmx.export.annotation.ManagedOperation;
 public class CacheLayer extends AbstractSubscribeLayer {
 	
     private final Object csvCacheMonitor = new Object(); //Switching the csvCache reference synchronises on this monitor
-    private final CsvLineCallbackComposite composite = new CsvLineCallbackComposite();
     private final Map<String, CsvDataSourceCache> caches;
     private final SortedSet<String> entityIds;
     
@@ -32,19 +31,28 @@ public class CacheLayer extends AbstractSubscribeLayer {
 		caches = new HashMap<>(sourceLayer.getEntityIds().size());
 		this.entityIds = sourceLayer.getEntityIds();
 		for(String entityId : sourceLayer.getEntityIds()) {
-			CsvDataSourceCache cache = new CsvDataSourceCache();
+			CsvDataSourceCache cache = new CsvDataSourceCache(entityId);
 			caches.put(entityId, cache);
 		}
 		
 		CsvCacheFactoryInitialLoad initialLoad = new CsvCacheFactoryInitialLoad();
-		sourceLayer.getAllCsvLinesAndSubscribe(initialLoad);
+		try {
+			initialLoad.start(entityIds);
+			for(String entityId : entityIds) {
+				initialLoad.startBulkUpdate(entityId, sourceLayer.getColumnNamesCsv(entityId));
+			}
+			sourceLayer.getAllCsvLinesAndSubscribe(initialLoad);
+			initialLoad.finish();
+		} catch (CsvUpdateBlockException ex) {
+			throw new RuntimeException(ex);
+		}
 	}
 	
 	public CacheLayer(SubscribeLayer sourceLayer, Collection<String> entityIds) {
 		caches = new HashMap<>(entityIds.size());
 		this.entityIds = new TreeSet<String>(entityIds);
 		for(String entityId : entityIds) {
-			CsvDataSourceCache cache = new CsvDataSourceCache();
+			CsvDataSourceCache cache = new CsvDataSourceCache(entityId);
 			caches.put(entityId, cache);
 		}
 		
@@ -68,73 +76,42 @@ public class CacheLayer extends AbstractSubscribeLayer {
 	}
 
 	@Override
-	public void getAllCsvLines(CsvLineCallback callback) {
+	public void getAllCsvLines(LineCallback callback) {
     	for(CsvDataSourceCache cache : caches.values()) {
-    		try {
-				callback.startUpdateBlock(cache.getEntityId(), cache.getColumnNamesCsv());
-				cache.getAllCsvLines(callback);
-			} catch (CsvUpdateBlockException ex) {
-				throw new RuntimeException(ex);
-			}
+			cache.getAllCsvLines(callback);
     	}
 	}
 
 	@Override
-	public void getAllCsvLines(Collection<String> entityIds, CsvLineCallback callback) {
+	public void getAllCsvLines(Collection<String> entityIds, LineCallback callback) {
     	for(String entityId : entityIds) {
-    		try {
-    			CsvDataSourceCache cache = caches.get(entityId);
-				callback.startUpdateBlock(entityId, cache.getColumnNamesCsv());
-				cache.getAllCsvLines(callback);
-			} catch (CsvUpdateBlockException ex) {
-				throw new RuntimeException(ex);
-			}
+			CsvDataSourceCache cache = caches.get(entityId);
+			cache.getAllCsvLines(callback);
     	}		
 	}
 
 	@Override
-	public void getAllCsvLines(String entityId, CsvLineCallback callback) {
-		try {
-			CsvDataSourceCache cache = caches.get(entityId);
-			callback.startUpdateBlock(entityId, cache.getColumnNamesCsv());
-			cache.getAllCsvLines(callback);
-		} catch (CsvUpdateBlockException ex) {
-			throw new RuntimeException(ex);
-		}
+	public void getAllCsvLines(String entityId, LineCallback callback) {
+		CsvDataSourceCache cache = caches.get(entityId);
+		cache.getAllCsvLines(callback);
 	}
 
 	@Override
-	public void getCsvLines(String entityId, Collection<String> ids, CsvLineCallback callback) {
-		try {
-			CsvDataSourceCache cache = caches.get(entityId);
-			callback.startUpdateBlock(entityId, cache.getColumnNamesCsv());
-			cache.getCsvLines(ids, callback);
-		} catch (CsvUpdateBlockException ex) {
-			throw new RuntimeException(ex);
-		}		
+	public void getCsvLines(String entityId, Collection<String> ids, LineCallback callback) {
+		CsvDataSourceCache cache = caches.get(entityId);
+		cache.getCsvLines(ids, callback);
 	}
 
 	@Override
-	public void getCsvLine(String entityId, String id, CsvLineCallback callback) {
-		try {
-			CsvDataSourceCache cache = caches.get(entityId);
-			callback.startUpdateBlock(entityId, cache.getColumnNamesCsv());
-			cache.getCsvLine(id, callback);
-		} catch (CsvUpdateBlockException ex) {
-			throw new RuntimeException(ex);
-		}
+	public void getCsvLine(String entityId, String id, LineCallback callback) {
+		CsvDataSourceCache cache = caches.get(entityId);
+		cache.getCsvLine(id, callback);
 	}
 
 	@Override
-	public void getCsvLinesForGroup(String entityId, String group, String idWithinGroup, CsvLineCallback callback) {
-		try {
-			CsvDataSourceCache cache = caches.get(entityId);
-			callback.startUpdateBlock(entityId, cache.getColumnNamesCsv());
-			cache.getCsvLinesForGroup(group, idWithinGroup, callback);
-		} catch (CsvUpdateBlockException ex) {
-			throw new RuntimeException(ex);
-		}
-		
+	public void getCsvLinesForGroup(String entityId, String group, String idWithinGroup, LineCallback callback) {
+		CsvDataSourceCache cache = caches.get(entityId);
+		cache.getCsvLinesForGroup(group, idWithinGroup, callback);
 	}
 
 
@@ -142,11 +119,11 @@ public class CacheLayer extends AbstractSubscribeLayer {
      * The initial load does not update any subscribers until the initial load has completed; the
      * cache is not open for business and no subscribers have had the opportunity to add themselves.
      */
-    private final class CsvCacheFactoryInitialLoad implements CsvLineCallback {
+    private final class CsvCacheFactoryInitialLoad implements BlockCallback {
     	
     	//Either points to a local cache where we're preparing a refresh
     	//or points to the main csvCache that's in operation.
-    	private Map<String, CsvCache> localCsvCache;
+    	private Map<String, CsvCache> localCsvCache = new HashMap<>();
     	
     	@Override
     	public void processUpdate(String entityId, String columnNamesCsv, CsvLine csvLine) throws CsvUpdateBlockException { 
@@ -155,9 +132,9 @@ public class CacheLayer extends AbstractSubscribeLayer {
     	}
     	
     	@Override
-    	public void processRemove(String entityId, String id) throws CsvUpdateBlockException {
+    	public void processRemove(String entityId, String columnNamesCsv, String id) throws CsvUpdateBlockException {
     		localCsvCache.get(entityId).removeId(id);
-    		composite.processRemove(entityId, id);
+    		composite.processRemove(entityId, columnNamesCsv, id);
     	}
     	
     	@Override
@@ -165,15 +142,6 @@ public class CacheLayer extends AbstractSubscribeLayer {
     		log.debug("Initialising local CsvCache with columns {} with context {}.", columnNamesCsv);
     		localCsvCache.put(entityId, new CsvCache(entityId, columnNamesCsv));
     		composite.startBulkUpdate(entityId, columnNamesCsv);
-    	}
-    	
-    	@Override
-    	public void startUpdateBlock(String entityId, String columnNamesCsv) throws CsvUpdateBlockException {
-    		//Check for first time it's ever been called
-    		if(localCsvCache == null) {
-    			localCsvCache.put(entityId, new CsvCache(entityId, columnNamesCsv));
-    		}
-    		composite.startUpdateBlock(entityId, columnNamesCsv);
     	}
     	
     	@Override
@@ -207,7 +175,8 @@ public class CacheLayer extends AbstractSubscribeLayer {
     	}
     	
     	@Override
-    	public void start() throws CsvUpdateBlockException {		
+    	public void start(Collection<String> entityIds) throws CsvUpdateBlockException {
+    		composite.start(entityIds);
     	}
     	
     	@Override

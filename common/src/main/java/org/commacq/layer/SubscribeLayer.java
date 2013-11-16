@@ -2,18 +2,18 @@ package org.commacq.layer;
 
 import java.util.Collection;
 
-import org.commacq.CsvLineCallback;
+import org.commacq.BlockCallback;
 
 /**
  * Each Layer maintains a list of observers used
  * for real-time updates.
  */
 public interface SubscribeLayer extends Layer {
-	void getAllCsvLinesAndSubscribe(String entityId, CsvLineCallback callback);
-	void getAllCsvLinesAndSubscribe(Collection<String> entityIds, CsvLineCallback callback);
-    void getAllCsvLinesAndSubscribe(CsvLineCallback callback);
-    void subscribe(String entityId, CsvLineCallback callback);
-    void subscribe(Collection<String> entityIds, CsvLineCallback callback);
-    void subscribe(CsvLineCallback callback);
-    void unsubscribe(CsvLineCallback callback);
+	void getAllCsvLinesAndSubscribe(String entityId, BlockCallback callback);
+	void getAllCsvLinesAndSubscribe(Collection<String> entityIds, BlockCallback callback);
+    void getAllCsvLinesAndSubscribe(BlockCallback callback);
+    void subscribe(String entityId, BlockCallback callback);
+    void subscribe(Collection<String> entityIds, BlockCallback callback);
+    void subscribe(BlockCallback callback);
+    void unsubscribe(BlockCallback callback);
 }

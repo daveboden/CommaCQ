@@ -39,7 +39,7 @@ public class CsvLineCallbackListImpl extends CsvLineCallbackAbstractSimple {
 	}
 	
 	@Override
-	public void processRemove(String entityId, String id) throws CsvUpdateBlockException {
+	public void processRemove(String entityId, String columnNamesCsv, String id) throws CsvUpdateBlockException {
 		removeList.add(id);
 	}
 	

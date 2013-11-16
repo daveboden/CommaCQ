@@ -12,8 +12,8 @@ import lombok.extern.slf4j.Slf4j;
 
 import org.commacq.CsvDataSource;
 import org.commacq.CsvLine;
-import org.commacq.CsvLineCallback;
 import org.commacq.CsvUpdateBlockException;
+import org.commacq.LineCallback;
 import org.commacq.db.DataSourceAccess;
 import org.commacq.db.EntityConfig;
 import org.springframework.dao.DataAccessException;
@@ -51,22 +51,22 @@ public class CsvDataSourceDatabase implements CsvDataSource {
     }
     
     @Override
-    public void getAllCsvLines(CsvLineCallback callback) {
+    public void getAllCsvLines(LineCallback callback) {
     	dataSourceAccess.getResultSetForAllRows(entityConfig, new CsvListFactory(callback, null));
     }
     
     @Override
-    public void getCsvLine(String id, CsvLineCallback callback) {
+    public void getCsvLine(String id, LineCallback callback) {
         dataSourceAccess.getResultSetForSingleRow(entityConfig, new CsvListFactory(callback, Collections.singleton(id)), id);
     }
 
     @Override
-    public void getCsvLines(final Collection<String> ids, CsvLineCallback callback) {     
+    public void getCsvLines(final Collection<String> ids, LineCallback callback) {     
         dataSourceAccess.getResultSetForMultipleRows(entityConfig, new CsvListFactory(callback, ids), ids);
     }
     
     @Override
-    public void getCsvLinesForGroup(final String group, final String idWithinGroup, CsvLineCallback callback) {        
+    public void getCsvLinesForGroup(final String group, final String idWithinGroup, LineCallback callback) {        
         dataSourceAccess.getResultSetForGroup(entityConfig, new CsvListFactory(callback, null), group, idWithinGroup);
     }
     
@@ -89,13 +89,13 @@ public class CsvDataSourceDatabase implements CsvDataSource {
     private final class CsvListFactory implements ResultSetExtractor<Void> {
 
     	
-    	private final CsvLineCallback callback;
+    	private final LineCallback callback;
     	/**
     	 * Use null if working with a bulk update. No need to work out which ids
     	 * are missing from the dataset because all the ids not mentioned in the
     	 * database will be naturally removed anyway.
     	 */
-    	private final Collection<String> ids; 
+    	private final Collection<String> ids;
     	
     	private final CsvMarshaller csvParser = new CsvMarshaller();
     	
@@ -105,18 +105,17 @@ public class CsvDataSourceDatabase implements CsvDataSource {
     			extractDataInternal(result);
     		} catch(SQLException ex) {
     			log.error("Cancelling update", ex);
-    			callback.cancel();
     			throw ex;
     		} catch(DataAccessException ex) {
-    			log.error("Cancelling update", ex);
-    			callback.cancel();
     			throw ex;
-    		}
+	    	} catch(CsvUpdateBlockException ex) {
+	    		throw new SQLException(ex);
+	    	}
     		
     		return null;
     	}
     	
-    	public void extractDataInternal(ResultSet result) throws SQLException, DataAccessException {
+    	public void extractDataInternal(ResultSet result) throws SQLException, DataAccessException, CsvUpdateBlockException {
     		String columnNamesCsv = csvParser.getColumnLabelsAsCsvLine(result.getMetaData(), entityConfig.getGroups());
     		
     		List<String> copyOfIds = null;
@@ -126,22 +125,18 @@ public class CsvDataSourceDatabase implements CsvDataSource {
     		
     		String entityId = entityConfig.getEntityId();
     		
-    		try {
-	    		while(result.next()) {    			
-	    			CsvLine csvLine = csvParser.toCsvLine(result, entityConfig.getGroups());
-						callback.processUpdate(entityId, columnNamesCsv, csvLine);
-	    			if(ids != null) {
-	    				copyOfIds.remove(csvLine.getId());
-	    			}
-	    		}
-	    		
-	    		if(ids != null) {
-					for(String remainingId : copyOfIds) {
-						callback.processRemove(entityId, remainingId);
-					}
-	    		}
-    		} catch (CsvUpdateBlockException ex) {
-    			log.error("Update failed", ex);
+    		while(result.next()) {    			
+    			CsvLine csvLine = csvParser.toCsvLine(result, entityConfig.getGroups());
+					callback.processUpdate(entityId, columnNamesCsv, csvLine);
+    			if(ids != null) {
+    				copyOfIds.remove(csvLine.getId());
+    			}
+    		}
+    		
+    		if(ids != null) {
+				for(String remainingId : copyOfIds) {
+					callback.processRemove(entityId, columnNamesCsv, remainingId);
+				}
     		}
     	}
     	

@@ -5,33 +5,31 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Set;
 import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * Composite callback that calls back each of the observers in turn.
  */
-public class CsvLineCallbackComposite implements CsvLineCallback {
+public class CsvLineCallbackComposite implements BlockCallback {
 
 	/**
 	 * Lock ensures that a callback can't be added or removed half
 	 * way through an update batch.
 	 */
 	private final ReentrantLock lock = new ReentrantLock();
-	private Set<CsvLineCallback> calledInThisTransaction;
 	
 	/**
 	 * Maintains active callbacks along with a list of entities that each
 	 * callback is interested in.
 	 * null means all entities.
 	 */
-	private final Map<CsvLineCallback, Collection<String>> callbacks = new HashMap<>();
+	private final Map<BlockCallback, Collection<String>> callbacks = new HashMap<>();
 	
-	public void addCallback(CsvLineCallback callback) {
+	public void addCallback(BlockCallback callback) {
 		addCallback((Collection<String>)null, callback);
 	}
 	
-	public void addCallback(Collection<String> entityIds, CsvLineCallback callback) {
+	public void addCallback(Collection<String> entityIds, BlockCallback callback) {
 		lock.lock();
 		try {
 			callbacks.put(callback, entityIds);
@@ -40,7 +38,7 @@ public class CsvLineCallbackComposite implements CsvLineCallback {
 		}
 	}
 	
-	public void addCallback(String entityId, CsvLineCallback callback) {
+	public void addCallback(String entityId, BlockCallback callback) {
 		lock.lock();
 		try {
 			callbacks.put(callback, Collections.singletonList(entityId));
@@ -49,7 +47,7 @@ public class CsvLineCallbackComposite implements CsvLineCallback {
 		}
 	}
 	
-	public void removeCallback(CsvLineCallback callback) {
+	public void removeCallback(BlockCallback callback) {
 		lock.lock();
 		try {
 			callbacks.remove(callback);
@@ -59,24 +57,15 @@ public class CsvLineCallbackComposite implements CsvLineCallback {
 	}
 	
 	/**
-	 * Starting an update block causes the lock to be held.
+	 * Starting an update causes the lock to be held.
 	 * No subscribers can be added or removed half way through a block.
 	 */
 	@Override
-	public void startUpdateBlock(String entityId, String csvColumnNames) throws CsvUpdateBlockException {
-		for(Entry<CsvLineCallback, Collection<String>> entry : callbacks.entrySet()) {
-			Collection<String> entityIds = entry.getValue();
-			if(entityIds == null || entityIds.contains(entityId)) {
-				CsvLineCallback callback = entry.getKey();
-				calledInThisTransaction.add(callback);
-				callback.startUpdateBlock(entityId, csvColumnNames);
-			}
+	public void start(final Collection<String> entityIds) throws CsvUpdateBlockException {
+		lock.lock();
+		for(Entry<BlockCallback, Collection<String>> entry : callbacks.entrySet()) {
+			entry.getKey().start(entityIds);
 		}
-	}
-	
-	@Override
-	public void start() throws CsvUpdateBlockException {
-		lock.lock();		
 	}
 	
 	/**
@@ -85,7 +74,7 @@ public class CsvLineCallbackComposite implements CsvLineCallback {
 	 */
 	@Override
 	public void finish() throws CsvUpdateBlockException {
-		for(CsvLineCallback callback : calledInThisTransaction) {
+		for(BlockCallback callback : callbacks.keySet()) {
 			callback.finish();
 		}
 		lock.unlock();
@@ -97,30 +86,29 @@ public class CsvLineCallbackComposite implements CsvLineCallback {
 	 */
 	@Override
 	public void cancel() {
-		for(CsvLineCallback callback : calledInThisTransaction) {
+		for(BlockCallback callback : callbacks.keySet()) {
 			callback.cancel();
 		}
-		calledInThisTransaction.clear();
 		lock.unlock();
 	}
 	
 	@Override
-	public void processRemove(String entityId, String id) throws CsvUpdateBlockException {
-		for(Entry<CsvLineCallback, Collection<String>> entry : callbacks.entrySet()) {
+	public void processRemove(String entityId, String columnNamesCsv, String id) throws CsvUpdateBlockException {
+		for(Entry<BlockCallback, Collection<String>> entry : callbacks.entrySet()) {
 			Collection<String> entityIds = entry.getValue();
 			if(entityIds == null || entityIds.contains(entityId)) {
-				CsvLineCallback callback = entry.getKey();
-				callback.processRemove(entityId, id);
+				BlockCallback callback = entry.getKey();
+				callback.processRemove(entityId, columnNamesCsv, id);
 			}
 		}
 	}
 	
 	@Override
 	public void processUpdate(String entityId, String columnNamesCsv, CsvLine csvLine) throws CsvUpdateBlockException {
-		for(Entry<CsvLineCallback, Collection<String>> entry : callbacks.entrySet()) {
+		for(Entry<BlockCallback, Collection<String>> entry : callbacks.entrySet()) {
 			Collection<String> entityIds = entry.getValue();
 			if(entityIds == null || entityIds.contains(entityId)) {
-				CsvLineCallback callback = entry.getKey();
+				BlockCallback callback = entry.getKey();
 				callback.processUpdate(entityId, columnNamesCsv, csvLine);
 			}
 		}			
@@ -128,10 +116,10 @@ public class CsvLineCallbackComposite implements CsvLineCallback {
 	
 	@Override
 	public void startBulkUpdate(String entityId, String columnNamesCsv) throws CsvUpdateBlockException {
-		for(Entry<CsvLineCallback, Collection<String>> entry : callbacks.entrySet()) {
+		for(Entry<BlockCallback, Collection<String>> entry : callbacks.entrySet()) {
 			Collection<String> entityIds = entry.getValue();
 			if(entityIds == null || entityIds.contains(entityId)) {
-				CsvLineCallback callback = entry.getKey();
+				BlockCallback callback = entry.getKey();
 				callback.startBulkUpdate(entityId, columnNamesCsv);
 			}
 		}
@@ -139,10 +127,10 @@ public class CsvLineCallbackComposite implements CsvLineCallback {
 	
 	@Override
 	public void startBulkUpdateForGroup(String entityId, String group, String idWithinGroup) throws CsvUpdateBlockException {
-		for(Entry<CsvLineCallback, Collection<String>> entry : callbacks.entrySet()) {
+		for(Entry<BlockCallback, Collection<String>> entry : callbacks.entrySet()) {
 			Collection<String> entityIds = entry.getValue();
 			if(entityIds == null || entityIds.contains(entityId)) {
-				CsvLineCallback callback = entry.getKey();
+				BlockCallback callback = entry.getKey();
 				callback.startBulkUpdateForGroup(entityId, group, idWithinGroup);
 			}
 		}

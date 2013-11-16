@@ -9,10 +9,8 @@
 http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
 http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd
 ">
-
-    <bean id="csvDataSourceCacheFactory" class="org.commacq.cache.csv.CsvDataSourceCacheFactory"/>
           
-    <bean id="csvDataSourceCaches" factory-bean="csvDataSourceCacheFactory" factory-method="create"
-          c:layer-ref="${layerToCache:csvDataSourceDatabases}"/>
+    <bean id="csvDataSourceCaches" class="org.commacq.cache.csv.CacheLayer"
+          c:sourceLayer-ref="${layerToCache:csvDataSourceDatabases}"/>
 
 </beans>

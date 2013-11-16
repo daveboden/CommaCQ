@@ -8,8 +8,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringEscapeUtils;
 import org.commacq.CsvDataSource;
 import org.commacq.CsvLine;
-import org.commacq.CsvLineCallback;
 import org.commacq.CsvUpdateBlockException;
+import org.commacq.LineCallback;
 import org.commacq.textdir.TextFileMapper;
 import org.commacq.textdir.TextFileSingleDirectory;
 
@@ -40,46 +40,52 @@ public class CsvDataSourceTextFileSingleDirectory implements CsvDataSource {
     }
     
     @Override
-	public void getAllCsvLines(CsvLineCallback callback) {
+	public void getAllCsvLines(LineCallback callback) {
 		List<CsvLine> csvLines = textFileSingleDirectory.getAll(mapper);
-		try {
-			callback.startUpdateBlock(entityId, CSV_COLUMN_HEADINGS);
-			for(CsvLine csvLine : csvLines) {
-				try {
-					callback.processUpdate(entityId, CSV_COLUMN_HEADINGS, csvLine);
-				} catch (CsvUpdateBlockException ex) {
-					throw new RuntimeException(ex);
-				}
+		for(CsvLine csvLine : csvLines) {
+			try {
+				callback.processUpdate(entityId, CSV_COLUMN_HEADINGS, csvLine);
+			} catch (CsvUpdateBlockException ex) {
+				log.info("Caller cannot process the response. Not sending any further data. "
+					   + "The caller will have logged the reason for the error.");
+				break;
 			}
-			callback.finish();
-		} catch (CsvUpdateBlockException e) {
-			log.error("Failed to deliver rows");
 		}
 	}
 
 	@Override
-	public void getCsvLines(Collection<String> ids, CsvLineCallback callback) {
-		for(String id : ids) {
-			getCsvLine(id, callback);
-		}
-	}
-
-	@Override
-	public void getCsvLine(String id, CsvLineCallback callback) {
-		CsvLine csvLine = textFileSingleDirectory.getRow(id, mapper);
+	public void getCsvLines(Collection<String> ids, LineCallback callback) {
 		try {
-			if(csvLine != null) {
-					callback.processUpdate(entityId, CSV_COLUMN_HEADINGS, csvLine);
-			} else {
-				callback.processRemove(entityId, id);
+			for(String id : ids) {
+				getCsvLineInternal(id, callback);
 			}
 		} catch (CsvUpdateBlockException ex) {
-			throw new RuntimeException(ex);
+			log.info("Caller cannot process the response. Not sending any further data. "
+		    	   + "The caller will have logged the reason for the error.");
 		}
 	}
 
 	@Override
-	public void getCsvLinesForGroup(String group, String idWithinGroup, CsvLineCallback callback) {
+	public void getCsvLine(String id, LineCallback callback) {
+		try {
+			getCsvLineInternal(id, callback);
+		} catch (CsvUpdateBlockException ex) {
+			log.info("Caller cannot process the response. Not sending any further data. "
+				   + "The caller will have logged the reason for the error.");
+		}
+	}
+	
+	private void getCsvLineInternal(String id, LineCallback callback) throws CsvUpdateBlockException {
+		CsvLine csvLine = textFileSingleDirectory.getRow(id, mapper);
+		if(csvLine != null) {
+			callback.processUpdate(entityId, CSV_COLUMN_HEADINGS, csvLine);
+		} else {
+			callback.processRemove(entityId, CSV_COLUMN_HEADINGS, id);
+		}
+	}
+
+	@Override
+	public void getCsvLinesForGroup(String group, String idWithinGroup, LineCallback callback) {
 		throw new UnsupportedOperationException("Groups are not supported by text file data sources");
 	}
     

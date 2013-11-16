@@ -10,9 +10,10 @@ import java.util.TreeMap;
 import javax.annotation.concurrent.ThreadSafe;
 
 import org.apache.commons.lang3.Validate;
+import org.commacq.BlockCallback;
 import org.commacq.CsvLine;
-import org.commacq.CsvLineCallback;
 import org.commacq.CsvUpdateBlockException;
+import org.commacq.LineCallback;
 
 /**
  * Contains a linked list of CSV lines that can be traversed and written
@@ -83,13 +84,13 @@ public final class CsvCache {
 	    return linesIdMap.get(id);
 	}
 	
-	public void visitAll(CsvLineCallback callback) throws CsvUpdateBlockException {
+	public void visitAll(LineCallback callback) throws CsvUpdateBlockException {
 		for(CsvLine csvLine : linesIdMap.values()) {
 			callback.processUpdate(entityId, columnNamesCsv, csvLine);
 		}
 	}
 	
-	public void visitIds(CsvLineCallback callback, Collection<String> ids) {
+	public void visitIds(LineCallback callback, Collection<String> ids) {
 		for(String id : ids) {
 			CsvLine csvLine = linesIdMap.get(id);
 			if(csvLine != null) {
@@ -102,7 +103,7 @@ public final class CsvCache {
 		}
 	}
 	
-	public void visitGroup(CsvLineCallback callback, String group, String idWithinGroup) {
+	public void visitGroup(LineCallback callback, String group, String idWithinGroup) {
 		Map<String, CsvLine> groupContents = groupsMap.get(group);
 		for(CsvLine csvLine : groupContents.values()) {
 			try {

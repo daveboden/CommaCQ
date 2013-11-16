@@ -8,6 +8,8 @@ import org.commacq.client.CsvToBeanConverter;
 import org.commacq.client.CsvToBeanConverterImpl;
 import org.commacq.client.CsvToBeanStrategySpringConstructor;
 import org.commacq.client.Manager;
+import org.commacq.layer.DataSourceCollectionLayer;
+import org.commacq.layer.SubscribeLayer;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.springframework.core.io.ClassPathResource;
@@ -19,10 +21,11 @@ public class CustomerTest {
 	public void testCustomerBean() throws Exception {
 		
 		CsvDataSourceResource resource = new CsvDataSourceResource("customer", new ClassPathResource("/customer.csv"));
+		SubscribeLayer layer = new DataSourceCollectionLayer(resource);
 		
 		CsvToBeanConverter<Customer> converter = new CsvToBeanConverterImpl<>(Customer.class, new CsvToBeanStrategySpringConstructor());
 		
-		BeanCache<Customer> beanCache = new BeanCache<>(resource, converter);
+		BeanCache<Customer> beanCache = new BeanCache<>(layer, "customer", converter);
 		
 		Manager<Customer> customerManager = new Manager<>(beanCache);
 		

@@ -2,16 +2,18 @@ package org.commacq;
 
 import java.io.PrintWriter;
 import java.io.Writer;
+import java.util.Collection;
 
 /**
  * Contains a large buffer. Reuse these objects.
  */
-public class CsvLineCallbackWriter implements CsvLineCallback {
+public class CsvLineCallbackWriter implements BlockCallback {
 	
 	private final PrintWriter printWriter;
 	
-	public CsvLineCallbackWriter(Writer writer) {
+	public CsvLineCallbackWriter(Writer writer, String columnNamesCsv) {
 		printWriter = new PrintWriter(writer);
+		printWriter.println(columnNamesCsv);
 	}
 	
 	@Override
@@ -20,20 +22,12 @@ public class CsvLineCallbackWriter implements CsvLineCallback {
 	}
 	
 	@Override
-	public void processRemove(String entityId, String id) throws CsvUpdateBlockException {
+	public void processRemove(String entityId, String columnNamesCsv, String id) throws CsvUpdateBlockException {
 		printWriter.println(id);
 	}
 	
-	/**
-	 * Add csv header
-	 */
 	@Override
-	public void startUpdateBlock(String entityId, String columnNamesCsv) throws CsvUpdateBlockException {
-		printWriter.println(columnNamesCsv);
-	}
-	
-	@Override
-	public void start() throws CsvUpdateBlockException {		
+	public void start(Collection<String> entityIds) throws CsvUpdateBlockException {		
 		//No behaviour defined.
 	}
 	

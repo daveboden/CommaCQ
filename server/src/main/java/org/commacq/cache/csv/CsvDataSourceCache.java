@@ -2,10 +2,13 @@ package org.commacq.cache.csv;
 
 import java.util.Collection;
 
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
+
 import org.commacq.CsvDataSource;
 import org.commacq.CsvLine;
-import org.commacq.CsvLineCallback;
 import org.commacq.CsvUpdateBlockException;
+import org.commacq.LineCallback;
 
 /**
  * Maintains a cache which looks like a CsvDataSource and can be notified of updates.
@@ -14,37 +17,34 @@ import org.commacq.CsvUpdateBlockException;
  * the cache is swapped in as the current cache. All further updates go into the new
  * cache.
  */
+@RequiredArgsConstructor
 public class CsvDataSourceCache implements CsvDataSource {
     
     protected volatile CsvCache csvCache; //Not usable until first initial load has completed
     
-    @Override
-    public String getEntityId() {
-    	return csvCache.getEntityId();
-    }
+    @Getter
+    private final String entityId;
     
     /**
      * Fetches from the cache.
      */
     @Override
-    public void getAllCsvLines(CsvLineCallback callback) {
+    public void getAllCsvLines(LineCallback callback) {
     	try {
-			callback.startUpdateBlock(csvCache.getEntityId(), csvCache.getColumnNamesCsv());
 			csvCache.visitAll(callback);
-			callback.finish();
 		} catch (CsvUpdateBlockException ex) {
 			throw new RuntimeException(ex);
 		}
     }
     
     @Override
-    public void getCsvLine(String id, CsvLineCallback callback) {
+    public void getCsvLine(String id, LineCallback callback) {
     	CsvLine csvLine = csvCache.getLine(id);
    		try {
    			if(csvLine != null) {
 				callback.processUpdate(csvCache.getEntityId(), csvCache.getColumnNamesCsv(), csvLine);
     		} else {
-    			callback.processRemove(csvCache.getEntityId(), id);
+    			callback.processRemove(csvCache.getEntityId(), csvCache.getColumnNamesCsv(), id);
     		}
 		} catch (CsvUpdateBlockException ex) {
 			throw new RuntimeException(ex);
@@ -52,12 +52,12 @@ public class CsvDataSourceCache implements CsvDataSource {
     }
     
     @Override
-    public void getCsvLines(Collection<String> ids, CsvLineCallback callback) {
+    public void getCsvLines(Collection<String> ids, LineCallback callback) {
     	csvCache.visitIds(callback, ids);
     }
     
     @Override
-    public void getCsvLinesForGroup(String group, String idWithinGroup, CsvLineCallback callback) {
+    public void getCsvLinesForGroup(String group, String idWithinGroup, LineCallback callback) {
     	csvCache.visitGroup(callback, group, idWithinGroup);
     }
     

@@ -10,8 +10,8 @@ import java.util.TreeSet;
 import javax.annotation.concurrent.Immutable;
 
 import org.commacq.CsvDataSource;
-import org.commacq.CsvLineCallback;
 import org.commacq.CsvUpdateBlockException;
+import org.commacq.LineCallback;
 
 /**
  * Joins layers together so that they can be addressed as a single block.
@@ -85,36 +85,36 @@ public class DataSourceCollectionUnionLayer extends AbstractUpdatableLayer {
 	}
 
 	@Override
-	public void getAllCsvLines(CsvLineCallback callback) {
+	public void getAllCsvLines(LineCallback callback) {
 		for(DataSourceCollectionLayer layer : mapping.values()) {
 			layer.getAllCsvLines(callback);
 		}
 	}
 
 	@Override
-	public void getAllCsvLines(Collection<String> entityIds, CsvLineCallback callback) {
+	public void getAllCsvLines(Collection<String> entityIds, LineCallback callback) {
 		for(DataSourceCollectionLayer layer : mapping.values()) {
 			layer.getAllCsvLines(entityIds, callback);
 		}
 	}
 
 	@Override
-	public void getAllCsvLines(String entityId, CsvLineCallback callback) {
+	public void getAllCsvLines(String entityId, LineCallback callback) {
 		getLayer(entityId).getAllCsvLines(entityId, callback);
 	}
 
 	@Override
-	public void getCsvLines(String entityId, Collection<String> ids, CsvLineCallback callback) {
+	public void getCsvLines(String entityId, Collection<String> ids, LineCallback callback) {
 		getLayer(entityId).getCsvLines(entityId, ids, callback);		
 	}
 
 	@Override
-	public void getCsvLine(String entityId, String id, CsvLineCallback callback) {
+	public void getCsvLine(String entityId, String id, LineCallback callback) {
 		getLayer(entityId).getCsvLine(entityId, id, callback);		
 	}
 
 	@Override
-	public void getCsvLinesForGroup(String entityId, String group, String idWithinGroup, CsvLineCallback callback) {
+	public void getCsvLinesForGroup(String entityId, String group, String idWithinGroup, LineCallback callback) {
 		getLayer(entityId).getCsvLinesForGroup(entityId, group, idWithinGroup, callback);
 	}
 }

@@ -1,13 +1,11 @@
 package org.commacq.db.csv;
 
 import static org.junit.Assert.fail;
-import static org.mockito.Mockito.verify;
 import static org.springframework.jdbc.datasource.embedded.EmbeddedDatabaseType.H2;
 
 import java.util.Set;
 
-import org.commacq.CsvLineCallback;
-import org.commacq.CsvUpdateBlockException;
+import org.commacq.BlockCallback;
 import org.commacq.db.DataSourceAccess;
 import org.commacq.db.EntityConfig;
 import org.junit.After;
@@ -27,7 +25,7 @@ import com.google.common.collect.ImmutableSet;
 public class CsvDataSourceDatabaseGroupTest {
 	
 	@Mock
-	private CsvLineCallback callback;
+	private BlockCallback callback;
 	
 	private EmbeddedDatabase dataSource;
 	private CsvDataSourceDatabase csvDataSourceDatabase;
@@ -51,7 +49,7 @@ public class CsvDataSourceDatabaseGroupTest {
 	}
 	
 	@Test
-	public void testBadGroupCausesError() throws CsvUpdateBlockException {
+	public void testBadGroupCausesError() {
 		DataSourceAccess dataSourceAccess = new DataSourceAccess(dataSource);
 		Set<String> badGroupNames = ImmutableSet.of("badGroupName");
 		EntityConfig entityConfig = new EntityConfig("test",
@@ -64,8 +62,6 @@ public class CsvDataSourceDatabaseGroupTest {
 		} catch(DataAccessException ex) {
 			//Expected exception
 		}
-		
-		verify(callback).cancel();
 	}
 	
 	@Ignore //Group updates not yet handled.

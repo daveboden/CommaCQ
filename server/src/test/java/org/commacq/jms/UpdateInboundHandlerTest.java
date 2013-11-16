@@ -1,6 +1,5 @@
 package org.commacq.jms;
 
-import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
@@ -14,7 +13,6 @@ import javax.jms.TextMessage;
 
 import org.commacq.CsvUpdateBlockException;
 import org.commacq.layer.UpdatableLayer;
-import org.commacq.layer.Layer;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -25,15 +23,13 @@ import org.mockito.runners.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class UpdateInboundHandlerTest {
 
-    @Mock private Layer layer;
-    @Mock private UpdatableLayer source;
+    @Mock private UpdatableLayer layer;
     
     private UpdateInboundHandler handler;
     
     @Before
     public void setup() {
         handler = new UpdateInboundHandler(layer);
-        when(layer.getCsvDataSource(anyString())).thenReturn(source);
     }
     
     @Test
@@ -44,14 +40,13 @@ public class UpdateInboundHandlerTest {
                 "id" + "\n" +
                 "abc"
         );
-        when(source.getColumnNamesCsv()).thenReturn("id");
+        when(layer.getColumnNamesCsv("testEntity")).thenReturn("id");
         
         handler.onMessage(textMessage);
-        verify(source).getColumnNamesCsv();
-        verify(source).startUpdateBlock("id");
-        verify(source).updateUntrusted("abc");
-        verify(source).finishUpdateBlock();
-        verifyNoMoreInteractions(source);
+        verify(layer).start(Collections.singleton("testEntity"));
+        verify(layer).updateUntrusted("testEntity", "abc");
+        verify(layer).finish();
+        verifyNoMoreInteractions(layer);
     }
     
     @Test
@@ -63,15 +58,14 @@ public class UpdateInboundHandlerTest {
                 "abc" + "\n" + 
                 "def" + "\n"
                 );
-        when(source.getColumnNamesCsv()).thenReturn("id");
+        when(layer.getColumnNamesCsv("testEntity2")).thenReturn("id");
         
         handler.onMessage(mapMessage);
-        verify(source).getColumnNamesCsv();
-        verify(source).startUpdateBlock("id");
-        verify(source).updateUntrusted("abc");
-        verify(source).updateUntrusted("def");
-        verify(source).finishUpdateBlock();
-        verifyNoMoreInteractions(source);
+        verify(layer).start(Collections.singleton("testEntity2"));
+        verify(layer).updateUntrusted("testEntity2", "abc");
+        verify(layer).updateUntrusted("testEntity2", "def");
+        verify(layer).finish();
+        verifyNoMoreInteractions(layer);
     }
 
     @Ignore //Can't handle groups yet

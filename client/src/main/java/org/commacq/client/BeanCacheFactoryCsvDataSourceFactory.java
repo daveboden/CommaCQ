@@ -1,7 +1,6 @@
 package org.commacq.client;
 
-import org.commacq.CsvDataSource;
-import org.commacq.CsvDataSourceFactory;
+import org.commacq.layer.SubscribeLayer;
 
 /**
  * Simple implementation of a BeanCacheFactory which just delegates
@@ -10,32 +9,30 @@ import org.commacq.CsvDataSourceFactory;
  */
 public class BeanCacheFactoryCsvDataSourceFactory implements BeanCacheFactory {
 
-	final CsvDataSourceFactory csvDataSourceFactory;
+	final SubscribeLayer layer;
 	final CsvToBeanConverterFactory csvToBeanConverterFactory;
 	
-	public BeanCacheFactoryCsvDataSourceFactory(CsvDataSourceFactory csvDataSourceFactory, CsvToBeanConverterFactory csvToBeanConverterFactory) {
-		this.csvDataSourceFactory = csvDataSourceFactory;
+	public BeanCacheFactoryCsvDataSourceFactory(SubscribeLayer layer, CsvToBeanConverterFactory csvToBeanConverterFactory) {
+		this.layer = layer;
 		this.csvToBeanConverterFactory = csvToBeanConverterFactory;
 	}
 
 	@Override
 	public BeanCache<?> createBeanCache(String entityId) throws Exception {
-		CsvDataSource csvDataSource = csvDataSourceFactory.createCsvDataSource(entityId);
 		CsvToBeanConverter<?> csvToBeanConverter;
 		try {
 			csvToBeanConverter = csvToBeanConverterFactory.getCsvBeanConverter(entityId);
 		} catch (ClassNotFoundException ex) {
 			throw new RuntimeException("Could not find bean class", ex);
 		}
-		BeanCache<?> beanCache = new BeanCache<>(csvDataSource, csvToBeanConverter);
+		BeanCache<?> beanCache = new BeanCache<>(layer, entityId, csvToBeanConverter);
 		return beanCache;
 	}
 
 	@Override
 	public <BeanType> BeanCache<BeanType> createBeanCache(String entityId, Class<BeanType> beanType) throws Exception {
-		CsvDataSource csvDataSource = csvDataSourceFactory.createCsvDataSource(entityId);
 		CsvToBeanConverter<BeanType> csvToBeanConverter = csvToBeanConverterFactory.getCsvBeanConverter(entityId, beanType);
-		BeanCache<BeanType> beanCache = new BeanCache<>(csvDataSource, csvToBeanConverter);
+		BeanCache<BeanType> beanCache = new BeanCache<>(layer, entityId, csvToBeanConverter);
 		return beanCache;
 	}
 

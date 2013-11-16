@@ -39,10 +39,12 @@ http://commacq.org/client http://commacq.org/client/comma-cq-1.0.xsd
           c:timeoutInSeconds="2"
           c:broadcastTopicPattern="${jms.client.broadcast.topic.pattern}"
     />
+    
+    <bean id="proxyLayer" factory-bean="csvDataSourceFactory" factory-method="createLayer"/>
 
     <!-- beanCacheFactory is a special bean id, referenced by the Manager bean definition parser -->
     <bean id="beanCacheFactory" class="org.commacq.client.BeanCacheFactoryCsvDataSourceFactory"
-          c:csvDataSourceFactory-ref="csvDataSourceFactory"
+          c:layer-ref="proxyLayer"
           c:csvToBeanConverterFactory-ref="csvToBeanConverterFactory"
     />
 
