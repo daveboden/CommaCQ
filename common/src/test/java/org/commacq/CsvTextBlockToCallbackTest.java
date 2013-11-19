@@ -2,13 +2,11 @@ package org.commacq;
 
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.util.Collections;
 
 import org.apache.commons.io.IOUtils;
 import org.junit.Test;

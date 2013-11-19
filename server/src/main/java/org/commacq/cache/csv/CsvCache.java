@@ -10,7 +10,6 @@ import java.util.TreeMap;
 import javax.annotation.concurrent.ThreadSafe;
 
 import org.apache.commons.lang3.Validate;
-import org.commacq.BlockCallback;
 import org.commacq.CsvLine;
 import org.commacq.CsvUpdateBlockException;
 import org.commacq.LineCallback;

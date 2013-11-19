@@ -3,7 +3,6 @@ package org.commacq.jms;
 import java.io.IOException;
 import java.io.StringReader;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 
 import javax.jms.ConnectionFactory;
@@ -15,7 +14,6 @@ import javax.jms.TextMessage;
 
 import lombok.extern.slf4j.Slf4j;
 
-import org.commacq.BlockCallback;
 import org.commacq.CsvDataSource;
 import org.commacq.CsvLine;
 import org.commacq.CsvLineCallbackListImpl;
