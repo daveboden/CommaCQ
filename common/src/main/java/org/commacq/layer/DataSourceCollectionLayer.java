@@ -164,5 +164,16 @@ public class DataSourceCollectionLayer extends AbstractUpdatableLayer {
 	public void getCsvLinesForGroup(String entityId, String group, String idWithinGroup, LineCallback callback) {
 		getCsvDataSource(entityId).getCsvLinesForGroup(group, idWithinGroup, callback);
 	}
+	
+	@Override
+	public String toString() {
+		StringBuilder sb = new StringBuilder();
+		sb.append("DataSourceCollectionLayer[");
+		for(String entityId : entityIds) {
+			sb.append(entityId);
+			sb.append("[").append(getCsvDataSource(entityId).getClass().getSimpleName()).append("] ");
+		}
+		return sb.toString();
+	}
     
 }

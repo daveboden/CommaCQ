@@ -23,10 +23,13 @@ import org.commacq.LineCallback;
 public class DataSourceCollectionUnionLayer extends AbstractUpdatableLayer {
 	
 	protected final SortedSet<String> entityIds;
+	protected final Collection<DataSourceCollectionLayer> layers;
 	protected final Map<String, DataSourceCollectionLayer> mapping;
 	private final Map<String, CsvDataSource> sourceMapping;
 	
 	public DataSourceCollectionUnionLayer(Collection<DataSourceCollectionLayer> collection) {
+		this.layers = collection;
+		
 		SortedSet<String> entityIds = new TreeSet<String>();
 		Map<String, DataSourceCollectionLayer> mapping = new HashMap<>();
 		Map<String, CsvDataSource> sourceMapping = new HashMap<String, CsvDataSource>();
@@ -79,21 +82,21 @@ public class DataSourceCollectionUnionLayer extends AbstractUpdatableLayer {
 
 	@Override
 	public void reloadAll() throws CsvUpdateBlockException {
-		for(DataSourceCollectionLayer layer : mapping.values()) {
+		for(DataSourceCollectionLayer layer : layers) {
 			layer.reloadAll();
 		}
 	}
 
 	@Override
 	public void getAllCsvLines(LineCallback callback) {
-		for(DataSourceCollectionLayer layer : mapping.values()) {
+		for(DataSourceCollectionLayer layer : layers) {
 			layer.getAllCsvLines(callback);
 		}
 	}
 
 	@Override
 	public void getAllCsvLines(Collection<String> entityIds, LineCallback callback) {
-		for(DataSourceCollectionLayer layer : mapping.values()) {
+		for(DataSourceCollectionLayer layer : layers) {
 			layer.getAllCsvLines(entityIds, callback);
 		}
 	}

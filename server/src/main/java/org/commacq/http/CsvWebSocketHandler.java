@@ -2,6 +2,7 @@ package org.commacq.http;
 
 import java.io.IOException;
 import java.util.Collection;
+import java.util.Collections;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -72,8 +73,12 @@ public class CsvWebSocketHandler extends WebSocketHandler {
 				    return;
 				}
 				callback = new CsvLineCallbackWebSocket(session, layer, entityId);
+				callback.start(Collections.singleton(entityId));
 				layer.getAllCsvLinesAndSubscribe(entityId, callback);
+				callback.finish();
 			} catch (IOException ex) {
+				log.error("Could not send message to opened connection", ex);
+			} catch (CsvUpdateBlockException ex) {
 				log.error("Could not send message to opened connection", ex);
 			}
 		}
