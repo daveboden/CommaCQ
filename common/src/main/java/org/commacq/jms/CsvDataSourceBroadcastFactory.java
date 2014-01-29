@@ -69,6 +69,10 @@ public class CsvDataSourceBroadcastFactory {
 		
 		TextMessage replyMessage = (TextMessage)template.receive(replyQueue);
 		
+		if(replyMessage == null) {
+			throw new RuntimeException("No response from server on: " + queryQueue);
+		}
+		
 		String entityIdsText = replyMessage.getText();
 		
 		BufferedReader reader = new BufferedReader(new StringReader(entityIdsText));

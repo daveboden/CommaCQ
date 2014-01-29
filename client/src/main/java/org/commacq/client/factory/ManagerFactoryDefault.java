@@ -25,9 +25,10 @@ public class ManagerFactoryDefault implements ManagerFactory {
 	}
     
     @Override
-    public <BeanType> Manager<BeanType> createManager(BeanCache<BeanType> beanCache, Class<? extends Manager<BeanType>> managerType) throws ClassNotFoundException {
+    public <BeanType> Manager<BeanType> createManager(BeanCache<BeanType> beanCache, Class<?> managerType) throws ClassNotFoundException {
     	try {
-			Constructor<? extends Manager<BeanType>> constructor = managerType.getConstructor(BeanCache.class);
+			@SuppressWarnings("unchecked")
+			Constructor<? extends Manager<BeanType>> constructor = (Constructor<? extends Manager<BeanType>>)managerType.getConstructor(BeanCache.class);
 			return constructor.newInstance(beanCache);
 		} catch (NoSuchMethodException | SecurityException | InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException ex) {
 			throw new ClassNotFoundException("Could not construct " + managerType.getName(), ex);
