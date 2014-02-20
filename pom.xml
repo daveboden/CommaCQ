@@ -29,7 +29,7 @@
 
         <slf4j.version>1.7.5</slf4j.version>
 
-        <jetty.version>9.1.0.RC1</jetty.version>
+        <jetty.version>9.1.2.v20140210</jetty.version>
     </properties>
 
     <dependencyManagement>

@@ -1,10 +1,10 @@
-package org.commacq.client.csvtobean.xml;
+package org.commacq.client.csvtobean;
 
 import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlRootElement;
 
 @XmlRootElement
-public class BeanWithLargeNumberOfXmlAnnotations {
+public class BeanWithLargeNumberOfAttributes {
 
 	@XmlAttribute
 	String id;
@@ -49,8 +49,41 @@ public class BeanWithLargeNumberOfXmlAnnotations {
 	String name18;
 	@XmlAttribute
 	String name19;
-
 	
+	//For jaxb construction strategy
+	public BeanWithLargeNumberOfAttributes() {
+	}
+	
+	//For spring construction strategy
+	public BeanWithLargeNumberOfAttributes(String id, String name0,
+			String name1, String name2, String name3, String name4,
+			String name5, String name6, String name7, String name8,
+			String name9, String name10, String name11, String name12,
+			String name13, String name14, String name15, String name16,
+			String name17, String name18, String name19) {
+		this.id = id;
+		this.name0 = name0;
+		this.name1 = name1;
+		this.name2 = name2;
+		this.name3 = name3;
+		this.name4 = name4;
+		this.name5 = name5;
+		this.name6 = name6;
+		this.name7 = name7;
+		this.name8 = name8;
+		this.name9 = name9;
+		this.name10 = name10;
+		this.name11 = name11;
+		this.name12 = name12;
+		this.name13 = name13;
+		this.name14 = name14;
+		this.name15 = name15;
+		this.name16 = name16;
+		this.name17 = name17;
+		this.name18 = name18;
+		this.name19 = name19;
+	}
+
 	public String getId() {
 		return id;
 	}

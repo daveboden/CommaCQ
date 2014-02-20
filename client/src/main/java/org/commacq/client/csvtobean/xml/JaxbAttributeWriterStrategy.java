@@ -1,7 +1,6 @@
 package org.commacq.client.csvtobean.xml;
 
 import java.io.IOException;
-import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -24,23 +23,21 @@ import javax.xml.stream.events.EndElement;
 import javax.xml.stream.events.StartElement;
 import javax.xml.stream.events.XMLEvent;
 
-import lombok.extern.slf4j.Slf4j;
-
 import org.apache.commons.lang3.StringUtils;
 import org.commacq.CsvLine;
+import org.commacq.client.CsvListReaderUtil;
 import org.commacq.client.CsvToBeanStrategy;
-import org.supercsv.io.CsvListReader;
-import org.supercsv.prefs.CsvPreference;
 
 /**
  * Unmarshals CSV to beans that have Jaxb annotations and are expecting a single XML element with attributes. 
  */
-@Slf4j
 @NotThreadSafe //Meant to be used by a single thread responsible for performing the initial load of bean cache data and performing the updates.
 public class JaxbAttributeWriterStrategy implements CsvToBeanStrategy {
     
     protected final Map<Class<?>, AttributeEventReader> attributeEventReaderMap = new HashMap<Class<?>, AttributeEventReader>();
     protected final Map<Class<?>, Unmarshaller> unmarshallerMap = new HashMap<Class<?>, Unmarshaller>();
+    
+    protected final CsvListReaderUtil csvListReaderUtil = new CsvListReaderUtil();
     
     private <BeanType> AttributeEventReader getAttributeEventReader(Class<BeanType> beanType) {
     	AttributeEventReader cached = attributeEventReaderMap.get(beanType);
@@ -97,17 +94,11 @@ public class JaxbAttributeWriterStrategy implements CsvToBeanStrategy {
     }
     
 	private List<String> splitCsv(String columnNamesCsv) {
-		CsvListReader parser = new CsvListReader(new StringReader(columnNamesCsv), CsvPreference.STANDARD_PREFERENCE);
 		try {
-			return parser.read();
+			csvListReaderUtil.appendLine(columnNamesCsv);
+			return csvListReaderUtil.getParser().read();
 		} catch(IOException ex) {
 			throw new RuntimeException("Error parsing CSV column names: " + columnNamesCsv);
-		} finally {
-			try {
-				parser.close();
-			} catch (IOException ex) {
-				log.warn("Error closing CSV parser", ex);
-			}
 		}
 	}
 

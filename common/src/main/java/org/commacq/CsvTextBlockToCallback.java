@@ -26,14 +26,18 @@ public class CsvTextBlockToCallback {
 	}
 	
 	public void presentTextBlockToCsvLineCallback(String entityId, String text, LineCallback callback) {
-
-		CsvListReader parser = new CsvListReader(new StringReader(text), CsvPreference.STANDARD_PREFERENCE);
+		presentTextBlockToCsvLineCallback(entityId, new StringReader(text), callback);
+	}
+	
+	public void presentTextBlockToCsvLineCallback(String entityId, Reader textReader, LineCallback callback) {
+		
+		CsvListReader parser = new CsvListReader(textReader, CsvPreference.STANDARD_PREFERENCE);
 		try {
 			final String[] header = parser.getHeader(true);
 			final String columnNamesCsv = parser.getUntokenizedRow();		
-	        Validate.notEmpty(columnNamesCsv, "At least the header row is required in the CSV text");
-	        final String firstColumnHeader = header[0];
-	        Validate.notEmpty(firstColumnHeader, "The CSV header row must contain at least one column");
+			Validate.notEmpty(columnNamesCsv, "At least the header row is required in the CSV text");
+			final String firstColumnHeader = header[0];
+			Validate.notEmpty(firstColumnHeader, "The CSV header row must contain at least one column");
 			
 			try {				
 				List<String> csv;
