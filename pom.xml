@@ -31,10 +31,6 @@
 
         <jetty.version>9.1.2.v20140210</jetty.version>
     </properties>
-    
-    <scm>
-        <developerConnection>scm:git:https://github.com/daveboden/CommaCQ.git</developerConnection>
-    </scm>
 
     <dependencyManagement>
         <dependencies>
