@@ -19,8 +19,8 @@ public class CsvLineCallbackListImpl extends CsvLineCallbackAbstractSimple {
 	private String columnNamesCsv;
 	
 	public CsvLineCallbackListImpl() {
-		updateList = new ArrayList<>();
-		removeList = new ArrayList<>();
+		updateList = new ArrayList<CsvLine>();
+		removeList = new ArrayList<String>();
 	}
 	
 	/**
@@ -28,8 +28,8 @@ public class CsvLineCallbackListImpl extends CsvLineCallbackAbstractSimple {
 	 * @param listSize
 	 */
 	public CsvLineCallbackListImpl(int listSize) {
-		updateList = new ArrayList<>(listSize);
-		removeList = new ArrayList<>(listSize);
+		updateList = new ArrayList<CsvLine>(listSize);
+		removeList = new ArrayList<String>(listSize);
 	}
 	
 	@Override

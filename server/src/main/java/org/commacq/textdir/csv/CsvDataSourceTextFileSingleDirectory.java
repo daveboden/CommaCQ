@@ -36,7 +36,7 @@ public class CsvDataSourceTextFileSingleDirectory implements CsvDataSource {
     
     public CsvDataSourceTextFileSingleDirectory(String entityId, String directory) {
         this.entityId = entityId;      
-        this.textFileSingleDirectory = new TextFileSingleDirectory<>(entityId, directory);
+        this.textFileSingleDirectory = new TextFileSingleDirectory<CsvLine>(entityId, directory);
     }
     
     @Override

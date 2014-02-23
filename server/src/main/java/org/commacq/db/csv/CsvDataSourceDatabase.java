@@ -120,7 +120,7 @@ public class CsvDataSourceDatabase implements CsvDataSource {
     		
     		List<String> copyOfIds = null;
     		if(ids != null) {
-    			copyOfIds = new ArrayList<>(ids);
+    			copyOfIds = new ArrayList<String>(ids);
     		}
     		
     		String entityId = entityConfig.getEntityId();

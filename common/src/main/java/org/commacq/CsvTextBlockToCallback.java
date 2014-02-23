@@ -15,13 +15,18 @@ import org.supercsv.prefs.CsvPreference;
 public class CsvTextBlockToCallback {
 	
 	public String getCsvColumnNames(Reader text) {
-		try (
-		    CsvListReader parser = new CsvListReader(text, CsvPreference.STANDARD_PREFERENCE);
-	    ) {
+		CsvListReader parser = new CsvListReader(text, CsvPreference.STANDARD_PREFERENCE);
+		//Try-with-resources when upgrading to Java 7
+		try {
 			parser.read();
 			return parser.getUntokenizedRow();
 		} catch (IOException ex) {
 			throw new RuntimeException(ex);
+		} finally {
+			try {
+				parser.close();
+			} catch(IOException ex) {
+			}
 		}
 	}
 	

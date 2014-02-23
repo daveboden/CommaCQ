@@ -30,7 +30,7 @@ import org.commacq.LineCallback;
 public final class CsvCache {
 
 	private final String entityId;
-	private final SortedMap<String, CsvLine> linesIdMap = new TreeMap<>();
+	private final SortedMap<String, CsvLine> linesIdMap = new TreeMap<String, CsvLine>();
 	private final List<String> groups;
 	private final Map<String, Map<String, CsvLine>> groupsMap = new HashMap<String, Map<String,CsvLine>>();
 	private final String columnNamesCsv;

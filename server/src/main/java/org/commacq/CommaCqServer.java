@@ -37,7 +37,7 @@ public class CommaCqServer {
 	    context = new GenericXmlApplicationContext();
 	    ConfigurableEnvironment environment = context.getEnvironment();
 	    MutablePropertySources propertySources = environment.getPropertySources();
-	    List<String> xmlConfiguration = new ArrayList<>();
+	    List<String> xmlConfiguration = new ArrayList<String>();
 	    
 	    for(String entry : configurationXmlAndProperties) {
 	        if(entry.endsWith(".properties")) {

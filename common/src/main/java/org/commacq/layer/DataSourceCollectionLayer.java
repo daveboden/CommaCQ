@@ -60,7 +60,7 @@ public class DataSourceCollectionLayer extends AbstractUpdatableLayer {
 	}
 	
 	public DataSourceCollectionLayer(CsvDataSourceFactory factory, Collection<String> entityIds) {
-		List<CsvDataSource> sources = new ArrayList<>();
+		List<CsvDataSource> sources = new ArrayList<CsvDataSource>();
 		for(String entityId : entityIds) {
 			try {
 				sources.add(factory.createCsvDataSource(entityId));

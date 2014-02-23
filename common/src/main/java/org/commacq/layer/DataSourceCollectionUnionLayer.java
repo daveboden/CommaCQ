@@ -31,7 +31,7 @@ public class DataSourceCollectionUnionLayer extends AbstractUpdatableLayer {
 		this.layers = collection;
 		
 		SortedSet<String> entityIds = new TreeSet<String>();
-		Map<String, DataSourceCollectionLayer> mapping = new HashMap<>();
+		Map<String, DataSourceCollectionLayer> mapping = new HashMap<String, DataSourceCollectionLayer>();
 		Map<String, CsvDataSource> sourceMapping = new HashMap<String, CsvDataSource>();
 		for(DataSourceCollectionLayer layer : collection) {
 			entityIds.addAll(layer.getEntityIds());

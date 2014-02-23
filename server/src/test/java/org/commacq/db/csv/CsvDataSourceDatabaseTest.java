@@ -95,7 +95,7 @@ public class CsvDataSourceDatabaseTest {
 		verifyNoMoreInteractions(callback);
 		reset(callback);
 		
-		List<String> bothLines = new ArrayList<>();
+		List<String> bothLines = new ArrayList<String>();
 		bothLines.add("1");
 		bothLines.add("2");
 		layer.updateUntrusted("test", bothLines);

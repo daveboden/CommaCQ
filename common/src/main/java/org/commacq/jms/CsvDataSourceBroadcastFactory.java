@@ -77,7 +77,7 @@ public class CsvDataSourceBroadcastFactory {
 		
 		BufferedReader reader = new BufferedReader(new StringReader(entityIdsText));
 		
-		SortedSet<String> entityIds = new TreeSet<>();
+		SortedSet<String> entityIds = new TreeSet<String>();
 		String line;
 		try {
 			while((line = reader.readLine()) != null) {

@@ -11,7 +11,7 @@ import lombok.Getter;
  */
 public class CsvLineCallbackStringWriter implements BlockCallback {
 	
-	private StringWriter writer = new StringWriter(1_000_000);
+	private StringWriter writer = new StringWriter(1000000);
 	private PrintWriter printWriter = new PrintWriter(writer);
 	@Getter
 	private int processUpdateCount = 0;

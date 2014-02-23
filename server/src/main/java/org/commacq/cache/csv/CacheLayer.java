@@ -28,7 +28,7 @@ public class CacheLayer extends AbstractSubscribeLayer {
     private final SortedSet<String> entityIds;
     
 	public CacheLayer(SubscribeLayer sourceLayer) {
-		caches = new HashMap<>(sourceLayer.getEntityIds().size());
+		caches = new HashMap<String, CsvDataSourceCache>(sourceLayer.getEntityIds().size());
 		this.entityIds = sourceLayer.getEntityIds();
 		for(String entityId : sourceLayer.getEntityIds()) {
 			CsvDataSourceCache cache = new CsvDataSourceCache(entityId);
@@ -49,7 +49,7 @@ public class CacheLayer extends AbstractSubscribeLayer {
 	}
 	
 	public CacheLayer(SubscribeLayer sourceLayer, Collection<String> entityIds) {
-		caches = new HashMap<>(entityIds.size());
+		caches = new HashMap<String, CsvDataSourceCache>(entityIds.size());
 		this.entityIds = new TreeSet<String>(entityIds);
 		for(String entityId : entityIds) {
 			CsvDataSourceCache cache = new CsvDataSourceCache(entityId);
@@ -123,7 +123,7 @@ public class CacheLayer extends AbstractSubscribeLayer {
     	
     	//Either points to a local cache where we're preparing a refresh
     	//or points to the main csvCache that's in operation.
-    	private Map<String, CsvCache> localCsvCache = new HashMap<>();
+    	private Map<String, CsvCache> localCsvCache = new HashMap<String, CsvCache>();
     	
     	@Override
     	public void processUpdate(String entityId, String columnNamesCsv, CsvLine csvLine) throws CsvUpdateBlockException { 

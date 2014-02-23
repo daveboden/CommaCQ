@@ -23,7 +23,7 @@ public class CsvLineCallbackComposite implements BlockCallback {
 	 * callback is interested in.
 	 * null means all entities.
 	 */
-	private final Map<BlockCallback, Collection<String>> callbacks = new HashMap<>();
+	private final Map<BlockCallback, Collection<String>> callbacks = new HashMap<BlockCallback, Collection<String>>();
 	
 	public void addCallback(BlockCallback callback) {
 		addCallback((Collection<String>)null, callback);
