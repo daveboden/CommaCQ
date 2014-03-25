@@ -12,7 +12,10 @@ import java.util.TreeSet;
 import javax.annotation.concurrent.ThreadSafe;
 
 import org.apache.commons.lang3.StringEscapeUtils;
+import org.commacq.CompositeIdEncoding;
+import org.commacq.CompositeIdEncodingEscaped;
 import org.commacq.CsvLine;
+import org.commacq.db.EntityConfig;
 import org.commacq.db.StringColumnValueConverter;
 
 /**
@@ -58,6 +61,8 @@ public class CsvMarshaller {
 	
 	public static final StringColumnValueConverter stringColumnValueConverter = new StringColumnValueConverter();
 	
+	private final CompositeIdEncoding compositeIdEncoding = new CompositeIdEncodingEscaped();
+	
 	private ThreadLocal<StringBuilder> stringBuilder = new ThreadLocal<StringBuilder>() {
 		protected StringBuilder initialValue() {
 			return new StringBuilder(2048);
@@ -71,7 +76,7 @@ public class CsvMarshaller {
 		}
 	};
 	
-	public CsvLine toCsvLine(ResultSet result, Collection<String> groups) throws SQLException {
+	public CsvLine toCsvLine(ResultSet result, EntityConfig entityConfig) throws SQLException {
 		StringBuilder builder = stringBuilder.get();
 		
         ResultSetMetaData metaData = result.getMetaData();
@@ -81,23 +86,54 @@ public class CsvMarshaller {
         	throw new SQLException("No columns to consider");
         }
         
-        appendEscapedCsvEntry(builder, getColumnValue(result, metaData.getColumnType(1), 1));
-        //The id is the first value to be added to the StringBuilder.
-        //At this point, the builder just contains the pure id value;
-        //so, let's capture it now.
-        String id = builder.toString();
+        String id = null; //Will never end up being null. Compiler isn't clever enough to detect that.
+        int startFromColumn;
+        if(entityConfig.getCompositeIdColumns() != null) {
+        	//Haven't calculated the id yet; will have to prefix it to the line afterwards
+        	startFromColumn = 1;
+        } else {
+        	String idValue = getColumnValue(result, metaData.getColumnType(1), 1);
+        	id = StringEscapeUtils.escapeCsv(idValue);
+        	startFromColumn = 2; //We've already processed column 1: id.
+            builder.append(id);
+        }
         
-        Map<String, String> groupValues = new HashMap<String, String>(groups.size());
-        	
-        for (int i = 2; i <= metaData.getColumnCount(); i++) {
+        Map<String, String> groupValues = new HashMap<String, String>(entityConfig.getGroups().size());
+        
+        Map<String, String> compositeKeyValues = null;
+        if(entityConfig.getCompositeIdColumns() != null) {
+        	compositeKeyValues = new HashMap<String, String>(entityConfig.getCompositeIdColumns().size());
+        }
+        
+        for (int i = startFromColumn; i <= metaData.getColumnCount(); i++) {
 			builder.append(COMMA);
 			String columnValue = getColumnValue(result, metaData.getColumnType(i), i);
 			appendEscapedCsvEntry(builder, columnValue);
 			
 			String columnLabel = metaData.getColumnLabel(i);
-			if(groups.contains(columnLabel)) {
+			if(entityConfig.getGroups().contains(columnLabel)) {
 				groupValues.put(columnLabel, columnValue);
 			}
+			if(compositeKeyValues != null) {
+				if(entityConfig.getCompositeIdColumns().contains(columnLabel)) {
+					compositeKeyValues.put(columnLabel, columnValue);
+				}
+			}
+        }
+        
+        if(compositeKeyValues != null) {
+        	String[] components = new String[entityConfig.getCompositeIdColumns().size()];
+        	int index = 0;
+        	for(String compositeColumn : entityConfig.getCompositeIdColumns()) {
+        		String value = compositeKeyValues.get(compositeColumn);
+        		if(value == null) {
+        			throw new RuntimeException("Null value in composite key column: " + compositeColumn);
+        		}
+        		components[index++] = value;
+        	}
+        	id = compositeIdEncoding.createCompositeId(components);
+        	
+        	builder.insert(0, id);
         }
 		
 		return new CsvLine(id, builder.toString(), groupValues);

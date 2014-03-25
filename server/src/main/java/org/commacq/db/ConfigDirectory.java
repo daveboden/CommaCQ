@@ -2,6 +2,7 @@ package org.commacq.db;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -24,6 +25,7 @@ public final class ConfigDirectory {
 	
 	private static final String SQL_SUFFIX = ".sql";
 	private static final String GROUPS_SUFFIX = ".groups.txt";
+	private static final String ID_COLUMNS_SUFFIX = ".idColumns.txt";	
 	
 	
 	private ConfigDirectory() {
@@ -63,7 +65,25 @@ public final class ConfigDirectory {
 				groups = Collections.emptySet();
 			}
 			
-			configs.put(entityId, new EntityConfig(entityId, sql, groups));
+			Resource idColumnsResource = resource.createRelative("./" + entityId + ID_COLUMNS_SUFFIX);
+			final List<String> idColumns;
+			if(idColumnsResource.exists()) {
+				List<String> idColumnLines = IOUtils.readLines(idColumnsResource.getInputStream());
+				idColumns = new ArrayList<String>();
+				for(String line : idColumnLines) {
+					if(StringUtils.isNotBlank(line)) {
+						line = StringUtils.strip(line);
+						boolean notAlreadyPresent = idColumns.add(line);
+						if(!notAlreadyPresent) {
+							throw new RuntimeException("Duplicate composite key column defined - " + line + " - in resource :" + idColumnsResource);
+						}
+					}
+				}
+			} else {
+				idColumns = null;
+			}
+			
+			configs.put(entityId, new EntityConfig(entityId, sql, groups, idColumns));
 			
 		}
 		return Collections.unmodifiableMap(configs);

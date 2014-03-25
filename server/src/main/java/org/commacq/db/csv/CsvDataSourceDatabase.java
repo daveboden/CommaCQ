@@ -76,7 +76,12 @@ public class CsvDataSourceDatabase implements CsvDataSource {
     		@Override
     		public String extractData(ResultSet rs) throws SQLException, DataAccessException {
     			CsvMarshaller csvParser = new CsvMarshaller();
-    			return csvParser.getColumnLabelsAsCsvLine(rs.getMetaData(), entityConfig.getGroups());
+    			String columnLabelsFromMetadata = csvParser.getColumnLabelsAsCsvLine(rs.getMetaData(), entityConfig.getGroups());
+    			if(entityConfig.getCompositeIdColumns() != null) {
+    				return "id," + columnLabelsFromMetadata;
+    			} else {
+    				return columnLabelsFromMetadata;
+    			}
     		}
 		});
     	return columnNamesCsv;
@@ -117,6 +122,13 @@ public class CsvDataSourceDatabase implements CsvDataSource {
     	
     	public void extractDataInternal(ResultSet result) throws SQLException, DataAccessException, CsvUpdateBlockException {
     		String columnNamesCsv = csvParser.getColumnLabelsAsCsvLine(result.getMetaData(), entityConfig.getGroups());
+    		if(entityConfig.getCompositeIdColumns() != null) {
+    			if(columnNamesCsv.startsWith("id,")) {
+    				throw new RuntimeException("An entity with a compositeId must not specify an id in the sql definition: " + entityConfig.getEntityId());
+    			}
+    			
+    			columnNamesCsv = "id," + columnNamesCsv;
+    		}
     		
     		List<String> copyOfIds = null;
     		if(ids != null) {
@@ -126,7 +138,7 @@ public class CsvDataSourceDatabase implements CsvDataSource {
     		String entityId = entityConfig.getEntityId();
     		
     		while(result.next()) {    			
-    			CsvLine csvLine = csvParser.toCsvLine(result, entityConfig.getGroups());
+    			CsvLine csvLine = csvParser.toCsvLine(result, entityConfig);
 					callback.processUpdate(entityId, columnNamesCsv, csvLine);
     			if(ids != null) {
     				copyOfIds.remove(csvLine.getId());

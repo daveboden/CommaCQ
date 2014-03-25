@@ -5,8 +5,12 @@ import java.util.Iterator;
 
 import javax.sql.DataSource;
 
+import lombok.Getter;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 
+import org.commacq.CompositeIdEncoding;
+import org.commacq.CompositeIdEncodingEscaped;
 import org.springframework.dao.DataAccessException;
 import org.springframework.dao.IncorrectResultSizeDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -23,6 +27,10 @@ import org.springframework.jdbc.core.ResultSetExtractor;
 public class DataSourceAccess {
 
     private final JdbcTemplate jdbcTemplate;
+    
+    @Getter
+    @Setter
+    private CompositeIdEncoding encoding = new CompositeIdEncodingEscaped();
     
     public DataSourceAccess(DataSource dataSource) {
         this.jdbcTemplate = new JdbcTemplate(dataSource);        
@@ -44,9 +52,33 @@ public class DataSourceAccess {
     
     public <T> T getResultSetForSingleRow(EntityConfig entityConfig, ResultSetExtractor<T> resultSetExtractor, String id) throws DataAccessException {
         StringBuilder sql = new StringBuilder();
-        //TODO probably best to cache this "nest" string arrangement
-        sql.append("select nest.* from (").append(entityConfig.getSql()).append(") as nest ")
-           .append("where nest.\"id\" = '").append(id).append("'");
+        
+        sql.append("select nest.* from (").append(entityConfig.getSql()).append(") as nest ");
+        
+        if(entityConfig.getCompositeIdColumns() == null) {
+	        //TODO probably best to cache this "nest" string arrangement
+	        sql.append("where nest.\"id\" = '").append(id).append("'");
+        } else {
+        	String[] components = encoding.parseCompositeIdComponents(id);
+        	int numberOfColumns = entityConfig.getCompositeIdColumns().size();
+        	if(components.length != numberOfColumns) {
+        		throw new RuntimeException("id can't be parsed into " + numberOfColumns + " components: " + id);
+        	}
+        	
+        	sql.append("where ");
+        	
+        	for(int i = 0; i < numberOfColumns; i++) {
+        		sql.append("nest.\"")
+        		   .append(entityConfig.getCompositeIdColumns().get(i))
+        		   .append("\" = '")
+        		   .append(components[i])
+        		   .append("'");
+        		
+        		if(i != numberOfColumns - 1) {
+        			sql.append(" and ");
+        		}
+        	}
+        }
         
         String sqlString = sql.toString();
         log.debug("Executing SQL: {}", sqlString);
