@@ -131,7 +131,7 @@ public class CsvMarshaller {
         		}
         		components[index++] = value;
         	}
-        	id = compositeIdEncoding.createCompositeId(components);
+        	id = StringEscapeUtils.escapeCsv(compositeIdEncoding.createCompositeId(components));
         	
         	builder.insert(0, id);
         }
