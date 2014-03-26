@@ -157,7 +157,8 @@ public class DataSourceAccess {
         log.debug("Executing SQL: {}", sqlString);
         
         try {
-        	//Debug hint - put a breakpoint on your ResultSetExtractor's extractData method. You're about to disappear into Spring...
+        	//Debug hint - put a breakpoint on your ResultSetExtractor's extractData method or use debug step filters.
+        	//You're about to disappear into Spring...
         	return jdbcTemplate.query(sqlString, resultSetExtractor);
         } catch(DataAccessException ex) {
             String message = "Error executing SQL with 'in' clause";
