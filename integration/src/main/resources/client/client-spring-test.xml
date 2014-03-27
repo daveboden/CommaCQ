@@ -19,7 +19,7 @@ jms.client.broadcast.topic.pattern
        xsi:schemaLocation="
 http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
 http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd
-http://commacq.org/client http://commacq.org/client/comma-cq-1.0.xsd
+http://commacq.org/client http://commacq.org/client/commacq.xsd
 ">
 
     <bean id="beanTypeSelectionStrategy" class="org.commacq.client.factory.BeanTypeSelectionStrategyEntityNameWithinPackages"
