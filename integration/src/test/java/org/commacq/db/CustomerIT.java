@@ -7,6 +7,7 @@ import static org.junit.Assert.assertTrue;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.util.Map;
+import java.util.Properties;
 import java.util.Set;
 
 import javax.annotation.Resource;
@@ -15,18 +16,21 @@ import javax.sql.DataSource;
 
 import lombok.extern.slf4j.Slf4j;
 
-import org.apache.commons.io.IOUtils;
+import org.commacq.client.BeanCacheFactory;
 import org.commacq.client.CacheObserver;
 import org.commacq.client.Manager;
 import org.commacq.client.UpdateManager;
+import org.commacq.client.factory.ManagerFactory;
 import org.commacq.testclient.Customer;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.support.GenericXmlApplicationContext;
-import org.springframework.core.io.DefaultResourceLoader;
+import org.springframework.core.env.PropertiesPropertySource;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.test.jdbc.JdbcTestUtils;
 
 @Slf4j
 public class CustomerIT extends SharedServices {
@@ -45,26 +49,35 @@ public class CustomerIT extends SharedServices {
     
     @SuppressWarnings("unchecked")
 	@Before
-    public void setup() throws IOException {
+    public void setup() throws Exception {
     	JdbcTemplate template = new JdbcTemplate(integrationDataSource1);
-    	DefaultResourceLoader loader = new DefaultResourceLoader();
-    	template.execute(IOUtils.toString(loader.getResource("classpath:integration-1/setup/customerTableData.sql").getInputStream()));
+
+    	JdbcTestUtils.executeSqlScript(template, new ClassPathResource("integration-1/setup/customerTable.sql"), false);
+    	JdbcTestUtils.executeSqlScript(template, new ClassPathResource("integration-1/setup/customerTableData.sql"), false);
     	
     	testContext = new GenericXmlApplicationContext();
     	testContext.setParent(sharedContext);
-    	testContext.load("classpath:/org/commacq/db/CustomerIT-context.xml");
+    	Properties properties = new Properties();
+    	properties.setProperty("database.sql.directory", "classpath:/integration-1/server-config/sql/customer");
+    	testContext.getEnvironment().getPropertySources().addLast(new PropertiesPropertySource("testProperties", properties));
+    	
+    	testContext.load("classpath:/integration-1/PrimaryServer.xml");
+    	testContext.load("classpath:/integration-1/PrimaryServer.Client.xml");
     	testContext.refresh();
     	testContext.start();
     	updateManager = testContext.getBean("updateManager", UpdateManager.class);
     	
-    	customerManager = testContext.getBean("customerManager", Manager.class);
+    	BeanCacheFactory beanCacheFactory = testContext.getBean(BeanCacheFactory.class);
+    	ManagerFactory managerFactory = testContext.getBean(ManagerFactory.class);
+    	
+    	customerManager = (Manager<Customer>)managerFactory.createManager(beanCacheFactory.createBeanCache("customer"));
     }
     
     @After
     public void teardown() {
     	
     	JdbcTemplate template = new JdbcTemplate(integrationDataSource1);
-    	template.execute("truncate table customer");
+    	template.execute("drop table customer");
     }
 
     @Test

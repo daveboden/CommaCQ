@@ -26,5 +26,13 @@ http://www.springframework.org/schema/beans http://www.springframework.org/schem
         	</bean>
         </constructor-arg>
     </bean>
+    <bean id="broadcastTopicCompositeEntity" factory-bean="destinationManager" factory-method="createTopic">
+        <constructor-arg>
+        	<bean class="java.lang.String" factory-method="format">
+        		<constructor-arg value="${jms.client.broadcast.topic.pattern}"/>
+        		<constructor-arg value="compositeEntity"/>
+        	</bean>
+        </constructor-arg>
+    </bean>
 
 </beans>

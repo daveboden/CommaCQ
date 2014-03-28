@@ -16,9 +16,6 @@ http://activemq.apache.org/schema/core http://activemq.apache.org/schema/core/ac
     jdbc:hsqldb:mem:integrationDataSource1
     The database is given the same name as the bean id.
     -->
-    <jdbc:embedded-database id="integrationDataSource1" type="H2">
-        <jdbc:script location="classpath:integration-1/setup/customerTable.sql" />
-        <jdbc:script location="classpath:integration-1/setup/holidayTable.sql" />
-    </jdbc:embedded-database>
+    <jdbc:embedded-database id="integrationDataSource1" type="H2"/>
 
 </beans>

@@ -2,6 +2,9 @@ package org.commacq.client;
 
 import java.util.Map;
 
+import org.commacq.CompositeIdEncoding;
+import org.commacq.CompositeIdEncodingEscaped;
+
 /**
  * The user may choose to extend the Manager type to add useful methods
  * (e.g. getActive(id) and mustGetActive(id) which introduce the concept
@@ -31,6 +34,8 @@ public class Manager<BeanType> {
 	//copy (HashMap) if in snapshot operation.
 	protected final BeanCache<BeanType> beanCache;
 	
+	protected CompositeIdEncoding compositeIdEncoding;
+	
 	/**
 	 * @param beanType
 	 * @param entityId The server knows the entity by this name
@@ -39,6 +44,8 @@ public class Manager<BeanType> {
 		this.beanCache = beanCache;
 		this.beanType = beanCache.getBeanType();
 		this.entityId = beanCache.getEntityId();
+		
+		this.compositeIdEncoding = new CompositeIdEncodingEscaped();
 	}
 	
 	/**
@@ -65,6 +72,10 @@ public class Manager<BeanType> {
 		return beanCache.get(id);
 	}
 	
+	public BeanType getByCompositeId(String... idComponents) {
+		return get(compositeIdEncoding.createCompositeId(idComponents));
+	}
+	
 	/**
 	 * Returns the bean using its identifier, or throws a RuntimeException if
 	 * the bean is not present in the cache.
@@ -76,6 +87,10 @@ public class Manager<BeanType> {
 					                                 id, entityId, beanType.getName()));
 		}
 		return bean;
+	}
+	
+	public BeanType mustGetByCompositeId(String... idComponents) {
+		return mustGet(compositeIdEncoding.createCompositeId(idComponents));
 	}
 	
 	/**
