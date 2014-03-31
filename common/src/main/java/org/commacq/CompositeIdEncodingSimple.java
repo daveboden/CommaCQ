@@ -8,7 +8,13 @@ public class CompositeIdEncodingSimple implements CompositeIdEncoding {
 	
 	@Override
 	public String[] parseCompositeIdComponents(String id) {
-		return id.split(SEPARATOR);
+		String[] split = id.split(SEPARATOR, -1);
+		for(int i = 0; i < split.length; i++) {
+			if(split[i].equals("")) {
+				split[i] = null;
+			}
+		}
+		return split;
 	}
 
 	@Override
