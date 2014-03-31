@@ -15,7 +15,7 @@
     </prerequisites>
     
     <scm>
-        <developerConnection>https://github.com/daveboden/CommaCQ</developerConnection>
+        <developerConnection>scm:git:https://github.com/daveboden/CommaCQ</developerConnection>
     </scm>
 
     <modules>
