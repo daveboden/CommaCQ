@@ -25,7 +25,7 @@ public final class ConfigDirectory {
 	
 	private static final String SQL_SUFFIX = ".sql";
 	private static final String GROUPS_SUFFIX = ".groups.txt";
-	private static final String ID_COLUMNS_SUFFIX = ".idColumns.txt";	
+	private static final String ID_COLUMNS_SUFFIX = ".compositeId";	
 	
 	
 	private ConfigDirectory() {
