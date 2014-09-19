@@ -3,7 +3,7 @@
 
     <groupId>org.commacq</groupId>
     <artifactId>commacq-parent</artifactId>
-    <version>0.5-SNAPSHOT</version>
+    <version>Java8ConstructorClient-SNAPSHOT</version>
     <packaging>pom</packaging>
     <name>${project.artifactId}</name>
 
