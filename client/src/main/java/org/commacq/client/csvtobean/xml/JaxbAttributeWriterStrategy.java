@@ -25,7 +25,7 @@ import javax.xml.stream.events.XMLEvent;
 
 import org.apache.commons.lang3.StringUtils;
 import org.commacq.CsvLine;
-import org.commacq.client.CsvListReaderUtil;
+import org.commacq.CsvListReaderUtil;
 import org.commacq.client.CsvToBeanStrategy;
 
 /**
@@ -104,35 +104,39 @@ public class JaxbAttributeWriterStrategy implements CsvToBeanStrategy {
 
     @Override
     public <BeanType> BeanType getBean(Class<BeanType> beanType, String columnNamesCsv, CsvLine csvLine) {
-		Map<String, BeanType> beans = getBeans(beanType, columnNamesCsv, Collections.singleton(csvLine));
-		return beans.get(csvLine.getId());
+    	List<String> columnNames = splitCsv(columnNamesCsv);
+    	List<String> rowValues = splitCsv(csvLine.getCsvLine());
+    	
+    	return getBean(beanType, columnNames, rowValues);
     }
     
-	@SuppressWarnings("unchecked")
 	@Override
 	public <BeanType> Map<String, BeanType> getBeans(Class<BeanType> beanType, String columnNamesCsv, Collection<CsvLine> csvLines) {
 		List<String> columnNames = splitCsv(columnNamesCsv);
 		
 		Map<String, BeanType> beansMap = new HashMap<>(csvLines.size());
 		for(CsvLine csvLine : csvLines) {
-			
-	        AttributeEventReader attributeEventReader = getAttributeEventReader(beanType);
-	        Unmarshaller unmarshaller = unmarshallerMap.get(beanType);
-	        
+				        
 	        List<String> rowValues = splitCsv(csvLine.getCsvLine());
 
-            attributeEventReader.setData(columnNames, rowValues);
-
-            BeanType item;
-            try {
-                item = (BeanType) unmarshaller.unmarshal(attributeEventReader);
-            } catch (JAXBException ex) {
-                throw new RuntimeException("Error while unmarshalling: " + beanType + " - " + rowValues, ex);
-            }
+	        BeanType item = getBean(beanType, columnNames, rowValues);
 			
 			beansMap.put(csvLine.getId(), item);
 		}
 		return beansMap;
+	}
+	
+	@SuppressWarnings("unchecked")
+	public <BeanType> BeanType getBean(Class<BeanType> beanType, List<String> columnNames, List<String> rowValues) {
+        AttributeEventReader attributeEventReader = getAttributeEventReader(beanType);
+        Unmarshaller unmarshaller = unmarshallerMap.get(beanType);
+        attributeEventReader.setData(columnNames, rowValues);
+
+        try {
+            return (BeanType) unmarshaller.unmarshal(attributeEventReader);
+        } catch (JAXBException ex) {
+            throw new RuntimeException("Error while unmarshalling: " + beanType + " - " + rowValues, ex);
+        }
 	}
 
     /**

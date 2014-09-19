@@ -14,10 +14,14 @@ import org.supercsv.prefs.CsvPreference;
 @Slf4j
 public class CsvTextBlockToCallback {
 	
+	private CsvListReaderUtil csvListReaderUtil = new CsvListReaderUtil();
+	
 	public String getCsvColumnNames(Reader text) {
-		CsvListReader parser = new CsvListReader(text, CsvPreference.STANDARD_PREFERENCE);
+		
+		CsvListReader parser = csvListReaderUtil.getParser();
 		//Try-with-resources when upgrading to Java 7
 		try {
+			csvListReaderUtil.appendReader(text);
 			parser.read();
 			return parser.getUntokenizedRow();
 		} catch (IOException ex) {

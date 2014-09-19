@@ -95,13 +95,13 @@
             <dependency>
                 <groupId>org.projectlombok</groupId>
                 <artifactId>lombok</artifactId>
-                <version>1.12.6</version>
+                <version>1.14.4</version>
             </dependency>
 
             <dependency>
                 <groupId>net.sf.supercsv</groupId>
                 <artifactId>super-csv</artifactId>
-                <version>2.1.0</version>
+                <version>2.2.0</version>
             </dependency>
 
             <dependency>
@@ -354,8 +354,10 @@
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>2.3.2</version>
                 <configuration>
-                    <source>1.7</source>
-                    <target>1.7</target>
+                    <source>1.8</source>
+                    <target>1.8</target>
+                    <!-- Java 8 - enable parameter names in debug info -->
+                    <compilerArgument>-parameters</compilerArgument>
                 </configuration>
             </plugin>
             <plugin>

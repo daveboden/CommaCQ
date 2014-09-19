@@ -1,9 +1,11 @@
-package org.commacq.client;
+package org.commacq;
 
 import java.io.IOException;
 import java.io.PipedReader;
 import java.io.PipedWriter;
+import java.io.Reader;
 
+import org.apache.commons.io.IOUtils;
 import org.supercsv.io.CsvListReader;
 import org.supercsv.prefs.CsvPreference;
 
@@ -30,6 +32,10 @@ public class CsvListReaderUtil {
     
     public void appendLine(String line) throws IOException {
     	parserWriter.append(line).append("\n");
+    }
+    
+    public void appendReader(Reader reader) throws IOException {
+    	IOUtils.copy(reader, parserWriter);
     }
 	
 }
