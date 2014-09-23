@@ -63,7 +63,13 @@ public class ConstructorParamsStrategy implements CsvToBeanStrategy {
 	}
 	
 	public <BeanType> Constructor<?> chooseConstructor(Class<BeanType> beanType) {
-		return beanType.getConstructors()[1]; //TODO choose from candidate constructors
+		for(Constructor<?> constructor : beanType.getConstructors()) {
+			if(constructor.getParameters().length != 0) {
+				//TODO choose from candidate constructors rather than just returning the first non-empty constructor
+				return constructor;
+			}
+		}
+		throw new RuntimeException("No appropriate constructors on: " + beanType);
 	}
 
 	@Override
